@@ -174,7 +174,7 @@ void statisticalTreatmentTH::InitFromFile(TString filename, double errorImprove,
     fBkgGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i));
     fBkgGraphUsed  ->SetPointError(i,0.,fExpectedErrors.BkgErr.at(i));
 
-    fNormBkgGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i)/fObservables.SignalEffiLocalObs.at(i)*fObservables.SqrtsObs.at(i)*fObservables.SqrtsObs.at(i));
+    fNormBkgGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i)/fObservables.SignalEffiLocalObs.at(i));
     fNormBkgGraphUsed  ->SetPointError(i,0.,fNormBkgGraphUsed->GetY()[i]*TMath::Sqrt(
 										     pow(fExpectedErrors.BkgErr.at(i)/fObservables.BkgObs.at(i),2)+
 										     pow(fExpectedErrors.SignalEffiLocalErr.at(i)/fObservables.SignalEffiLocalObs.at(i),2)
