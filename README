@@ -1,0 +1,6 @@
+Statistical Treatment for the PADME RunIII analysis
+
+source compileStatisticalTreatment.sh to compile <-- need to modify clang on certain machines
+
+3 executables are obtained: geneStatisticalTreatment	readStatisticalTreatment	runStatisticalTreatment 
+later will explain how they work
