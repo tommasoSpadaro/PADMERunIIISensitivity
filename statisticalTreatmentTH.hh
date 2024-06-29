@@ -168,7 +168,7 @@ class Likelihood {
 	 //PROVA	 double eRes = (mass*mass - 2*me*me)/(2.*(me+Wb));
 	 //PROVA	 double eBeam = (fObservables.SqrtsObs.at(i)*fObservables.SqrtsObs.at(i) - 2*me*me)/(2.*me); // s = 2me^2 + 2meEbeam -> eBeam = (s-2me^2) / 2me
 
-	 sc = gve*gve*par[potTrueIdx+i]*1E10*potScaleTrue*par[effiTrueIdx]*Likelihood::SignalShape(signalPeakYieldTrue,BESTrue,signalLorentzianWidthTrue,mass,fObservables.SqrtsObs.at(i));
+	 sc = gve*gve*par[potTrueIdx+i]*1E10*potScaleTrue*par[effiTrueIdx+i]*Likelihood::SignalShape(signalPeakYieldTrue,BESTrue,signalLorentzianWidthTrue,mass,fObservables.SqrtsObs.at(i));
 	 //PROVA	 sc = signalPeakYieldTrue*gve*gve*par[potTrueIdx + i]*1E10*potScaleTrue*par[effiTrueIdx + i]*TMath::Voigt(eBeam-eRes,BESTrue*eBeam,signalLorentzianWidthTrue*2,4);
 
 	 //	 std::cout << "mass = " << mass << " gve = " << gve << " eRes = " << eRes << " eBeam = " << eBeam << " signal = " << sc << endl;
