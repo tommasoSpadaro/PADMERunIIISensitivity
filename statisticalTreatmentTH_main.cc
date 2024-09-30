@@ -9,6 +9,7 @@
 #include "TApplication.h"
 #include "TStyle.h"
 #include "statisticalTreatmentTH.hh"
+#include "statConfig.hh"
 
 void usage()
 {
@@ -29,6 +30,13 @@ int main(int argc, char **argv)
   gStyle->SetOptFit(1111);
 
   printf("Initializing statistical treatment classes...\n");
+
+  printf("...init of statConfig\n");
+  statConfig* configPtr = statConfig::GetInstance();
+  configPtr->readConfigFromFile("/Users/Tommaso1/PADME/PADME_sensitivity/input/config_generic.txt");
+
+
+
   statisticalTreatmentTH* statT = new statisticalTreatmentTH();  
   printf("...done\n");
 
@@ -40,9 +48,8 @@ int main(int argc, char **argv)
   statT->SetVerbosity(1);
   printf("...done\n");
 
-  //  statT->OverrideMassGrid(atof(app.Argv(2)),atof(app.Argv(2)),1);
   printf("Setting random seed...\n");
-  statT->InitRandomSeed(atoi(app.Argv(2)));
+  statT->OverrideRandomSeed(atoi(app.Argv(2)));
   printf("...done\n");
   
 //  printf("Setting parallelization level %d... process index %d \n",atoi(app.Argv(4)), atoi(app.Argv(5)));

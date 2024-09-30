@@ -3,6 +3,7 @@
 #define STATISTICALTREATMENTTH_HH
 
 //#include "nuisancePars.hh"
+#include "statConfig.hh"
 #include "TMath.h"
 #include <Fit/Fitter.h>
 #include "TH1D.h"
@@ -96,7 +97,7 @@ class Likelihood {
     const double Wb = -7E-6;// MeV
     double eRes = (massn*massn - 2*me*me)/(2.*(me+Wb));
     double eBeam = (sqrts*sqrts - 2*me*me)/(2.*me); // s = 2me^2 + 2meEbeam -> eBeam = (s-2me^2) / 2me
-    return signalpeak*TMath::Voigt(eBeam-eRes,bes*eBeam,lorewidth*2,4);
+    return signalpeak*TMath::Voigt(eBeam-eRes,bes*eRes,lorewidth*2,5); // last input was 4 but with low BES can have rounding problems
   }
 
   Likelihood(){}
@@ -192,12 +193,15 @@ public:
   ~statisticalTreatmentTH();
 
   void SetVerbosity(int verbosity){fVerbosity = verbosity;}
+
+  void Init();
   void InitFromFile(TString filename, bool useNuisance){InitFromFile(filename,1.,useNuisance);} // set filename with init info, no modified improvement factor, useNuisance flag
   void InitFromFile(TString filename, Double_t errorImprovementFactor, bool useNuisance); // set filename with init info, improvementFactor, useNuisance flag
+
   void ReadOutput(TString filename);       // set filename with input CLs info -> perform limits
   void SaveAllHistos();
   
-  void InitRandomSeed(int seed){fSeed = seed; fRndmNumber->SetSeed(seed);}
+  void OverrideRandomSeed(int seed){fSeed = seed; fRndmNumber->SetSeed(seed);}
   void InitParallelization(int parallelLevel, int parallelID){fParallelLevel = parallelLevel; fParallelID = parallelID;}// number of parallel instances, instanceID
   
   // to be run only AFTER INIT:
@@ -243,12 +247,14 @@ private:
   nuisancePars MaximizeLBGivenNObs(double* lb); //  maximize Lb wrt store nuisance pars, return "profiled" nuisance pars q_s
 
 private:
+  statConfig* fConfigPtr;
   CLsinfo fCLsInfo;   // Cls evaluations
   Freqinfo fFreqInfo; // rolke and feldman evaluations
   TTree* fCLsTree;
   TTree* fFreqTree;
   Double_t fErrorImprove;
   Bool_t fUseNuisance;
+  TString fInputFileName;
   // manipulated input graphs
   TGraphErrors* fPotGraphUsed;
   TGraphErrors* fEffiGraphUsed;

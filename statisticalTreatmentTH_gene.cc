@@ -37,13 +37,13 @@ int main(int argc, char **argv)
   //Open input file and retrieve the necessary information.
 
   printf("Opening necessary input files...\n");
-  statT->InitFromFile(app.Argv(1),90.,false);
+  statT->InitFromFile(app.Argv(1),2.,true);
   //  statT->InitFromFile(app.Argv(1),true); //default error
   statT->SetVerbosity(1);
   printf("...done\n");
 
   printf("Setting random seed...\n");
-  statT->InitRandomSeed(atoi(app.Argv(2)));
+  statT->OverrideRandomSeed(atoi(app.Argv(2)));
   printf("...done\n");
   
   bool bkgonly = true;

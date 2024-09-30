@@ -31,9 +31,10 @@ struct by_yield_desc
 
 statisticalTreatmentTH::statisticalTreatmentTH(){
   cout << "Allocating statisticalTreatmentTH " << endl;
-
-  fNumberOfGenerations = 200; // number of toys
-  fNumberOfGenerationsExpectedLimit = 1; // number of pseudo data 
+  fConfigPtr = statConfig::GetInstance();
+  
+  fNumberOfGenerations = fConfigPtr->GetNumberOfGenerations(); // number of toys
+  fNumberOfGenerationsExpectedLimit = fConfigPtr->GetNumberOfGenerationsExpectedLimit(); // number of pseudo data 
 
   cout << "Allocating expected CL bands " << endl;
   fNCLBands = 2; // here, number of bands to be done
@@ -46,36 +47,39 @@ statisticalTreatmentTH::statisticalTreatmentTH(){
   fExtractedCLS = new Double_t[fNCLAvgs];  // number of extracted CLS: median, left-right 1 sigma, left-right 2 sigma
   fLabel = "none";
 
-  fErrorImprove = 1;
-  fUseNuisance = true; // by default use nuisance
+  fErrorImprove = fConfigPtr->GetErrorImprove();
+  fUseNuisance = fConfigPtr->GetUseNuisance(); // by default use nuisance
 
   // init random numbers
   fRndmNumber = new TRandom3();
-  fSeed = 0;
+  fSeed = fConfigPtr->GetSeed();
   fRndmNumber->SetSeed(fSeed);
 
   // default with minimum verbosity = 0
   // minimum verbosity = 1
   // some verbosity = 2
   // max verbosity = 3
-  fVerbosity = 0;
+  fVerbosity = fConfigPtr->GetVerbosity();
 
   // initialise default values of the grid
   
-  fMassStep  = 0.02;//0.01; //MeV
-  fMassMin   =  16.22; // MeV
-  fMassMax   =  17.62; // MeV
+  fMassStep  =  fConfigPtr->GetMassStep(); //0.02;//0.01; //MeV
+  fMassMin   =  fConfigPtr->GetMassMin(); //16.22; // MeV
+  fMassMax   =  fConfigPtr->GetMassMax(); //17.62; // MeV
   fNMassBins =  (fMassMax-fMassMin)/fMassStep + 1; // 128 linear steps in mass
   
-  fNgveBins =  20;
-  fgveMin   =  1E-4;
-  fgveMax   =  8E-4;
+  fNgveBins =  fConfigPtr->GetNgveBins(); //40;
+  fgveMin   =  fConfigPtr->GetgveMin(); //1E-4;
+  fgveMax   =  fConfigPtr->GetgveMax(); //6E-4;
   fgveStep  =  (fgveMax*fgveMax*fgveMax*fgveMax - fgveMin*fgveMin*fgveMin*fgveMin)/fNgveBins; // linear steps in gve^4
 
   // number of point used in the frequentist window
   
-  fFrequentistNPoints = 2; // number of points for integration for the frequentist methods (FC, RL)  
+  fFrequentistNPoints = fConfigPtr->GetFrequentistNPoints(); // number of points for integration for the frequentist methods (FC, RL)  
   
+  // input filename
+  fInputFileName = fConfigPtr->GetInputFileName();
+
   // print out of constructor  
   
   cout << "Init Structs " << endl;
@@ -116,6 +120,121 @@ statisticalTreatmentTH::~statisticalTreatmentTH(){
 
 }
 
+void statisticalTreatmentTH::Init(){
+  TFile* filo = new TFile(fInputFileName.Data(), "READ");
+  TGraphErrors* potGraph = (TGraphErrors*) filo->Get("gPoT");
+  TGraphErrors* effiGraph = (TGraphErrors*) filo->Get("gEff");
+  TGraphErrors* bkgGraph = (TGraphErrors*) filo->Get("gBkg");
+
+  fObservables.NObs.clear();
+  fObservables.SqrtsObs.clear();
+  fObservables.POTObs.clear();
+  fObservables.SignalEffiLocalObs.clear();
+  fObservables.BkgObs.clear();
+
+  fExpectedErrors.POTLocalErr.clear();
+  fExpectedErrors.SignalEffiLocalErr.clear();
+  fExpectedErrors.BkgErr.clear();
+
+  std::cout << "Reading input file with " << potGraph->GetN() << " points" << std::endl;
+
+  double signalEfficiencyFac = 1.;
+  double bkgyieldFac = 1;  
+  if (fConfigPtr->GetManipulateInput()){ 
+    signalEfficiencyFac = 0.8;
+    bkgyieldFac = 0.8;
+  }
+
+  
+  for (int i=0; i<potGraph->GetN(); i++){
+    if (potGraph->GetY()[i] < 1E6) continue; // might add sqrts range or other quality cuts to exclude given points here [e.g.: scan up points vs scan dw points]
+    // retrieve Sqrt(s) values
+    fObservables.SqrtsObs.push_back(potGraph->GetX()[i]); // sqrt(s) observed
+    // retrieve POT values and errors, set in 1E10 units
+    fObservables.POTObs.push_back(potGraph->GetY()[i]/1E10); // POTs observed in 1E10 units    
+
+    
+    fExpectedErrors.POTLocalErr.push_back(potGraph->GetEY()[i]/1E10/fErrorImprove); // POTs error
+    // retrieve signal efficiencies and errors
+    fObservables.SignalEffiLocalObs.push_back(effiGraph->GetY()[i]*signalEfficiencyFac); // signal effi
+    fExpectedErrors.SignalEffiLocalErr.push_back(effiGraph->GetEY()[i]*signalEfficiencyFac/fErrorImprove); // signal effi error
+    // retrieve expected background and error
+    fObservables.BkgObs.push_back(bkgGraph->GetY()[i]*bkgyieldFac); // bkg yield
+    fExpectedErrors.BkgErr.push_back(bkgGraph->GetEY()[i]*bkgyieldFac/fErrorImprove); // bkg yield error    
+  }
+  filo->Close();
+  delete filo;
+  
+  std::cout << "After selection keep " << fObservables.SqrtsObs.size() << " points" << std::endl;
+
+  // store manipulated input in TGraphErrors in memory
+
+  fPotGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fPotGraphUsed  ->SetName("fPotGraphUsed");
+  fEffiGraphUsed = new TGraphErrors(fObservables.SqrtsObs.size()); fEffiGraphUsed ->SetName("fEffiGraphUsed");
+  fBkgGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fBkgGraphUsed  ->SetName("fBkgGraphUsed");
+  fNormBkgGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fNormBkgGraphUsed  ->SetName("fNormBkgGraphUsed");
+  for (uint i=0; i<fObservables.SqrtsObs.size(); i++){
+    fPotGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.POTObs.at(i));
+    fPotGraphUsed  ->SetPointError(i,0.,fExpectedErrors.POTLocalErr.at(i));
+
+    fEffiGraphUsed ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.SignalEffiLocalObs.at(i));
+    fEffiGraphUsed ->SetPointError(i,0.,fExpectedErrors.SignalEffiLocalErr.at(i));
+
+    fBkgGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i));
+    fBkgGraphUsed  ->SetPointError(i,0.,fExpectedErrors.BkgErr.at(i));
+
+    fNormBkgGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i)/fObservables.SignalEffiLocalObs.at(i));
+    fNormBkgGraphUsed  ->SetPointError(i,0.,fNormBkgGraphUsed->GetY()[i]*TMath::Sqrt(
+										     pow(fExpectedErrors.BkgErr.at(i)/fObservables.BkgObs.at(i),2)+
+										     pow(fExpectedErrors.SignalEffiLocalErr.at(i)/fObservables.SignalEffiLocalObs.at(i),2)
+										     ));
+  }
+
+
+  // iniialise the other observables
+
+  fObservables.SignalPeakYieldObs = fConfigPtr->GetSignalPeakYield();   // 13.56, times the voigt value at the peak gives a signal yield at the peak of 2.26 x gve^2 for BES = 0.0022 (1.80 x gve^2 at BES=0.005)
+  //fObservables.SignalPeakYieldObs = 12.46;          // this, times the voigt value at the peak gives a signal yield at the peak of 2.26 x gve^2 for BES = 0.0022 (1.80 x gve^2 at BES=0.005)
+  fObservables.SignalLorentzianWidthObs = fConfigPtr->GetSignalLorentzianWidth();     // 1.72 MeV, estimated value of lorentzian width for the signal shape expressed on pbeam
+  //fObservables.SignalLorentzianWidthObs = 0.;       // MeV, estimated value of lorentzian width for the signal shape expressed on pbeam
+  fObservables.BESObs = fConfigPtr->GetBES();                     // 0.0025 relative BES
+  fObservables.POTScaleObs = fConfigPtr->GetPOTScale();           // 1. absolute relative scale correction on the POT [independent on sqrt(s)]
+
+  fExpectedErrors.SignalPeakYieldErr = fConfigPtr->GetSignalPeakYieldErr();        // 0.18 i.e., 1.4% relative uncertainty on the signal yield at the peak
+  fExpectedErrors.SignalLorentzianWidthErr = fConfigPtr->GetSignalLorentzianWidthErr();  // 0.038 MeV, absolute error on the signal lorentzian width
+  fExpectedErrors.BESErr = fConfigPtr->GetBESErr();                  // 0.0005 error on the relative BES
+  fExpectedErrors.POTScaleErr = fConfigPtr->GetPOTScaleErr();        // 0.01 error on absolute POT scale [independent on the sqrt(s)]
+  fExpectedErrors.isNotFilled = false;  // Expected errors is initialised
+  
+  // initialise starting values of the nuisance parameters
+
+  fTheta_S = InitNuisanceToObservables(fObservables); // init but flagged as nonInitialised
+  fTheta_B = InitNuisanceToObservables(fObservables); // init but flagged as nonInitialised
+
+  // initialise likelihood
+
+  fLikeli.SetObservables(fObservables);
+  fLikeli.SetExpectedErrors(fExpectedErrors);
+
+  // initialize fitters
+
+  initFitters(false); // SB fitter
+  initFitters(true); // B fitter
+  
+  // print out
+  
+  cout << "Init From histo" << endl;
+  cout << "observables are filled: " << fObservables.isNotFilled << endl;
+  cout << "expectedErrors are filled: " << fExpectedErrors.isNotFilled << endl;
+  cout << "signalPlusBackground-profiled nuisances are filled: " << fTheta_S.isNotFilled << endl;
+  cout << "Background-profiled nuisances are filled: " << fTheta_B.isNotFilled << endl;
+
+  // set initflag to TRUE
+  fIsInitialized = true;
+}
+
+
+
 void statisticalTreatmentTH::InitFromFile(TString filename, double errorImprove, Bool_t useNuisance){
   fErrorImprove = errorImprove;
   fUseNuisance = useNuisance;
@@ -140,7 +259,6 @@ void statisticalTreatmentTH::InitFromFile(TString filename, double errorImprove,
   
   for (int i=0; i<potGraph->GetN(); i++){
     if (potGraph->GetY()[i] < 1E6) continue; // might add sqrts range or other quality cuts to exclude given points here [e.g.: scan up points vs scan dw points]
-
     // retrieve Sqrt(s) values
     fObservables.SqrtsObs.push_back(potGraph->GetX()[i]); // sqrt(s) observed
     // retrieve POT values and errors, set in 1E10 units
@@ -184,15 +302,17 @@ void statisticalTreatmentTH::InitFromFile(TString filename, double errorImprove,
 
   // iniialise the other observables
 
-  fObservables.SignalPeakYieldObs = 12.5;           // this, times the voigt value at the peak ~0.167 gives a signal yield at the resonance peak of 3 x gve^2 for BES = 0.002 (2gve^2 at BES=0.005)
-  fObservables.SignalLorentzianWidthObs = 1.1;      // MeV, estimated value of lorentzian width for the signal shape expressed on pbeam
+  fObservables.SignalPeakYieldObs = 13.56;          // this, times the voigt value at the peak gives a signal yield at the peak of 2.26 x gve^2 for BES = 0.0022 (1.80 x gve^2 at BES=0.005)
+  //fObservables.SignalPeakYieldObs = 12.46;          // this, times the voigt value at the peak gives a signal yield at the peak of 2.26 x gve^2 for BES = 0.0022 (1.80 x gve^2 at BES=0.005)
+  fObservables.SignalLorentzianWidthObs = 1.72;     // MeV, estimated value of lorentzian width for the signal shape expressed on pbeam
+  //fObservables.SignalLorentzianWidthObs = 0.;       // MeV, estimated value of lorentzian width for the signal shape expressed on pbeam
   fObservables.BESObs = 0.0025;                     // relative BES
   fObservables.POTScaleObs = 1.;                    // absolute relative scale correction on the POT [independent on sqrt(s)]
 
-  fExpectedErrors.SignalPeakYieldErr = 0.125;         // i.e., 1% relative uncertainty on the signal yield at the peak
-  fExpectedErrors.SignalLorentzianWidthErr = 0.1;   // MeV, absolute error on the signal lorentzian width
+  fExpectedErrors.SignalPeakYieldErr = 0.18;        // i.e., 1.4% relative uncertainty on the signal yield at the peak
+  fExpectedErrors.SignalLorentzianWidthErr = 0.038;  // MeV, absolute error on the signal lorentzian width
   fExpectedErrors.BESErr = 0.0005;                  // error on the relative BES
-  fExpectedErrors.POTScaleErr = 0.0001;             // error on absolute POT scale [independent on the sqrt(s)]
+  fExpectedErrors.POTScaleErr = 0.01;               // error on absolute POT scale [independent on the sqrt(s)]
   fExpectedErrors.isNotFilled = false;  // Expected errors is initialised
   
   // initialise starting values of the nuisance parameters
@@ -469,6 +589,7 @@ void statisticalTreatmentTH::initFitters(bool bonly){
     fFitterSB.Config().ParSettings(0).Fix(); // used to define S+B or B fits
     fFitterSB.Config().ParSettings(1).Fix(); // mass is always fixed
     fFitterSB.Config().ParSettings(2).Fix(); // coupling is always fixed
+    //    fFitterSB.Config().ParSettings(4+2*npts).Fix(); // to fix the lorentzian width gamma
   }
 
   // if nuisances must be blocked, only allow potscale to be fit
@@ -890,9 +1011,6 @@ vector<Double_t> statisticalTreatmentTH::GenerateSignalPlusBackgroundPseudoData(
   double potscale = nuis.POTScaleTrue;
   potscale += fRndmNumber->Gaus(0.,fExpectedErrors.POTScaleErr);
 
-
-  //  const double me = 0.511;// MeV
-  //  const double Wb = -7E-6;// MeV
 
   double signalpeak = nuis.SignalPeakYieldTrue;
   double bes = nuis.BESTrue;
