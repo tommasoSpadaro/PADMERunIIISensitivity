@@ -18,7 +18,26 @@ public:
   static statConfig* GetInstance();  
   void readConfigFromFile(TString datacardName);
 
+  // Gene mode
+  
+  Bool_t GetGeneMode(){return fGeneMode;}
+  Bool_t GetBkgOnlyGeneMode(){return fBkgOnlyGeneMode;}
+  TString GetGeneOutputFileName(){return fGeneOutputFileName;}
 
+  // Read mode
+  
+  Bool_t GetReadMode(){return fReadMode;}
+
+  // Standard mode [if no readmode and no genemode]
+
+  Bool_t GetToyOfToyMode(){return fToyOfToyMode;} // if true -> generate background pseudo data while making the expected limit
+  // if ToyOfToyMode == kFALSE:
+  TString GetInputFileNameNObsFromFile(){return fInputFileNameNObsFromFile;} // filename where the input NObs must be retrieved
+  Bool_t GetBkgOnlyNObsFromFile(){return fBkgOnlyNObsFromFile;}// use the bkg-only NObs from the input file
+  Double_t GetWantedMassNObsFromFile(){return fWantedMassNObsFromFile;} // mass to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
+  Double_t GetWantedGveNObsFromFile(){return fWantedGveNObsFromFile;}   // gve  to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
+
+  // Other settings
   Int_t GetNumberOfGenerations(){return fNumberOfGenerations;} // number of toys
   Int_t GetNumberOfGenerationsExpectedLimit(){return fNumberOfGenerationsExpectedLimit;} // number of pseudo data 
 
@@ -41,10 +60,13 @@ public:
   Int_t GetFrequentistNPoints(){return fFrequentistNPoints;} // n pts for integration for frequentist methods (FC, RL)  
 
   // input MC information
+
   TString GetInputFileName(){return fInputFileName;} // path relative to the executable or absolute path
   Bool_t GetManipulateInput(){return fManipulateInput;} // if true -> apply modification to the input errors
   Double_t GetErrorImprove(){return fErrorImprove;} // factor used to decrease the relative errors on the input
 
+
+  
   // input parameters for signal shape
   Double_t GetSignalPeakYield(){return fSignalPeakYield;}         // peak yield ~ 2.26 x gve^2 if BES = 0.0022
   Double_t GetSignalPeakYieldErr(){return fSignalPeakYieldErr;}   // relative error ~ 1.4%
@@ -71,7 +93,22 @@ private:
   std::vector<std::pair<const char*, stringFieldFlag>> fFieldStrings;
   int useInputString(TString);
 
+  // gene mode
+  Bool_t fGeneMode; // if true -> generate toys-of-toys distributions
+  Bool_t fBkgOnlyGeneMode; // if true -> generate background-only, else signal+bkg
+  TString fGeneOutputFileName; // name of gene-MC output file
+
+  // read mode
+  Bool_t fReadMode;
   
+  // standard setup
+  Bool_t fToyOfToyMode;               // if true -> generate background pseudo data while making the expected limit
+  TString fInputFileNameNObsFromFile; // if ToyOfToyMode == kFALSE: filename where the input NObs must be retrieved
+  Bool_t fBkgOnlyNObsFromFile;        // if ToyOfToyMode == kFALSE: use the bkg-only NObs from the input file
+  Double_t fWantedMassNObsFromFile;   // if ToyOfToyMode == kFALSE: mass to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
+  Double_t fWantedGveNObsFromFile;    // if ToyOfToyMode == kFALSE: gve  to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
+  
+  // other settings
   Int_t fNumberOfGenerations; // number of toys
   Int_t fNumberOfGenerationsExpectedLimit; // number of pseudo data 
 

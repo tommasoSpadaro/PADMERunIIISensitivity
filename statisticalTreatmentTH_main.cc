@@ -13,14 +13,14 @@
 
 void usage()
 {
-  printf("./<executable> <inputFileName> <seed> \n"
-         "--- inputFileName = name of ROOT file with input distributions\n");
+  printf("./<executable> <inputConfigFileName> \n"
+         "--- inputConfigFileName = name of input config file\n");
 }
 
 
 int main(int argc, char **argv)
 {
-  if (argc != 3)
+  if (argc != 2)
   {
     usage();
     exit(1);
@@ -33,24 +33,60 @@ int main(int argc, char **argv)
 
   printf("...init of statConfig\n");
   statConfig* configPtr = statConfig::GetInstance();
-  configPtr->readConfigFromFile("/Users/Tommaso1/PADME/PADME_sensitivity/input/config_generic.txt");
+  configPtr->readConfigFromFile(app.Argv(1));
+  printf("...done\n");
 
-
-
+  printf("Allocating statisticalTreatment class object...\n");
   statisticalTreatmentTH* statT = new statisticalTreatmentTH();  
   printf("...done\n");
 
+
+  // read-mode: re-read output from a previous run, to evaluate the CLs
+  
+  if (configPtr->GetReadMode()) { 
+    printf("ReadMode: opening necessary input files...\n");
+    statT->SetVerbosity(3); // override any verbosity to set a high-verbosity level
+    statT->ReadOutput(configPtr->GetInputFileName().Data());
+    printf("...done\n");
+    return 0;
+  }    
+
+  // gene-mode: generate output from toys-of-toys, either background only or signal+background
+  
+  if (configPtr->GetGeneMode()) { 
+    printf("GeneMode: setup...\n");
+    std::cout << "GeneMode background-only: " << configPtr->GetBkgOnlyGeneMode() << std::endl;
+
+    statT->Init();
+    if (configPtr->GetBkgOnlyGeneMode()){
+      std::cout << "Generating background only pseudodata to output file with name--" << configPtr->GetGeneOutputFileName().Data() << std::endl;
+      statT->SimulateBkgPseudoDataToFile(configPtr->GetGeneOutputFileName()); // do the toyoftoy background only simulation
+    }
+    else {
+      std::cout << "Generating signal + background pseudodata to output file with name---" << configPtr->GetGeneOutputFileName().Data() << std::endl;
+      statT->SimulateSignalPlusBkgPseudoDataToFile(configPtr->GetGeneOutputFileName()); // do the toyoftoy background only simulation
+    }
+    printf("...done\n");
+    return 0;
+  }    
+
+  // Standard mode
+  
   //Open input file and retrieve the necessary information.
 
-  printf("Opening necessary input files...\n");
-  statT->InitFromFile(app.Argv(1),2.,false);
-  //  statT->InitFromFile(app.Argv(1),true); //default error
-  statT->SetVerbosity(1);
+  printf("Initializing statisticalTreatment object...\n");
+  statT->Init();
   printf("...done\n");
-
-  printf("Setting random seed...\n");
-  statT->OverrideRandomSeed(atoi(app.Argv(2)));
-  printf("...done\n");
+  
+//  printf("Opening necessary input files...\n");
+//  statT->InitFromFile(app.Argv(1),2.,false);
+//  //  statT->InitFromFile(app.Argv(1),true); //default error
+//  statT->SetVerbosity(1);
+//  printf("...done\n");
+//
+//  printf("Setting random seed...\n");
+//  statT->OverrideRandomSeed(atoi(app.Argv(2)));
+//  printf("...done\n");
   
 //  printf("Setting parallelization level %d... process index %d \n",atoi(app.Argv(4)), atoi(app.Argv(5)));
 //  statT->InitParallelization(atoi(app.Argv(4)),atoi(app.Argv(5)) );

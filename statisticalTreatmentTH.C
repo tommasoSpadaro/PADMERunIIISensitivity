@@ -235,113 +235,113 @@ void statisticalTreatmentTH::Init(){
 
 
 
-void statisticalTreatmentTH::InitFromFile(TString filename, double errorImprove, Bool_t useNuisance){
-  fErrorImprove = errorImprove;
-  fUseNuisance = useNuisance;
-  // store info from incoming tgraph
-
-  TFile* filo = new TFile(filename.Data(), "READ");
-  TGraphErrors* potGraph = (TGraphErrors*) filo->Get("gPoT");
-  TGraphErrors* effiGraph = (TGraphErrors*) filo->Get("gEff");
-  TGraphErrors* bkgGraph = (TGraphErrors*) filo->Get("gBkg");
-
-  fObservables.NObs.clear();
-  fObservables.SqrtsObs.clear();
-  fObservables.POTObs.clear();
-  fObservables.SignalEffiLocalObs.clear();
-  fObservables.BkgObs.clear();
-
-  fExpectedErrors.POTLocalErr.clear();
-  fExpectedErrors.SignalEffiLocalErr.clear();
-  fExpectedErrors.BkgErr.clear();
-
-  std::cout << "Reading input file with " << potGraph->GetN() << " points" << std::endl;
-  
-  for (int i=0; i<potGraph->GetN(); i++){
-    if (potGraph->GetY()[i] < 1E6) continue; // might add sqrts range or other quality cuts to exclude given points here [e.g.: scan up points vs scan dw points]
-    // retrieve Sqrt(s) values
-    fObservables.SqrtsObs.push_back(potGraph->GetX()[i]); // sqrt(s) observed
-    // retrieve POT values and errors, set in 1E10 units
-    fObservables.POTObs.push_back(potGraph->GetY()[i]/1E10); // POTs observed in 1E10 units    
-    fExpectedErrors.POTLocalErr.push_back(potGraph->GetEY()[i]/1E10/fErrorImprove); // POTs error
-    // retrieve signal efficiencies and errors
-    fObservables.SignalEffiLocalObs.push_back(effiGraph->GetY()[i]*0.8); // signal effi
-    fExpectedErrors.SignalEffiLocalErr.push_back(effiGraph->GetEY()[i]*0.8/fErrorImprove); // signal effi error
-    // retrieve expected background and error
-    fObservables.BkgObs.push_back(bkgGraph->GetY()[i]*0.8); // bkg yield
-    fExpectedErrors.BkgErr.push_back(bkgGraph->GetEY()[i]*0.8/fErrorImprove); // bkg yield error    
-  }
-  filo->Close();
-  delete filo;
-  
-  std::cout << "After selection keep " << fObservables.SqrtsObs.size() << " points" << std::endl;
-
-  // store manipulated input in TGraphErrors in memory
-
-  fPotGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fPotGraphUsed  ->SetName("fPotGraphUsed");
-  fEffiGraphUsed = new TGraphErrors(fObservables.SqrtsObs.size()); fEffiGraphUsed ->SetName("fEffiGraphUsed");
-  fBkgGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fBkgGraphUsed  ->SetName("fBkgGraphUsed");
-  fNormBkgGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fNormBkgGraphUsed  ->SetName("fNormBkgGraphUsed");
-  for (uint i=0; i<fObservables.SqrtsObs.size(); i++){
-    fPotGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.POTObs.at(i));
-    fPotGraphUsed  ->SetPointError(i,0.,fExpectedErrors.POTLocalErr.at(i));
-
-    fEffiGraphUsed ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.SignalEffiLocalObs.at(i));
-    fEffiGraphUsed ->SetPointError(i,0.,fExpectedErrors.SignalEffiLocalErr.at(i));
-
-    fBkgGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i));
-    fBkgGraphUsed  ->SetPointError(i,0.,fExpectedErrors.BkgErr.at(i));
-
-    fNormBkgGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i)/fObservables.SignalEffiLocalObs.at(i));
-    fNormBkgGraphUsed  ->SetPointError(i,0.,fNormBkgGraphUsed->GetY()[i]*TMath::Sqrt(
-										     pow(fExpectedErrors.BkgErr.at(i)/fObservables.BkgObs.at(i),2)+
-										     pow(fExpectedErrors.SignalEffiLocalErr.at(i)/fObservables.SignalEffiLocalObs.at(i),2)
-										     ));
-  }
-
-
-  // iniialise the other observables
-
-  fObservables.SignalPeakYieldObs = 13.56;          // this, times the voigt value at the peak gives a signal yield at the peak of 2.26 x gve^2 for BES = 0.0022 (1.80 x gve^2 at BES=0.005)
-  //fObservables.SignalPeakYieldObs = 12.46;          // this, times the voigt value at the peak gives a signal yield at the peak of 2.26 x gve^2 for BES = 0.0022 (1.80 x gve^2 at BES=0.005)
-  fObservables.SignalLorentzianWidthObs = 1.72;     // MeV, estimated value of lorentzian width for the signal shape expressed on pbeam
-  //fObservables.SignalLorentzianWidthObs = 0.;       // MeV, estimated value of lorentzian width for the signal shape expressed on pbeam
-  fObservables.BESObs = 0.0025;                     // relative BES
-  fObservables.POTScaleObs = 1.;                    // absolute relative scale correction on the POT [independent on sqrt(s)]
-
-  fExpectedErrors.SignalPeakYieldErr = 0.18;        // i.e., 1.4% relative uncertainty on the signal yield at the peak
-  fExpectedErrors.SignalLorentzianWidthErr = 0.038;  // MeV, absolute error on the signal lorentzian width
-  fExpectedErrors.BESErr = 0.0005;                  // error on the relative BES
-  fExpectedErrors.POTScaleErr = 0.01;               // error on absolute POT scale [independent on the sqrt(s)]
-  fExpectedErrors.isNotFilled = false;  // Expected errors is initialised
-  
-  // initialise starting values of the nuisance parameters
-
-  fTheta_S = InitNuisanceToObservables(fObservables); // init but flagged as nonInitialised
-  fTheta_B = InitNuisanceToObservables(fObservables); // init but flagged as nonInitialised
-
-  // initialise likelihood
-
-  fLikeli.SetObservables(fObservables);
-  fLikeli.SetExpectedErrors(fExpectedErrors);
-
-  // initialize fitters
-
-  initFitters(false); // SB fitter
-  initFitters(true); // B fitter
-  
-  // print out
-  
-  cout << "Init From histo" << endl;
-  cout << "observables are filled: " << fObservables.isNotFilled << endl;
-  cout << "expectedErrors are filled: " << fExpectedErrors.isNotFilled << endl;
-  cout << "signalPlusBackground-profiled nuisances are filled: " << fTheta_S.isNotFilled << endl;
-  cout << "Background-profiled nuisances are filled: " << fTheta_B.isNotFilled << endl;
-
-  // set initflag to TRUE
-  fIsInitialized = true;
-  
-}
+//NOTUSEDANYMORE void statisticalTreatmentTH::InitFromFile(TString filename, double errorImprove, Bool_t useNuisance){
+//NOTUSEDANYMORE   fErrorImprove = errorImprove;
+//NOTUSEDANYMORE   fUseNuisance = useNuisance;
+//NOTUSEDANYMORE   // store info from incoming tgraph
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   TFile* filo = new TFile(filename.Data(), "READ");
+//NOTUSEDANYMORE   TGraphErrors* potGraph = (TGraphErrors*) filo->Get("gPoT");
+//NOTUSEDANYMORE   TGraphErrors* effiGraph = (TGraphErrors*) filo->Get("gEff");
+//NOTUSEDANYMORE   TGraphErrors* bkgGraph = (TGraphErrors*) filo->Get("gBkg");
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   fObservables.NObs.clear();
+//NOTUSEDANYMORE   fObservables.SqrtsObs.clear();
+//NOTUSEDANYMORE   fObservables.POTObs.clear();
+//NOTUSEDANYMORE   fObservables.SignalEffiLocalObs.clear();
+//NOTUSEDANYMORE   fObservables.BkgObs.clear();
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   fExpectedErrors.POTLocalErr.clear();
+//NOTUSEDANYMORE   fExpectedErrors.SignalEffiLocalErr.clear();
+//NOTUSEDANYMORE   fExpectedErrors.BkgErr.clear();
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   std::cout << "Reading input file with " << potGraph->GetN() << " points" << std::endl;
+//NOTUSEDANYMORE   
+//NOTUSEDANYMORE   for (int i=0; i<potGraph->GetN(); i++){
+//NOTUSEDANYMORE     if (potGraph->GetY()[i] < 1E6) continue; // might add sqrts range or other quality cuts to exclude given points here [e.g.: scan up points vs scan dw points]
+//NOTUSEDANYMORE     // retrieve Sqrt(s) values
+//NOTUSEDANYMORE     fObservables.SqrtsObs.push_back(potGraph->GetX()[i]); // sqrt(s) observed
+//NOTUSEDANYMORE     // retrieve POT values and errors, set in 1E10 units
+//NOTUSEDANYMORE     fObservables.POTObs.push_back(potGraph->GetY()[i]/1E10); // POTs observed in 1E10 units    
+//NOTUSEDANYMORE     fExpectedErrors.POTLocalErr.push_back(potGraph->GetEY()[i]/1E10/fErrorImprove); // POTs error
+//NOTUSEDANYMORE     // retrieve signal efficiencies and errors
+//NOTUSEDANYMORE     fObservables.SignalEffiLocalObs.push_back(effiGraph->GetY()[i]*0.8); // signal effi
+//NOTUSEDANYMORE     fExpectedErrors.SignalEffiLocalErr.push_back(effiGraph->GetEY()[i]*0.8/fErrorImprove); // signal effi error
+//NOTUSEDANYMORE     // retrieve expected background and error
+//NOTUSEDANYMORE     fObservables.BkgObs.push_back(bkgGraph->GetY()[i]*0.8); // bkg yield
+//NOTUSEDANYMORE     fExpectedErrors.BkgErr.push_back(bkgGraph->GetEY()[i]*0.8/fErrorImprove); // bkg yield error    
+//NOTUSEDANYMORE   }
+//NOTUSEDANYMORE   filo->Close();
+//NOTUSEDANYMORE   delete filo;
+//NOTUSEDANYMORE   
+//NOTUSEDANYMORE   std::cout << "After selection keep " << fObservables.SqrtsObs.size() << " points" << std::endl;
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   // store manipulated input in TGraphErrors in memory
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   fPotGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fPotGraphUsed  ->SetName("fPotGraphUsed");
+//NOTUSEDANYMORE   fEffiGraphUsed = new TGraphErrors(fObservables.SqrtsObs.size()); fEffiGraphUsed ->SetName("fEffiGraphUsed");
+//NOTUSEDANYMORE   fBkgGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fBkgGraphUsed  ->SetName("fBkgGraphUsed");
+//NOTUSEDANYMORE   fNormBkgGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fNormBkgGraphUsed  ->SetName("fNormBkgGraphUsed");
+//NOTUSEDANYMORE   for (uint i=0; i<fObservables.SqrtsObs.size(); i++){
+//NOTUSEDANYMORE     fPotGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.POTObs.at(i));
+//NOTUSEDANYMORE     fPotGraphUsed  ->SetPointError(i,0.,fExpectedErrors.POTLocalErr.at(i));
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE     fEffiGraphUsed ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.SignalEffiLocalObs.at(i));
+//NOTUSEDANYMORE     fEffiGraphUsed ->SetPointError(i,0.,fExpectedErrors.SignalEffiLocalErr.at(i));
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE     fBkgGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i));
+//NOTUSEDANYMORE     fBkgGraphUsed  ->SetPointError(i,0.,fExpectedErrors.BkgErr.at(i));
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE     fNormBkgGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i)/fObservables.SignalEffiLocalObs.at(i));
+//NOTUSEDANYMORE     fNormBkgGraphUsed  ->SetPointError(i,0.,fNormBkgGraphUsed->GetY()[i]*TMath::Sqrt(
+//NOTUSEDANYMORE 										     pow(fExpectedErrors.BkgErr.at(i)/fObservables.BkgObs.at(i),2)+
+//NOTUSEDANYMORE 										     pow(fExpectedErrors.SignalEffiLocalErr.at(i)/fObservables.SignalEffiLocalObs.at(i),2)
+//NOTUSEDANYMORE 										     ));
+//NOTUSEDANYMORE   }
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   // iniialise the other observables
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   fObservables.SignalPeakYieldObs = 13.56;          // this, times the voigt value at the peak gives a signal yield at the peak of 2.26 x gve^2 for BES = 0.0022 (1.80 x gve^2 at BES=0.005)
+//NOTUSEDANYMORE   //fObservables.SignalPeakYieldObs = 12.46;          // this, times the voigt value at the peak gives a signal yield at the peak of 2.26 x gve^2 for BES = 0.0022 (1.80 x gve^2 at BES=0.005)
+//NOTUSEDANYMORE   fObservables.SignalLorentzianWidthObs = 1.72;     // MeV, estimated value of lorentzian width for the signal shape expressed on pbeam
+//NOTUSEDANYMORE   //fObservables.SignalLorentzianWidthObs = 0.;       // MeV, estimated value of lorentzian width for the signal shape expressed on pbeam
+//NOTUSEDANYMORE   fObservables.BESObs = 0.0025;                     // relative BES
+//NOTUSEDANYMORE   fObservables.POTScaleObs = 1.;                    // absolute relative scale correction on the POT [independent on sqrt(s)]
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   fExpectedErrors.SignalPeakYieldErr = 0.18;        // i.e., 1.4% relative uncertainty on the signal yield at the peak
+//NOTUSEDANYMORE   fExpectedErrors.SignalLorentzianWidthErr = 0.038;  // MeV, absolute error on the signal lorentzian width
+//NOTUSEDANYMORE   fExpectedErrors.BESErr = 0.0005;                  // error on the relative BES
+//NOTUSEDANYMORE   fExpectedErrors.POTScaleErr = 0.01;               // error on absolute POT scale [independent on the sqrt(s)]
+//NOTUSEDANYMORE   fExpectedErrors.isNotFilled = false;  // Expected errors is initialised
+//NOTUSEDANYMORE   
+//NOTUSEDANYMORE   // initialise starting values of the nuisance parameters
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   fTheta_S = InitNuisanceToObservables(fObservables); // init but flagged as nonInitialised
+//NOTUSEDANYMORE   fTheta_B = InitNuisanceToObservables(fObservables); // init but flagged as nonInitialised
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   // initialise likelihood
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   fLikeli.SetObservables(fObservables);
+//NOTUSEDANYMORE   fLikeli.SetExpectedErrors(fExpectedErrors);
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   // initialize fitters
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   initFitters(false); // SB fitter
+//NOTUSEDANYMORE   initFitters(true); // B fitter
+//NOTUSEDANYMORE   
+//NOTUSEDANYMORE   // print out
+//NOTUSEDANYMORE   
+//NOTUSEDANYMORE   cout << "Init From histo" << endl;
+//NOTUSEDANYMORE   cout << "observables are filled: " << fObservables.isNotFilled << endl;
+//NOTUSEDANYMORE   cout << "expectedErrors are filled: " << fExpectedErrors.isNotFilled << endl;
+//NOTUSEDANYMORE   cout << "signalPlusBackground-profiled nuisances are filled: " << fTheta_S.isNotFilled << endl;
+//NOTUSEDANYMORE   cout << "Background-profiled nuisances are filled: " << fTheta_B.isNotFilled << endl;
+//NOTUSEDANYMORE 
+//NOTUSEDANYMORE   // set initflag to TRUE
+//NOTUSEDANYMORE   fIsInitialized = true;
+//NOTUSEDANYMORE   
+//NOTUSEDANYMORE }
 
 nuisancePars statisticalTreatmentTH::InitNuisanceToObservables(observables obs){ 
   nuisancePars nuis;
