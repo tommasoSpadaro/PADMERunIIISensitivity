@@ -94,6 +94,23 @@ statConfig::statConfig(){
 
   fPOTScaleErr = 0.01; 
   fFieldStrings.push_back(std::pair{"POTScaleErr",sFFD});
+
+  fBkgObsP0 = 1E-6;
+  fFieldStrings.push_back(std::pair{"BkgObsP0",sFFD});
+
+  fBkgObsP1 = 1E-3;
+  fFieldStrings.push_back(std::pair{"BkgObsP1",sFFD});
+
+  fBkgErrP0 = 1E-7;
+  fFieldStrings.push_back(std::pair{"BkgErrP0",sFFD});
+
+  fBkgErrP1 = 1E-4;
+  fFieldStrings.push_back(std::pair{"BkgErrP1",sFFD});
+
+  fBkgErrP0P1Corr = 0;
+  fFieldStrings.push_back(std::pair{"BkgErrP0P1Corr",sFFD});
+
+  
 }
 
 statConfig::~statConfig(){
@@ -175,6 +192,11 @@ int statConfig::useInputString(TString sStr){
 	else if (fieldString.EqualTo("BESErr")) fBESErr = inputstrvalD;
 	else if (fieldString.EqualTo("POTScale")) fPOTScale = inputstrvalD;
 	else if (fieldString.EqualTo("POTScaleErr")) fPOTScaleErr = inputstrvalD;
+	else if (fieldString.EqualTo("BkgObsP0")) fBkgObsP0 = inputstrvalD;
+	else if (fieldString.EqualTo("BkgObsP1")) fBkgObsP1 = inputstrvalD;
+	else if (fieldString.EqualTo("BkgErrP0")) fBkgErrP0 = inputstrvalD;
+	else if (fieldString.EqualTo("BkgErrP1")) fBkgErrP1 = inputstrvalD;
+	else if (fieldString.EqualTo("BkgErrP0P1Corr")) fBkgErrP0P1Corr = inputstrvalD;
 	else {
 	  std::cerr << "Wrong input field string for double value: " << fieldString.Data() << std::endl;
 	  return -1;

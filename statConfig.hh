@@ -57,7 +57,12 @@ public:
   Double_t GetPOTScale(){return fPOTScale;}
   Double_t GetPOTScaleErr(){return fPOTScaleErr;} 
 
-  
+  // P0,P1 parameters of the bkg/pot/effisig vs sqrt(s) shape
+  Double_t GetBkgObsP0(){return fBkgObsP0;}
+  Double_t GetBkgObsP1(){return fBkgObsP1;}
+  Double_t GetBkgErrP0(){return fBkgErrP0;}
+  Double_t GetBkgErrP1(){return fBkgErrP1;}
+  Double_t GetBkgErrP0P1Corr(){return fBkgErrP0P1Corr;}
 private:
   statConfig();
   ~statConfig();
@@ -105,6 +110,11 @@ private:
   Double_t fPOTScale;
   Double_t fPOTScaleErr; 
 
+  Double_t fBkgObsP0;
+  Double_t fBkgObsP1;
+  Double_t fBkgErrP0;
+  Double_t fBkgErrP1;
+  Double_t fBkgErrP0P1Corr;
   
 };
 #endif
