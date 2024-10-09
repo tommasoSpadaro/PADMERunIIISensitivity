@@ -8,7 +8,13 @@
 
 #include "TApplication.h"
 #include "TStyle.h"
+
+#if defined(VFIT)
+#include "statisticalTreatmentTH_vfit.hh"
+#else
 #include "statisticalTreatmentTH.hh"
+#endif
+
 #include "statConfig.hh"
 
 void usage()

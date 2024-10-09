@@ -61,6 +61,12 @@ statConfig::statConfig(){
   fUseNuisance = true; // by default use nuisance
   fFieldStrings.push_back(std::pair{"UseNuisance",sFFB});
 
+  fCorrectBkgBias = true; // by default do not correct for bkg bias vs sqrt(s)
+  fFieldStrings.push_back(std::pair{"CorrectBkgBias",sFFB});
+
+  fAssumeEffiOverBkgCurve = true; // by default do not assume a curve for effi/(bkg/pot) vs sqrt(s)
+  fFieldStrings.push_back(std::pair{"AssumeEffiOverBkgCurve",sFFB});
+
   fEvaluateExpLimit = true;
   fFieldStrings.push_back(std::pair{"EvaluateExpLimit",sFFB});
 
@@ -123,12 +129,13 @@ statConfig::statConfig(){
   fBESErr = 0.0005; // error on the relative spread
   fFieldStrings.push_back(std::pair{"BESErr",sFFD});
 
-  // other external nuisance pars. In case of background-scaled obs events assumed to vary linear with sqrt(s), here the constant and slope parameters might enter
   fPOTScale = 1.;
   fFieldStrings.push_back(std::pair{"POTScale",sFFD});
 
   fPOTScaleErr = 0.01; 
   fFieldStrings.push_back(std::pair{"POTScaleErr",sFFD});
+
+  // Constant and slope nuisance pars to correct biases of Nobs via linear fit of Nobs/(background/pot)/pot sqrt(s)
 
   fBkgObsP0 = 1E-6;
   fFieldStrings.push_back(std::pair{"BkgObsP0",sFFD});
@@ -144,6 +151,59 @@ statConfig::statConfig(){
 
   fBkgErrP0P1Corr = 0;
   fFieldStrings.push_back(std::pair{"BkgErrP0P1Corr",sFFD});
+
+  // Constant and slope nuisance pars of a linear fit of effi/(background/pot) sqrt(s):
+
+  // period 1 of the scan corresponds to index 0: periods < 23
+
+  fEffiSigOverBkgObsP0[0] = 4.82E-5;
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgObsP0_0",sFFD});
+
+  fEffiSigOverBkgObsP1[0] = -2.43E-6; //MeV^-1
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgObsP1_0",sFFD});
+
+  fEffiSigOverBkgErrP0[0] = 1.2E-7;
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgErrP0_0",sFFD});
+
+  fEffiSigOverBkgErrP1[0] = 3.8E-7; //MeV^-1
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgErrP1_0",sFFD});
+
+  fEffiSigOverBkgErrP0P1Corr[0] = -0.06;
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgErrP0P1Corr_0",sFFD});
+
+  // period 2 of the scan corresponds to index 1: periods >= 23 and not in the below-energy scan part
+
+  fEffiSigOverBkgObsP0[1] = 4.77E-5;
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgObsP0_1",sFFD});
+
+  fEffiSigOverBkgObsP1[1] = -1.40E-6; //MeV^-1
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgObsP1_1",sFFD});
+
+  fEffiSigOverBkgErrP0[1] = 1.3E-7;
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgErrP0_1",sFFD});
+
+  fEffiSigOverBkgErrP1[1] = 3.8E-7; //MeV^-1
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgErrP1_1",sFFD});
+
+  fEffiSigOverBkgErrP0P1Corr[1] = -0.52;
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgErrP0P1Corr_1",sFFD});
+
+  // the scan as a whole corresponds to index 2: all periods together
+
+  fEffiSigOverBkgObsP0[2] = 4.799E-5;
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgObsP0_2",sFFD});
+
+  fEffiSigOverBkgObsP1[2] = -2.06E-6; //MeV^-1
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgObsP1_2",sFFD});
+
+  fEffiSigOverBkgErrP0[2] = 0.86E-7;
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgErrP0_2",sFFD});
+
+  fEffiSigOverBkgErrP1[2] = 2.6E-7; //MeV^-1
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgErrP1_2",sFFD});
+
+  fEffiSigOverBkgErrP0P1Corr[2] = -0.32;
+  fFieldStrings.push_back(std::pair{"EffiSigOverBkgErrP0P1Corr_2",sFFD});
 
   
 }
@@ -257,6 +317,21 @@ int statConfig::useInputString(TString sStr){
 	else if (fieldString.EqualTo("BkgErrP0")) fBkgErrP0 = inputstrvalD;
 	else if (fieldString.EqualTo("BkgErrP1")) fBkgErrP1 = inputstrvalD;
 	else if (fieldString.EqualTo("BkgErrP0P1Corr")) fBkgErrP0P1Corr = inputstrvalD;
+	else if (fieldString.EqualTo("EffiSigOverBkgObsP0_0")) fEffiSigOverBkgObsP0[0] = inputstrvalD*1E-5;
+	else if (fieldString.EqualTo("EffiSigOverBkgObsP1_0")) fEffiSigOverBkgObsP1[0] = inputstrvalD*1E-5;
+	else if (fieldString.EqualTo("EffiSigOverBkgErrP0_0")) fEffiSigOverBkgErrP0[0] = inputstrvalD*1E-5;
+	else if (fieldString.EqualTo("EffiSigOverBkgErrP1_0")) fEffiSigOverBkgErrP1[0] = inputstrvalD*1E-5;
+	else if (fieldString.EqualTo("EffiSigOverBkgErrP0P1Corr_0")) fEffiSigOverBkgErrP0P1Corr[0] = inputstrvalD;
+	else if (fieldString.EqualTo("EffiSigOverBkgObsP0_1")) fEffiSigOverBkgObsP0[1] = inputstrvalD*1E-5;
+	else if (fieldString.EqualTo("EffiSigOverBkgObsP1_1")) fEffiSigOverBkgObsP1[1] = inputstrvalD*1E-5;
+	else if (fieldString.EqualTo("EffiSigOverBkgErrP0_1")) fEffiSigOverBkgErrP0[1] = inputstrvalD*1E-5;
+	else if (fieldString.EqualTo("EffiSigOverBkgErrP1_1")) fEffiSigOverBkgErrP1[1] = inputstrvalD*1E-5;
+	else if (fieldString.EqualTo("EffiSigOverBkgErrP0P1Corr_1")) fEffiSigOverBkgErrP0P1Corr[1] = inputstrvalD;
+	else if (fieldString.EqualTo("EffiSigOverBkgObsP0_2")) fEffiSigOverBkgObsP0[2] = inputstrvalD*1E-5;
+	else if (fieldString.EqualTo("EffiSigOverBkgObsP1_2")) fEffiSigOverBkgObsP1[2] = inputstrvalD*1E-5;
+	else if (fieldString.EqualTo("EffiSigOverBkgErrP0_2")) fEffiSigOverBkgErrP0[2] = inputstrvalD*1E-5;
+	else if (fieldString.EqualTo("EffiSigOverBkgErrP1_2")) fEffiSigOverBkgErrP1[2] = inputstrvalD*1E-5;
+	else if (fieldString.EqualTo("EffiSigOverBkgErrP0P1Corr_2")) fEffiSigOverBkgErrP0P1Corr[2] = inputstrvalD;
 	else {
 	  std::cerr << "Wrong input field string for double value: " << fieldString.Data() << std::endl;
 	  return -1;
@@ -270,6 +345,8 @@ int statConfig::useInputString(TString sStr){
 	else if (fieldString.EqualTo("ToyOfToyMode")) fToyOfToyMode = inputstrvalB;
 	else if (fieldString.EqualTo("BkgOnlyNObsFromFile")) fBkgOnlyNObsFromFile = inputstrvalB;
 	else if (fieldString.EqualTo("UseNuisance")) fUseNuisance = inputstrvalB;
+	else if (fieldString.EqualTo("CorrectBkgBias")) fCorrectBkgBias = inputstrvalB;
+	else if (fieldString.EqualTo("AssumeEffiOverBkgCurve")) fAssumeEffiOverBkgCurve = inputstrvalB;
 	else if (fieldString.EqualTo("EvaluateExpLimit")) fEvaluateExpLimit = inputstrvalB;
 	else if (fieldString.EqualTo("ManipulateInput")) fManipulateInput = inputstrvalB;
 	else {

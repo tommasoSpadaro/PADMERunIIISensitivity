@@ -42,6 +42,8 @@ public:
   Int_t GetNumberOfGenerationsExpectedLimit(){return fNumberOfGenerationsExpectedLimit;} // number of pseudo data 
 
   Bool_t GetUseNuisance(){return fUseNuisance;} // by default true = use nuisances
+  Bool_t GetCorrectBkgBias(){return fCorrectBkgBias;} // by default false = do not correct bkg bias
+  Bool_t GetAssumeEffiOverBkgCurve(){return fAssumeEffiOverBkgCurve;} // by default false = do not assume sqrt(s) dependence of effi/(bkg/pot)
   Bool_t GetEvaluateExpLimit(){return fEvaluateExpLimit;}
   Int_t GetSeed(){return fSeed;}
   Int_t GetVerbosity(){return fVerbosity;}
@@ -79,12 +81,20 @@ public:
   Double_t GetPOTScale(){return fPOTScale;}
   Double_t GetPOTScaleErr(){return fPOTScaleErr;} 
 
-  // P0,P1 parameters of the bkg/pot/effisig vs sqrt(s) shape
+  // P0,P1 parameters of the Nobs/(bkg/pot)/pot vs sqrt(s) shape
   Double_t GetBkgObsP0(){return fBkgObsP0;}
   Double_t GetBkgObsP1(){return fBkgObsP1;}
   Double_t GetBkgErrP0(){return fBkgErrP0;}
   Double_t GetBkgErrP1(){return fBkgErrP1;}
   Double_t GetBkgErrP0P1Corr(){return fBkgErrP0P1Corr;}
+
+  // P0,P1 parameters of the effi/(bkg/pot) vs sqrt(s) shape
+  Double_t GetEffiSigBkgObsP0(int iperiod){return fEffiSigOverBkgObsP0[iperiod];}
+  Double_t GetEffiSigBkgObsP1(int iperiod){return fEffiSigOverBkgObsP1[iperiod];}
+  Double_t GetEffiSigBkgErrP0(int iperiod){return fEffiSigOverBkgErrP0[iperiod];}
+  Double_t GetEffiSigBkgErrP1(int iperiod){return fEffiSigOverBkgErrP1[iperiod];}
+  Double_t GetEffiSigBkgErrP0P1Corr(int iperiod){return fEffiSigOverBkgErrP0P1Corr[iperiod];}
+
 private:
   statConfig();
   ~statConfig();
@@ -113,6 +123,8 @@ private:
   Int_t fNumberOfGenerationsExpectedLimit; // number of pseudo data 
 
   Bool_t fUseNuisance; // by default use nuisance
+  Bool_t fCorrectBkgBias; // by default do not correct it
+  Bool_t fAssumeEffiOverBkgCurve; // by default do not assume it
   Bool_t fEvaluateExpLimit;
   Int_t fSeed;
   Int_t fVerbosity;
@@ -143,15 +155,24 @@ private:
   Double_t fBES; // relative spread
   Double_t fBESErr; // error on the relative spread
 
-  // other external nuisance pars. In case of background-scaled obs events assumed to vary linear with sqrt(s), here the constant and slope parameters might enter
   Double_t fPOTScale;
   Double_t fPOTScaleErr; 
+
+  // other external nuisance pars. In case of bias on obs events (due to bkg) assumed to vary linear with sqrt(s), here the constant and slope parameters might enter
 
   Double_t fBkgObsP0;
   Double_t fBkgObsP1;
   Double_t fBkgErrP0;
   Double_t fBkgErrP1;
   Double_t fBkgErrP0P1Corr;
-  
+
+  // In case effi_sig/(pot/bkg) is fit with a linear function of sqrt(s)
+
+  Double_t fEffiSigOverBkgObsP0[3]; // one value for each scan set: 0->first part of the scan [period < 23], 1->second part [period > 23, not below res], 2 [all periods together]
+  Double_t fEffiSigOverBkgObsP1[3];
+  Double_t fEffiSigOverBkgErrP0[3];
+  Double_t fEffiSigOverBkgErrP1[3];
+  Double_t fEffiSigOverBkgErrP0P1Corr[3];
+
 };
 #endif
