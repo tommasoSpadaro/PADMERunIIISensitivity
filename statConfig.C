@@ -312,11 +312,11 @@ int statConfig::useInputString(TString sStr){
 	else if (fieldString.EqualTo("BESErr")) fBESErr = inputstrvalD;
 	else if (fieldString.EqualTo("POTScale")) fPOTScale = inputstrvalD;
 	else if (fieldString.EqualTo("POTScaleErr")) fPOTScaleErr = inputstrvalD;
-	else if (fieldString.EqualTo("BkgObsP0")) fBkgObsP0 = inputstrvalD;
-	else if (fieldString.EqualTo("BkgObsP1")) fBkgObsP1 = inputstrvalD;
-	else if (fieldString.EqualTo("BkgErrP0")) fBkgErrP0 = inputstrvalD;
-	else if (fieldString.EqualTo("BkgErrP1")) fBkgErrP1 = inputstrvalD;
-	else if (fieldString.EqualTo("BkgErrP0P1Corr")) fBkgErrP0P1Corr = inputstrvalD;
+	else if (fieldString.EqualTo("BkgBiasObsP0")) fBkgBiasObsP0 = inputstrvalD;
+	else if (fieldString.EqualTo("BkgBiasObsP1")) fBkgBiasObsP1 = inputstrvalD;
+	else if (fieldString.EqualTo("BkgBiasErrP0")) fBkgBiasErrP0 = inputstrvalD;
+	else if (fieldString.EqualTo("BkgBiasErrP1")) fBkgBiasErrP1 = inputstrvalD;
+	else if (fieldString.EqualTo("BkgBiasErrP0P1Corr")) fBkgBiasErrP0P1Corr = inputstrvalD;
 	else if (fieldString.EqualTo("EffiSigOverBkgObsP0_0")) fEffiSigOverBkgObsP0[0] = inputstrvalD*1E-5;
 	else if (fieldString.EqualTo("EffiSigOverBkgObsP1_0")) fEffiSigOverBkgObsP1[0] = inputstrvalD*1E-5;
 	else if (fieldString.EqualTo("EffiSigOverBkgErrP0_0")) fEffiSigOverBkgErrP0[0] = inputstrvalD*1E-5;

@@ -82,18 +82,18 @@ public:
   Double_t GetPOTScaleErr(){return fPOTScaleErr;} 
 
   // P0,P1 parameters of the Nobs/(bkg/pot)/pot vs sqrt(s) shape
-  Double_t GetBkgObsP0(){return fBkgObsP0;}
-  Double_t GetBkgObsP1(){return fBkgObsP1;}
-  Double_t GetBkgErrP0(){return fBkgErrP0;}
-  Double_t GetBkgErrP1(){return fBkgErrP1;}
-  Double_t GetBkgErrP0P1Corr(){return fBkgErrP0P1Corr;}
+  Double_t GetBkgBiasObsP0(){return fBkgBiasObsP0;}
+  Double_t GetBkgBiasObsP1(){return fBkgBiasObsP1;}
+  Double_t GetBkgBiasErrP0(){return fBkgBiasErrP0;}
+  Double_t GetBkgBiasErrP1(){return fBkgBiasErrP1;}
+  Double_t GetBkgBiasErrP0P1Corr(){return fBkgBiasErrP0P1Corr;}
 
   // P0,P1 parameters of the effi/(bkg/pot) vs sqrt(s) shape
-  Double_t GetEffiSigBkgObsP0(int iperiod){return fEffiSigOverBkgObsP0[iperiod];}
-  Double_t GetEffiSigBkgObsP1(int iperiod){return fEffiSigOverBkgObsP1[iperiod];}
-  Double_t GetEffiSigBkgErrP0(int iperiod){return fEffiSigOverBkgErrP0[iperiod];}
-  Double_t GetEffiSigBkgErrP1(int iperiod){return fEffiSigOverBkgErrP1[iperiod];}
-  Double_t GetEffiSigBkgErrP0P1Corr(int iperiod){return fEffiSigOverBkgErrP0P1Corr[iperiod];}
+  Double_t GetEffiSigOverBkgObsP0(int iperiod){return fEffiSigOverBkgObsP0[iperiod];}
+  Double_t GetEffiSigOverBkgObsP1(int iperiod){return fEffiSigOverBkgObsP1[iperiod];}
+  Double_t GetEffiSigOverBkgErrP0(int iperiod){return fEffiSigOverBkgErrP0[iperiod];}
+  Double_t GetEffiSigOverBkgErrP1(int iperiod){return fEffiSigOverBkgErrP1[iperiod];}
+  Double_t GetEffiSigOverBkgErrP0P1Corr(int iperiod){return fEffiSigOverBkgErrP0P1Corr[iperiod];}
 
 private:
   statConfig();
@@ -160,11 +160,11 @@ private:
 
   // other external nuisance pars. In case of bias on obs events (due to bkg) assumed to vary linear with sqrt(s), here the constant and slope parameters might enter
 
-  Double_t fBkgObsP0;
-  Double_t fBkgObsP1;
-  Double_t fBkgErrP0;
-  Double_t fBkgErrP1;
-  Double_t fBkgErrP0P1Corr;
+  Double_t fBkgBiasObsP0;
+  Double_t fBkgBiasObsP1;
+  Double_t fBkgBiasErrP0;
+  Double_t fBkgBiasErrP1;
+  Double_t fBkgBiasErrP0P1Corr;
 
   // In case effi_sig/(pot/bkg) is fit with a linear function of sqrt(s)
 
