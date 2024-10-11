@@ -78,6 +78,7 @@ statisticalTreatmentTH::statisticalTreatmentTH(){
   fFrequentistNPoints = fConfigPtr->GetFrequentistNPoints(); // number of points for integration for the frequentist methods (FC, RL)  
   
   // input filename
+
   fInputFileName = fConfigPtr->GetInputFileName();
 
   // print out of constructor  
@@ -205,7 +206,86 @@ void statisticalTreatmentTH::Init(){
   fExpectedErrors.BESErr = fConfigPtr->GetBESErr();                  // 0.0005 error on the relative BES
   fExpectedErrors.POTScaleErr = fConfigPtr->GetPOTScaleErr();        // 0.01 error on absolute POT scale [independent on the sqrt(s)]
   fExpectedErrors.isNotFilled = false;  // Expected errors is initialised
+
+  // other observables, not necessarily used 
+
+  fObservables.BkgBiasObsP0 = fConfigPtr->GetBkgBiasObsP0();
+  fObservables.BkgBiasObsP1 = fConfigPtr->GetBkgBiasObsP1();
+  fExpectedErrors.BkgBiasErrP0 = fConfigPtr->GetBkgBiasErrP0();
+  fExpectedErrors.BkgBiasErrP1 = fConfigPtr->GetBkgBiasErrP1();
+  fExpectedErrors.BkgBiasErrP0P1Corr = fConfigPtr->GetBkgBiasErrP0P1Corr();
+
+  // if needed, diagonalise covariance matrix to be able to generate fluctuations of correlated parameters
   
+  for (int i=0; i<2; i++) {
+    for (int j=0; j<2; j++) {
+      if (i==j) {
+	fInvCholeTransBkgBias[i][j] = 1;
+	fInvCholeTransEffiOverBkgScan1st[i][j] = 1;
+	fInvCholeTransEffiOverBkgScan2nd[i][j] = 1;
+      } else {
+	fInvCholeTransBkgBias[i][j] = 0;
+	fInvCholeTransEffiOverBkgScan1st[i][j] = 0;
+	fInvCholeTransEffiOverBkgScan2nd[i][j] = 0;
+      }
+    }
+  }  
+
+  TDecompChol* chole = new TDecompChol(2);
+  
+  if (fConfigPtr->GetUseBkgBiasCurve()){ 
+    double elements[4] = {
+      fExpectedErrors.BkgBiasErrP0*fExpectedErrors.BkgBiasErrP0,
+      fExpectedErrors.BkgBiasErrP0*fExpectedErrors.BkgBiasErrP1*fExpectedErrors.BkgBiasErrP0P1Corr,
+      fExpectedErrors.BkgBiasErrP0*fExpectedErrors.BkgBiasErrP1*fExpectedErrors.BkgBiasErrP0P1Corr,
+      fExpectedErrors.BkgBiasErrP1*fExpectedErrors.BkgBiasErrP1};
+    TMatrixDSym cov(2,elements);
+    TMatrixDSym invCov = cov.Invert(); // apparently this inverts cov as well
+    chole->SetMatrix(invCov);   // use Cholesky decomposition
+    chole->Decompose();         // use Cholesky decomposition
+    TMatrixD choleTrans = chole->GetU();
+    TMatrixD invCholeTrans = choleTrans.Invert();
+    for (int i=0; i<2; i++) {
+      for (int j=0; j<2; j++) {
+	fInvCholeTransBkgBias[i][j] = invCholeTrans[i][j];
+      }
+    }
+  }
+
+  // curves for effi/(bkg/pot) vs sqrt(s)
+  
+  for (int i=0; i<3; i++){
+    fObservables.EffiSigOverBkgObsP0[i] = fConfigPtr->GetEffiSigOverBkgObsP0(i);
+    fObservables.EffiSigOverBkgObsP1[i] = fConfigPtr->GetEffiSigOverBkgObsP1(i);
+    fExpectedErrors.EffiSigOverBkgErrP0[i] = fConfigPtr->GetEffiSigOverBkgErrP0(i);
+    fExpectedErrors.EffiSigOverBkgErrP1[i] = fConfigPtr->GetEffiSigOverBkgErrP1(i);
+    fExpectedErrors.EffiSigOverBkgErrP0P1Corr[i] = fConfigPtr->GetEffiSigOverBkgErrP0P1Corr(i);
+  }
+
+  if (fConfigPtr->GetAssumeEffiOverBkgCurve()){ 
+    for (int k=0; k<2; k++){ // first, second period of the scan
+      double elements[4] = {
+	fExpectedErrors.EffiOverBkgErrP0[k]*fExpectedErrors.EffiOverBkgErrP0[k],
+	fExpectedErrors.EffiOverBkgErrP0[k]*fExpectedErrors.EffiOverBkgErrP1[k]*fExpectedErrors.EffiOverBkgErrP0P1Corr[k],
+	fExpectedErrors.EffiOverBkgErrP0[k]*fExpectedErrors.EffiOverBkgErrP1[k]*fExpectedErrors.EffiOverBkgErrP0P1Corr[k],
+	fExpectedErrors.EffiOverBkgErrP1[k]*fExpectedErrors.EffiOverBkgErrP1[k]};
+      TMatrixDSym cov(2,elements);
+      TMatrixDSym invCov = cov.Invert(); // apparently this inverts cov as well
+      chole->SetMatrix(invCov);   // use Cholesky decomposition
+      chole->Decompose();         // use Cholesky decomposition
+      TMatrixD choleTrans = chole->GetU();
+      TMatrixD invCholeTrans = choleTrans.Invert();
+      for (int i=0; i<2; i++) {
+	for (int j=0; j<2; j++) {
+	  if (k==0) fInvCholeTransEffiOverBkgScan1st[i][j] = invCholeTrans[i][j];
+	  else      fInvCholeTransEffiOverBkgScan2nd[i][j] = invCholeTrans[i][j];
+	}
+      }
+    }
+  }
+
+  delete chole;
+
   // initialise starting values of the nuisance parameters
 
   fTheta_S = InitNuisanceToObservables(fObservables); // init but flagged as nonInitialised
@@ -352,6 +432,13 @@ nuisancePars statisticalTreatmentTH::InitNuisanceToObservables(observables obs){
   nuis.BESTrue = obs.BESObs;  // relative beam energy spread 
   nuis.POTScaleTrue = obs.POTScaleObs;             // estimated value of the POT scale
   nuis.BkgTrue = obs.BkgObs;                       // estimated value of the ratio Nbkg/POT per point
+
+  nuis.BkgBiasTrueP0 = obs.BkgBiasObsP0;
+  nuis.BkgBiasTrueP1 = obs.BkgBiasObsP1;
+  for (int i=0; i<3; i++){
+    nuis.EffiOverBkgTrueP0[i] = obs.EffiOverBkgObsP0[i];
+    nuis.EffiOverBkgTrueP1[i] = obs.EffiOverBkgObsP1[i];
+  }  
   return nuis; // return it flagged as non-filled
 }
 
@@ -551,11 +638,30 @@ void statisticalTreatmentTH::ReadOutput(TString filename){
 
 void statisticalTreatmentTH::initFitters(bool bonly){
   int npts = fObservables.SqrtsObs.size();
-  int npars = 7+3*npts;
 
+  // here, update number of pars, introduce the likelihood schemes possible:
+  // - with/without using the nuisances
+  // - with/without bias correction
+  // - with/without using the effi/(bkg/pot) parameterisation
+  
+  // must change the likelihood interface and the parameters to map inside it
+  // must change the parameters that are fixed
+  // if NOT using the nuisances --> all the nuisances are fixed 
+  // if the bias is NOT applied --> P0 = 1 and P1 = 0 must be fixed
+
+  // if the effi/bkg/pot curve is NOT used --> must fix the EffiOverBkgTrueP0,P1 parameters, must leave free the effisig parameters
+  // else --> the EffiOverBkgTrueP0,P1 parameters are fit, the effisig parameters are fixed
+
+  // THE TOY GENERATION PART SHOULD BE CONSISTENT WITH THE CHOICE DONE HERE
+  
+  int npars = 15+3*npts;
+  // aggiungere le due flag di bias/efficurve e 2+4 parametri
+
+  
   double* parinput = new double[npars];
   double* parstep  = new double[npars];
   TString* parnames = new TString[npars];
+  
   parnames[0] = "IsBonlyFit"; parinput[0] = 1         ; parstep[0] = 0;
   parnames[1] = "mass"      ; parinput[1] = fMassMin  ; parstep[1] = 0; 
   parnames[2] = "coupling"  ; parinput[2] = fgveMin    ; parstep[2] = 0; 
@@ -570,6 +676,16 @@ void statisticalTreatmentTH::initFitters(bool bonly){
   for (int i=0; i<npts; i++){
     parnames[7+2*npts+i] = Form("BkgTruePerPOT_%d",i); parinput[7+2*npts+i] = fTheta_S.BkgTrue.at(i)     ; parstep[7+2*npts+i] = fExpectedErrors.BkgErr.at(i)*0.01;    
   }
+  parnames[7+3*npts] = "CorrectBkgBias"        ; parinput[7+3*npts] = fConfigPtr->GetCorrectBkgBias()        ; parstep[7+3*npts] = 0.1;    
+  parnames[8+3*npts] = "BkgBiasTrueP0"         ; parinput[8+3*npts] = fTheta_S.BkgBiasTrueP0                 ; parstep[8+3*npts] = fExpectedErrors.BkgBiasErrP0*0.01;    
+  parnames[9+3*npts] = "BkgBiasTrueP1"         ; parinput[9+3*npts] = fTheta_S.BkgBiasTrueP1                 ; parstep[9+3*npts] = fExpectedErrors.BkgBiasErrP1*0.01;    
+  parnames[10+3*npts]= "AssumeEffiOverBkgCurve"; parinput[10+3*npts]= fConfigPtr->GetAssumeEffiOverBkgCurve(); parstep[10+3*npts]= 0.1;    
+  parnames[11+3*npts]= "EffiOverBkgTrueP0_0"   ; parinput[11+3*npts]= fTheta_S.EffiOverBkgTrueP0[0]          ; parstep[11+3*npts]= fExpectedErrors.EffiOverBkgErrP0[0]*0.01;    
+  parnames[12+3*npts]= "EffiOverBkgTrueP1_0"   ; parinput[12+3*npts]= fTheta_S.EffiOverBkgTrueP1[0]          ; parstep[12+3*npts]= fExpectedErrors.EffiOverBkgErrP1[0]*0.01;    
+  parnames[13+3*npts]= "EffiOverBkgTrueP0_1"   ; parinput[13+3*npts]= fTheta_S.EffiOverBkgTrueP0[1]          ; parstep[13+3*npts]= fExpectedErrors.EffiOverBkgErrP0[1]*0.01;    
+  parnames[14+3*npts]= "EffiOverBkgTrueP1_1"   ; parinput[14+3*npts]= fTheta_S.EffiOverBkgTrueP1[1]          ; parstep[14+3*npts]= fExpectedErrors.EffiOverBkgErrP1[1]*0.01;    
+//  parnames[15+3*npts]= "EffiOverBkgTrueP0_2"   ; parinput[15+3*npts]= fTheta_S.EffiOverBkgTrueP0[2]          ; parstep[15+3*npts]= fExpectedErrors.EffiOverBkgErrP0[2]*0.01;    
+//  parnames[16+3*npts]= "EffiOverBkgTrueP1_2"   ; parinput[16+3*npts]= fTheta_S.EffiOverBkgTrueP1[2]          ; parstep[16+3*npts]= fExpectedErrors.EffiOverBkgErrP1[2]*0.01;    
 
   if (bonly){
     fFitterB.SetFCN(npars, fLikeli); // flag_sb/b, mass, gve, signalPeak, LorentzianW, BES, potscale, 3 array: pottrue, signaleffitrue, bkgtrue
@@ -578,9 +694,19 @@ void statisticalTreatmentTH::initFitters(bool bonly){
     fFitterB.Config().ParSettings(0).Fix(); // used to define S+B or B fits
     fFitterB.Config().ParSettings(1).Fix(); // mass is always fixed
     fFitterB.Config().ParSettings(2).Fix(); // coupling is always fixed
+    fFitterB.Config().ParSettings(7+3*npts).Fix(); // flag to correct the N2cl/pot/(bkg/pot) bias 
+    fFitterB.Config().ParSettings(10+3*npts).Fix(); // flag to assume the Effi/(Bkg/pot) curve
 
-    for (uint i=0; i<(uint)npts; i++)            fFitterB.Config().ParSettings(3+npts+i).Fix(); // fix signal effi parameters, if they had been released
-    for (uint i=3+2*npts; i<(uint)6+2*npts; i++) fFitterB.Config().ParSettings(i).Fix();        // fix signal shape parameters
+    for (uint i=0; i<(uint)npts; i++)              fFitterB.Config().ParSettings(3+npts+i).Fix(); // fix signal effi parameters, if they had been released
+    for (uint i=3+2*npts; i<(uint)6+2*npts; i++)   fFitterB.Config().ParSettings(i).Fix();        // fix signal shape parameters
+    for (uint i=11+3*npts; i<(uint)15+3*npts; i++) fFitterB.Config().ParSettings(i).Fix();        // fix effi/(bkg/pot) curve parameters, if they had been released
+    
+    if (fConfigPtr->GetCorrectBkgBias()){ // USE the bias curve, therefore remove the potscale parameter, substituted by the curve
+      fFitterB.Config().ParSettings(6+2*npts).Fix();
+    } else { // DO NOT USE the bias curve
+      for (uint i=8+3*npts; i<(uint)10+3*npts; i++) fFitterB.Config().ParSettings(i).Fix();       // fix P0,P1 of the bias curve 
+    }
+
   }
   else {
     fFitterSB.SetFCN(npars, fLikeli); // flag_sb/b, mass, gve, signalPeak, LorentzianW, BES, potscale, 3 array: pottrue, signaleffitrue, bkgtrue
@@ -589,21 +715,40 @@ void statisticalTreatmentTH::initFitters(bool bonly){
     fFitterSB.Config().ParSettings(0).Fix(); // used to define S+B or B fits
     fFitterSB.Config().ParSettings(1).Fix(); // mass is always fixed
     fFitterSB.Config().ParSettings(2).Fix(); // coupling is always fixed
+    fFitterSB.Config().ParSettings(7+3*npts).Fix(); // flag to correct the N2cl/pot/(bkg/pot) bias 
+    fFitterSB.Config().ParSettings(10+3*npts).Fix(); // flag to assume the Effi/(Bkg/pot) curve
     //    fFitterSB.Config().ParSettings(4+2*npts).Fix(); // to fix the lorentzian width gamma
+
+    if (fConfigPtr->GetCorrectBkgBias()){ // USE the bias curve, therefore remove the potscale parameter, substituted by the curve
+      fFitterSB.Config().ParSettings(6+2*npts).Fix();
+    } else { // DO NOT use the bias curve
+      for (uint i=8+3*npts; i<(uint)10+3*npts; i++) fFitterSB.Config().ParSettings(i).Fix();       // fix P0,P1 of the bias curve <-- should be protected in the likelihood
+    }
+
+    if (fConfigPtr->GetAssumeEffiOverBkgCurve()){ // USE the effi/(bkg/pot) curve
+      for (uint i=0; i<(uint)npts; i++)              fFitterSB.Config().ParSettings(3+npts+i).Fix(); // fix signal effi point-by-point, if they had been released
+    } else { // DO NOT USE the effi/(bkg/pot) curve
+      for (uint i=11+3*npts; i<(uint)15+3*npts; i++) fFitterSB.Config().ParSettings(i).Fix();       // fix P0,P1 of the bias curve for all scan subsets
+    }
   }
 
   // if nuisances must be blocked, only allow potscale to be fit
   if (!fUseNuisance) { 
     for (uint ip=0; ip < npars; ip++) {
-      if (ip == 6+2*npts) continue; 
-      if (bonly) fFitterB.Config().ParSettings(ip).Fix(); //fit all the parameters
-      else      fFitterSB.Config().ParSettings(ip).Fix(); //fit all the parameters
+
+      if (fConfigPtr->GetCorrectBkgBias()){ // USE the bias curve
+	if (ip == 8+3*npts || ip == 9+3*npts) continue; // leave P0,P1 of the bias curve as only fit parameters 
+      } else {
+	if (ip == 6+2*npts) continue; // leave potscale as only fit parameter
+      }
+      if (bonly) fFitterB.Config().ParSettings(ip).Fix(); //fix all the parameters
+      else      fFitterSB.Config().ParSettings(ip).Fix(); //fix all the parameters
     }
   }
 }
 
 
-void statisticalTreatmentTH::EvaluateExpectedLimit(Bool_t toyOfToy, Bool_t bOnlyFile, Double_t wantedMass, Double_t wantedGve, TString filename){
+void statisticalTreatmentTH::EvaluateExpectedLimit(){
   if (!fIsInitialized){
     std::cout << "Cannot Evaluate expected limit - no init done " << endl;
     exit(1);
@@ -651,10 +796,10 @@ void statisticalTreatmentTH::EvaluateExpectedLimit(Bool_t toyOfToy, Bool_t bOnly
     }
 
 
-    if (toyOfToy) SetNObs(GenerateBackgroundPseudoData(fTheta_B));
+    if (fConfigPtr->GetGeneMode()) SetNObs(GenerateBackgroundPseudoData(fTheta_B));
     else {
-      if (bOnlyFile) SetNObsFromFile(filename,i);
-      else           SetNObsFromSBFile(filename,wantedMass,wantedGve,i);
+      if (fConfigPtr->GetBkgOnlyGeneMode()) SetNObsFromFile(fConfigPtr->GetInputFileNameNObsFromFile(),i);
+      else           SetNObsFromSBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetWantedMassNObsFromFile(),fConfigPtr->GetWantedGveNObsFromFile(),i);
     }
     
     if (fVerbosity >= 2) {
@@ -990,7 +1135,17 @@ vector<Double_t> statisticalTreatmentTH::GenerateBackgroundPseudoData(nuisancePa
   vector<Double_t> nobs;  
   // sample pots vs sqrts, potscaletrue, bkgtrue
   double potscale = nuis.POTScaleTrue;
-  potscale += fRndmNumber->Gaus(0.,fExpectedErrors.POTScaleErr);
+  double bkgbiaspars[2];
+
+  if (fConfigPtr->GetCorrectBkgBias()){ // USE the bias curve, therefore remove the potscale parameter, substituted by the curve
+    potscale = 1;
+    // here sample the parameters from a bigauss
+  } else {
+    potscale += fRndmNumber->Gaus(0.,fExpectedErrors.POTScaleErr);
+    bkgbiaspars[0] = 1;
+    bkgbiaspars[1] = 0;
+  }
+  
   int npts = nuis.POTTrue.size();
   for (uint i=0; i<npts; i++){
     double bkgtrue = nuis.BkgTrue.at(i);
@@ -1123,16 +1278,35 @@ nuisancePars statisticalTreatmentTH::MaximizeLSBGivenNObs(double mass, double gv
     // store output fit results into the nuisance parameters
     const double* parRes = result.GetParams();    
     for (int i=0; i<npts; i++){
-      fitNuisance.POTTrue.push_back(parRes[3+i]);
-      fitNuisance.SignalEffiLocalTrue.push_back(parRes[3+npts+i]);
+      fitNuisance.POTTrue.push_back(parRes[3+i]);      
     }
     fitNuisance.SignalPeakYieldTrue = parRes[3+2*npts];
     fitNuisance.SignalLorentzianWidthTrue = parRes[4+2*npts];
     fitNuisance.BESTrue           = parRes[5+2*npts];
-    fitNuisance.POTScaleTrue      = parRes[6+2*npts];
+
+    if (fConfigPtr->GetCorrectBkgBias()){ // USE the bias curve, therefore remove the potscale parameter, substituted by the curve
+      fitNuisance.BkgBiasTrueP0 = parRes[8+3*npts]; // p0 bias curve result
+      fitNuisance.BkgBiasTrueP1 = parRes[9+3*npts]; // p1 bias curve result
+    } else { // DO NOT USE the bias curve, fit the pot scale
+      fitNuisance.POTScaleTrue      = parRes[6+2*npts]; // pot scale result
+    }
+
     for (int i=0; i<npts; i++){
       fitNuisance.BkgTrue.push_back(parRes[7+2*npts+i]);
     }
+
+    if (fConfigPtr->GetAssumeEffiOverBkgCurve()){ // USE the effi/(bkg/pot) curve vs sqrt(s) 
+      for (int i=0; i<2; i++){
+	fitNuisance.EffiOverBkgTrueP0[i] = parRes[11+3*npts+2*i]; // 11+3*npts, 13+3*npts
+	fitNuisance.EffiOverBkgTrueP1[i] = parRes[12+3*npts+2*i]; // 12+3*npts, 14+3*npts
+      }
+    } else { // DO NOT USE the effi/(bkg/pot) curve --> fit the efficiencies point by point
+      for (int i=0; i<npts; i++){
+	fitNuisance.SignalEffiLocalTrue.push_back(parRes[3+npts+i]);
+      }
+    }
+
+
     fitNuisance.isNotFilled = false;
     
     // store the minimum lsb value [chi^2 like]
@@ -1166,10 +1340,17 @@ nuisancePars statisticalTreatmentTH::MaximizeLBGivenNObs(double* lb){ // maximiz
     for (int i=0; i<npts; i++){
       fitNuisance.POTTrue.push_back(parRes[3+i]);
     }
-    fitNuisance.POTScaleTrue      = parRes[6+2*npts];
+    if (fConfigPtr->GetCorrectBkgBias()){ // USE the bias curve, therefore remove the potscale parameter, substituted by the curve
+      fitNuisance.BkgBiasTrueP0 = parRes[8+3*npts]; // p0 bias curve result
+      fitNuisance.BkgBiasTrueP1 = parRes[9+3*npts]; // p1 bias curve result
+    } else {
+      fitNuisance.POTScaleTrue      = parRes[6+2*npts]; // pot scale result
+    }
     for (int i=0; i<npts; i++){
       fitNuisance.BkgTrue.push_back(parRes[7+2*npts+i]);
     }
+
+    
     fitNuisance.isNotFilled = false;
     
     // store the minimum lsb value [chi^2 like]

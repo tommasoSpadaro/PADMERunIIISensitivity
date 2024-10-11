@@ -1,4 +1,4 @@
-
+A
 #ifndef STATISTICALTREATMENTTH_HH
 #define STATISTICALTREATMENTTH_HH
 
@@ -51,7 +51,10 @@ struct observables{
   Double_t SignalPeakYieldObs;     // estimated signal yield at the peak
   Double_t SignalLorentzianWidthObs;       // estimated value of Lorentzian width for the signal shape
   Double_t BESObs;                 // estimated value of the BES
-  //  Double_t SignalRatioObs;         // estimated value of the ratio of wide and tight gaussian integrals
+  Double_t BkgBiasObsP0;              // estimated value of par0 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
+  Double_t BkgBiasObsP1;              // estimated value of par1 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
+  Double_t EffiOverBkgObsP0[3];       // estimated value of par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
+  Double_t EffiOverBkgObsP1[3];       // estimated value of par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
 };
 
 struct expectedErrors{
@@ -63,8 +66,13 @@ struct expectedErrors{
   Double_t SignalPeakYieldErr; // error on the signal peak yield
   Double_t SignalLorentzianWidthErr;  // absolute error on the signal Lorentzian width
   Double_t BESErr;            // absolute error on the BES
-  //  Double_t SignalRatioErr;     // absolute error on the signal tight/wide amplitude integrals
-  //  vector<Double_t> SqrtsErr;       // error on the sqrts per point
+  Double_t BkgBiasErrP0;              // estimated error on par0 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
+  Double_t BkgBiasErrP1;              // estimated error on par1 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
+  Double_t BkgBiasErrP0P1Corr;        // estimated correlation on the errors of par0 and par1 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
+  Double_t EffiOverBkgErrP0[3];       // estimated error on par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
+  Double_t EffiOverBkgErrP1[3];       // estimated error on par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
+  Double_t EffiOverBkgErrP0P1Corr[3]; // estimated correlation on the errors of par0 and par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
+  //  vector<Double_t> SqrtsErr;      // error on the sqrts per point
 };
 
 struct nuisancePars{
@@ -76,8 +84,11 @@ struct nuisancePars{
   Double_t SignalPeakYieldTrue;  // true value of the yield on resonance
   Double_t SignalLorentzianWidthTrue;    // true Lorentzian width for the signal shape
   Double_t BESTrue;              // true value of the BES
+  Double_t BkgBiasTrueP0;              // true value of par0 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
+  Double_t BkgBiasTrueP1;              // true value of par1 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
+  Double_t EffiOverBkgTrueP0[3];       // true value of par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
+  Double_t EffiOverBkgTrueP1[3];       // true value of par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
   //  vector<Double_t> SqrtsTrue;       // true sqrts per point
-  //  Double_t SignalRatioTrue;      // true value of the ratio of wide and tight gaussians
 };
 
 class Likelihood {
@@ -205,7 +216,7 @@ public:
   void InitParallelization(int parallelLevel, int parallelID){fParallelLevel = parallelLevel; fParallelID = parallelID;}// number of parallel instances, instanceID
   
   // to be run only AFTER INIT:
-  void EvaluateExpectedLimit(Bool_t toyOfToy, Bool_t bOnlyFile, Double_t wantedMass, Double_t wantedGve, TString filename);// if toyOfToy == false -> nobs from filename. if bOnlyFile == false -> use SBfile 
+  void EvaluateExpectedLimit();//Bool_t toyOfToy, Bool_t bOnlyFile, Double_t wantedMass, Double_t wantedGve, TString filename);// if toyOfToy == false -> nobs from filename. if bOnlyFile == false -> use SBfile 
   void SimulateBkgPseudoDataToFile(TString filename); // can generate and write to a file pseudodata background-only distributions
   void SimulateSignalPlusBkgPseudoDataToFile(TString filename); // can generate and write to a file pseudodata signal + bkg distributions scanning over the mass,gve grid
 
@@ -283,6 +294,13 @@ private:
   // expected errors
   expectedErrors fExpectedErrors;
 
+  // inverse transpose of the matrix to generate correlated parameters for the bkgBiasCurve
+  double fInvCholeTransBkgBias[2][2];
+
+  // inverse transpose of the matrix to generate correlated parameters for the effi/(bkg/pot) curve (one curve for each scan period)
+  double fInvCholeTransEffiOverBkgScan1st[2][2];
+  double fInvCholeTransEffiOverBkgScan2nd[2][2];
+  
   // profiled nuisance pars
   nuisancePars fTheta_S; // profiled nuisance pars from the minimum of Lsb given the observed data
   nuisancePars fTheta_B; // profiled nuisance pars from the minimum of Lb  given the observed data 
