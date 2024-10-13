@@ -44,6 +44,7 @@ struct observables{
   bool isNotFilled = true; // true if struct is not filled
   vector<Double_t> NObs;           // counts per sqrts
   vector<Double_t> SqrtsObs;       // estimated sqrts per point
+  vector<Int_t> ScanPeriod;        // scan period index for that point
   vector<Double_t> POTObs;         // estimated POT per point, in 1E10 units
   vector<Double_t> SignalEffiLocalObs;  // estimated efficiency
   Double_t POTScaleObs;            // absolute relative scale correction on the POT [independent on sqrt(s)]

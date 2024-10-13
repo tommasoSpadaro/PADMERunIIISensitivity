@@ -151,6 +151,9 @@ void statisticalTreatmentTH::Init(){
     if (potGraph->GetY()[i] < 1E6) continue; // might add sqrts range or other quality cuts to exclude given points here [e.g.: scan up points vs scan dw points]
     // retrieve Sqrt(s) values
     fObservables.SqrtsObs.push_back(potGraph->GetX()[i]); // sqrt(s) observed
+    // retrieve periods of the scan TO BE ACTUALLY IMPLEMENTED!!!!!!!
+    if (i%2==0) fObservables.ScanPeriod.push_back(0); // period 0
+    else        fObservables.ScanPeriod.push_back(1); // period 1
     // retrieve POT values and errors, set in 1E10 units
     fObservables.POTObs.push_back(potGraph->GetY()[i]/1E10); // POTs observed in 1E10 units    
 
@@ -1091,13 +1094,28 @@ void statisticalTreatmentTH::EvaluateFrequentist(double massn, double* rolkegveU
     // integrals in the window considered
     if (npts < fFrequentistNPoints) {
       nobs += fObservables.NObs.at(idx);
-      nexp += fObservables.POTObs.at(idx)*1E10*fObservables.POTScaleObs*fObservables.BkgObs.at(idx); // POT x bkg/POT
-      enexp += nexp*nexp*relerrsq; // sum of square errors
-      nsig  += fObservables.POTObs.at(idx)*1E10*fObservables.POTScaleObs*yi.signalYield*fObservables.SignalEffiLocalObs.at(idx); // POT x yield/POT x effisig
+      double NBExp = fObservables.POTObs.at(idx)*1E10*fObservables.BkgObs.at(idx);
+      double NSExp = fObservables.POTObs.at(idx)*1E10*yi.signalYield;
+      if (fConfigPtr->GetCorrectBias()){
+	NBExp *= (fObservables.BkgBiasObsP0 + fObservables.BkgBiasObsP1*(fObservables.SqrtsObs.at(idx)-16.92));
+	NSExp *= (fObservables.BkgBiasObsP0 + fObservables.BkgBiasObsP1*(fObservables.SqrtsObs.at(idx)-16.92));
+      } else {
+	NBExp *= fObservables.POTScaleObs;
+	NSExp *= fObservables.POTScaleObs;
+      }
+      if (fConfigPtr->GetAssumeEffiOverBkgCurve()){
+	NSExp *= fObservables.BkgObs.at(idx)*(fObservables.EffiOverBkgObsP0[fObservables.ScanPeriod.at(idx)] + fObservables.EffiOverBkgObsP1[fObservables.ScanPeriod.at(idx)]*
+					      (fObservables.SqrtsObs.at(i)-16.92));
+      } else {
+	NSExp *= fObservables.SignalEffiLocalObs.at(idx);
+      }
+      nexp += NBExp; // POT x bkg/POT
+      enexp += NBExp*NBExp*relerrsq; // sum of square errors: should we remove the bkg_i error if using the curve?? 
+      nsig  += NSExp; // POT x yield/POT x effisig
     }
     npts++;
   }
-  enexp = TMath::Sqrt(enexp); // no scale error considered here
+  enexp = TMath::Sqrt(enexp); // no scale error considered here, should we remove the bkg_i error if using the curve as well??
   
   // evaluate the upper limits at 90% and 95% CL using FC
   // exclude region with Nsig > NUL --> gve^2 x nsig > NUL --> gve > sqrt(NUL/nsig)
@@ -1133,13 +1151,23 @@ void statisticalTreatmentTH::EvaluateFrequentist(double massn, double* rolkegveU
 
 vector<Double_t> statisticalTreatmentTH::GenerateBackgroundPseudoData(nuisancePars nuis){
   vector<Double_t> nobs;  
+
   // sample pots vs sqrts, potscaletrue, bkgtrue
   double potscale = nuis.POTScaleTrue;
-  double bkgbiaspars[2];
+  double bkgbiaspars[2] = {0,0};
 
   if (fConfigPtr->GetCorrectBkgBias()){ // USE the bias curve, therefore remove the potscale parameter, substituted by the curve
     potscale = 1;
     // here sample the parameters from a bigauss
+    double diagpar[2] = { fRndmNumber->Gaus(0.,1),  fRndmNumber->Gaus(0.,1)};
+    for (int i=0; i<2; i++){
+      bkgbiaspars[i] = 0;
+      for (int j=0; j<2; j++){
+	bkgbiaspars[i] += fInvCholeTransBkgBias[i][j]*diagpar[j];
+      }
+      if (i==0) bkgbiaspars[i] += nuis.BkgBiasTrueP0;
+      else      bkgbiaspars[i] += nuis.BkgBiasTrueP1;
+    }
   } else {
     potscale += fRndmNumber->Gaus(0.,fExpectedErrors.POTScaleErr);
     bkgbiaspars[0] = 1;
@@ -1154,7 +1182,12 @@ vector<Double_t> statisticalTreatmentTH::GenerateBackgroundPseudoData(nuisancePa
       bkgtrue += fRndmNumber->Gaus(0.,fExpectedErrors.BkgErr.at(i));
       pottrue += fRndmNumber->Gaus(0.,fExpectedErrors.POTLocalErr.at(i));
     }
-    double poismean = potscale*bkgtrue*pottrue*1E10;
+    double poismean = bkgtrue*pottrue*1E10;
+    if (fConfigPtr->GetCorrectBkgBias()) {
+      poismean *= (bkgbiaspars[0]+bkgbiaspars[1]*(fObservables.SqrtsObs.at(i)-16.92));
+    } else {
+      poismean *= potscale;
+    }
     nobs.push_back(fRndmNumber->Gaus(poismean,TMath::Sqrt(poismean)));
   }
   return nobs;
@@ -1162,11 +1195,57 @@ vector<Double_t> statisticalTreatmentTH::GenerateBackgroundPseudoData(nuisancePa
 
 vector<Double_t> statisticalTreatmentTH::GenerateSignalPlusBackgroundPseudoData(double massn, double gven, nuisancePars nuis){
   vector<Double_t> nobs;  
-  // sample pots vs sqrts, potscaletrue, bkgtrue
+
+  // sample potscaletrue or, if needed, the parameters of the bkg bias curve: THOSE ARE SAMPLED ALWAYS, EVEN WHEN NO NUISANCES ARE CHOSEN
+
   double potscale = nuis.POTScaleTrue;
-  potscale += fRndmNumber->Gaus(0.,fExpectedErrors.POTScaleErr);
+  double bkgbiaspars[2] = {0,0};
+  if (fConfigPtr->GetCorrectBkgBias()){ // USE the bias curve, therefore remove the potscale parameter, substituted by the curve
+    potscale = 1;
+    // here sample the parameters from a bigauss
+    double diagpar[2] = { fRndmNumber->Gaus(0.,1),  fRndmNumber->Gaus(0.,1)};
+    for (int i=0; i<2; i++){
+      bkgbiaspars[i] = 0;
+      for (int j=0; j<2; j++){
+	bkgbiaspars[i] += fInvCholeTransBkgBias[i][j]*diagpar[j];
+      }
+      if (i==0) bkgbiaspars[i] += nuis.BkgBiasTrueP0;
+      else      bkgbiaspars[i] += nuis.BkgBiasTrueP1;
+    }
+  } else {
+    potscale += fRndmNumber->Gaus(0.,fExpectedErrors.POTScaleErr);
+    bkgbiaspars[0] = 1;
+    bkgbiaspars[1] = 0;
+  }
 
+  // if needed sample the parameters of the curves for the effi/(bkg/pot) vs sqrts
+  
+  double efficurvepars[2][2] = {0,0,0,0};
+  if (fConfigPtr->GetAssumeEffiOverBkgCurve()){ // USE the effi curve, therefore do not treat the effi parameters
+    if (fUseNuisance){
+    // here sample the parameters from a bigauss
+      for (int k=0; k<2; k++){ // scan periods
+	double diagpar[2] = { fRndmNumber->Gaus(0.,1),  fRndmNumber->Gaus(0.,1)};
+	for (int i=0; i<2; i++){
+	  efficurvepars[k][i] = 0;
+	  for (int j=0; j<2; j++){
+	    if (k==0) efficurvepars[k][i] += fInvCholeTransEffiOverBkgScan1st[i][j]*diagpar[j];
+	    else      efficurvepars[k][i] += fInvCholeTransEffiOverBkgScan2nd[i][j]*diagpar[j];
+	  }
+	  if (i==0) efficurvepars[k][i] += nuis.EffiOverBkgTrueP0[k];
+	  else      efficurvepars[k][i] += nuis.EffiOverBkgTrueP1[k];
+	}
+      }
+    } else { // here do not use the nuisances -> keep the effioverbkg parameters frozen
+      for (int k=0; k<2; k++){
+	efficurvepars[k][0] = nuis.EffiOverBkgTrueP0[k];
+	efficurvepars[k][1] = nuis.EffiOverBkgTrueP1[k];
+      }
+    } 
+  }
 
+  // sample signal shape parameters
+  
   double signalpeak = nuis.SignalPeakYieldTrue;
   double bes = nuis.BESTrue;
   double lorewidth = nuis.SignalLorentzianWidthTrue;
@@ -1188,18 +1267,33 @@ vector<Double_t> statisticalTreatmentTH::GenerateSignalPlusBackgroundPseudoData(
     if (fUseNuisance){
       bkgtrue += fRndmNumber->Gaus(0.,fExpectedErrors.BkgErr.at(i));
       pottrue += fRndmNumber->Gaus(0.,fExpectedErrors.POTLocalErr.at(i));
-      effisig += fRndmNumber->Gaus(0.,fExpectedErrors.SignalEffiLocalErr.at(i));
+      if (!fConfigPtr->GetAssumeEffiOverBkgCurve()) effisig += fRndmNumber->Gaus(0.,fExpectedErrors.SignalEffiLocalErr.at(i));
     }
 
-    double poismean_b = potscale*bkgtrue*pottrue*1E10;
-
+    double poismean_b = bkgtrue*pottrue*1E10;
+    if (fConfigPtr->GetCorrectBkgBias()){
+      poismean_b *= (bkgbiaspars[0]+bkgbiaspars[1]*(fObservables.SqrtsObs.at(i)-16.92));
+    } else {
+      poismean_b *= potscale;
+    }
     //PROVA    double eRes = (massn*massn - 2*me*me)/(2.*(me+Wb));
     //PROVA    double eBeam = (fObservables.SqrtsObs.at(i)*fObservables.SqrtsObs.at(i) - 2*me*me)/(2.*me); // s = 2me^2 + 2meEbeam -> eBeam = (s-2me^2) / 2me
 
-    double poismean_s = gven*gven*pottrue*1E10*potscale*effisig*Likelihood::SignalShape(signalpeak,bes,lorewidth,massn,fObservables.SqrtsObs.at(i));
+    double poismean_s = gven*gven*pottrue*1E10*Likelihood::SignalShape(signalpeak,bes,lorewidth,massn,fObservables.SqrtsObs.at(i));
+    if (fConfigPtr->GetCorrectBkgBias()){
+      poismean_s *= (bkgbiaspars[0]+bkgbiaspars[1]*(fObservables.SqrtsObs.at(i)-16.92));
+    } else {
+      poismean_s *= potscale;
+    }
+    
+    if (fConfigPtr->GetAssumeEffiOverBkgCurve()){
+      poismean_s *= bkgtrue*(efficurvepars[fObservables.ScanPeriod.at(i)][0] + efficurvepars[fObservables.ScanPeriod.at(i)][1]*(fObservables.SqrtsObs.at(i)-16.92));
+    } else{
+      poismean_s *= effisig;
+    }
+			     
     //    double poismean_s = signalpeak*gven*gven*pottrue*1E10*potscale*effisig*TMath::Voigt(eBeam-eRes,bes*eBeam,lorewidth*2,4);
-    
-    
+        
     if (fVerbosity >= 2) {
       std::cout << "point = " << i << " sqrts = " << fObservables.SqrtsObs.at(i) << " bkg= " << poismean_b << " sig= " << poismean_s << std::endl;
     }
@@ -1214,11 +1308,14 @@ vector<Double_t> statisticalTreatmentTH::GenerateSignalPlusBackgroundPseudoData(
 
 
 vector<Double_t> statisticalTreatmentTH::GenerateBackground(nuisancePars nuis){
-  // sample pots vs sqrts, potscaletrue, bkgtrue
+  // evaluate bkgmean from pots, potscaletrue OR the P0/P1 bias curve, bkgtrue
   vector<Double_t> nobs;  
   int npts = nuis.POTTrue.size();
   for (uint i=0; i<npts; i++){
-    double poismean = nuis.POTScaleTrue*nuis.BkgTrue.at(i)*nuis.POTTrue.at(i)*1E10;
+    double poismean = nuis.BkgTrue.at(i)*nuis.POTTrue.at(i)*1E10;
+    if (fConfigPtr->GetCorrectBkgBias()) poismean *= (nuis.BkgBiasTrueP0 + nuis.BkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-16.92));
+    else                                 poismean *= nuis.POTScaleTrue;
+    // sample statistical fluctuation only with nuisances blocked
     nobs.push_back(fRndmNumber->Gaus(poismean,TMath::Sqrt(poismean)));
   }
   return nobs;
@@ -1232,13 +1329,23 @@ vector<Double_t> statisticalTreatmentTH::GenerateSignalPlusBackground(double mas
   vector<Double_t> nobs;  
   int npts = nuis.POTTrue.size();
   for (uint i=0; i<npts; i++){
-    double poismean_b = nuis.POTScaleTrue*nuis.BkgTrue.at(i)*nuis.POTTrue.at(i)*1E10;
+    double poismean_b = nuis.BkgTrue.at(i)*nuis.POTTrue.at(i)*1E10;
+    if (fConfigPtr->GetCorrectBkgBias()) poismean_b *= (nuis.BkgBiasTrueP0 + nuis.BkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-16.92));
+    else                                 poismean_b *= nuis.POTScaleTrue;
 
 //    double eRes = (massn*massn - 2*me*me)/(2.*(me+Wb));
 //    double eBeam = (fObservables.SqrtsObs.at(i)*fObservables.SqrtsObs.at(i) - 2*me*me)/(2.*me); // s = 2me^2 + 2meEbeam -> eBeam = (s-2me^2) / 2me
 
-    double poismean_s = gven*gven*nuis.POTTrue.at(i)*1E10*nuis.POTScaleTrue*nuis.SignalEffiLocalTrue[i]*
+    double poismean_s = gven*gven*nuis.POTTrue.at(i)*1E10*
       Likelihood::SignalShape(nuis.SignalPeakYieldTrue,nuis.BESTrue,nuis.SignalLorentzianWidthTrue,massn,fObservables.SqrtsObs.at(i));
+
+    if (fConfigPtr->GetCorrectBkgBias()) poismean_s *= (nuis.BkgBiasTrueP0 + nuis.BkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-16.92));
+    else                                 poismean_s *= nuis.POTScaleTrue;
+
+    if (fConfigPtr->GetAssumeEffiOverBkgCurve()) poismean_s *= nuis.BkgTrue.at(i)*(
+										   nuis.EffiOverBkgTrueP0[fObservables.ScanPeriod.at(i)] +
+										   nuis.EffiOverBkgTrueP1[fObservables.ScanPeriod.at(i)]*(fObservables.SqrtsObs.at(i)-16.92));
+    else                                         poismean_s *= nuis.SignalEffiLocalTrue[i];
     //    double poismean_s = nuis.SignalPeakYieldTrue*gven*gven*nuis.POTTrue.at(i)*1E10*nuis.POTScaleTrue*nuis.SignalEffiLocalTrue[i]*TMath::Voigt(eBeam-eRes,nuis.BESTrue*eBeam,nuis.SignalLorentzianWidthTrue*2,4);
 
 //    double argtight = (fObservables.SqrtsObs.at(i)-massn)*(fObservables.SqrtsObs.at(i)-massn)/(2.*nuis.SignalSigmaHiTrue*nuis.SignalSigmaHiTrue);
