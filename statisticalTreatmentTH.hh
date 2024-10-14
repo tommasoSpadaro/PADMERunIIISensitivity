@@ -1,4 +1,3 @@
-A
 #ifndef STATISTICALTREATMENTTH_HH
 #define STATISTICALTREATMENTTH_HH
 
@@ -13,6 +12,7 @@ A
 #include "TRandom3.h"
 
 using namespace std;
+#define SQRTSMID 16.92
 
 struct CLsinfo{
   int ipseudodata;
@@ -214,7 +214,7 @@ class Likelihood {
 
        // expected number of bkg events       
        double bc = par[bkgTrueIdx + i]*par[potTrueIdx + i]*1E10; // (Nbkg/POT)true x POT_i_true
-       if (useBkgBias) bc *= (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-16.92));  // (Nbkg/POT)true x POT_i_true x (BiasP0 + BiasP1*(sqrt(s)-16.92))
+       if (useBkgBias) bc *= (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (Nbkg/POT)true x POT_i_true x (BiasP0 + BiasP1*(sqrt(s)-16.92))
        else            bc *= potScaleTrue;                                                         // (Nbkg/POT)true x POT_i_true x POT_scale_true
 
        // expected number of signal events
@@ -225,7 +225,7 @@ class Likelihood {
 	 //PROVA	 double eBeam = (fObservables.SqrtsObs.at(i)*fObservables.SqrtsObs.at(i) - 2*me*me)/(2.*me); // s = 2me^2 + 2meEbeam -> eBeam = (s-2me^2) / 2me
 
 	 sc = gve*gve*par[potTrueIdx+i]*1E10*Likelihood::SignalShape(signalPeakYieldTrue,BESTrue,signalLorentzianWidthTrue,mass,fObservables.SqrtsObs.at(i));
-	 if (useBkgBias) sc *= (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-16.92));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
+	 if (useBkgBias) sc *= (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
 	 else            sc *= potScaleTrue;                                                         // POT_scale_true
 
 	 if (assumeEffiOverBkgCurve){
