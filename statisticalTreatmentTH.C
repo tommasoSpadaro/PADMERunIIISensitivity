@@ -128,6 +128,7 @@ void statisticalTreatmentTH::Init(){
   TGraphErrors* potGraph = (TGraphErrors*) filo->Get("gPoT");
   TGraphErrors* effiGraph = (TGraphErrors*) filo->Get("gEff");
   TGraphErrors* bkgGraph = (TGraphErrors*) filo->Get("gBkg");
+  TGraph* partGraph = (TGraph*) filo->Get("ScanPartVsPeriod");
 
   fObservables.NObs.clear();
   fObservables.SqrtsObs.clear();
@@ -151,15 +152,13 @@ void statisticalTreatmentTH::Init(){
   
   for (int i=0; i<potGraph->GetN(); i++){
     if (potGraph->GetY()[i] < 1E6) continue; // might add sqrts range or other quality cuts to exclude given points here [e.g.: scan up points vs scan dw points]
+    if (partGraph->GetY()[i] != 0 && partGraph->GetY()[i] != 1) continue; // remove the out-of-resonance points
     // retrieve Sqrt(s) values
     fObservables.SqrtsObs.push_back(potGraph->GetX()[i]); // sqrt(s) observed
-    // retrieve periods of the scan TO BE ACTUALLY IMPLEMENTED!!!!!!!
-    if (i%2==0) fObservables.ScanPeriod.push_back(0); // period 0
-    else        fObservables.ScanPeriod.push_back(1); // period 1
-    // retrieve POT values and errors, set in 1E10 units
-    fObservables.POTObs.push_back(potGraph->GetY()[i]/1E10); // POTs observed in 1E10 units    
+    fObservables.ScanPeriod.push_back(partGraph->GetY()[i]); 
 
-    
+    // retrieve POT values and errors, set in 1E10 units
+    fObservables.POTObs.push_back(potGraph->GetY()[i]/1E10); // POTs observed in 1E10 units        
     fExpectedErrors.POTLocalErr.push_back(potGraph->GetEY()[i]/1E10/fErrorImprove); // POTs error
     // retrieve signal efficiencies and errors
     fObservables.SignalEffiLocalObs.push_back(effiGraph->GetY()[i]*signalEfficiencyFac); // signal effi
