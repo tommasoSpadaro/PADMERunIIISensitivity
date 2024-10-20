@@ -91,10 +91,10 @@ statConfig::statConfig(){
   fFieldStrings.push_back(std::pair{"NgveBins",sFFI});
 
   fgveMin   =  1E-4;
-  fFieldStrings.push_back(std::pair{"MassMin",sFFD});
+  fFieldStrings.push_back(std::pair{"gveMin",sFFD});
 
   fgveMax   =  4E-4;
-  fFieldStrings.push_back(std::pair{"MassMax",sFFD});
+  fFieldStrings.push_back(std::pair{"gveMax",sFFD});
 
   // number of points of the scan used in the frequentist window  
   fFrequentistNPoints = 2; // number of points for integration for the frequentist methods (FC, RL)  
@@ -150,7 +150,7 @@ statConfig::statConfig(){
   fFieldStrings.push_back(std::pair{"BkgBiasErrP1",sFFD});
 
   fBkgBiasErrP0P1Corr = 0;
-  fFieldStrings.push_back(std::pair{"BkgErrP0P1Corr",sFFD});
+  fFieldStrings.push_back(std::pair{"BkgBiasErrP0P1Corr",sFFD});
 
   // Constant and slope nuisance pars of a linear fit of effi/(background/pot) sqrt(s):
 
@@ -220,14 +220,17 @@ void statConfig::readConfigFromFile(TString datacardName){
     std::cerr << "Cannot open input file ---" << datacardName.Data() << "---" << std::endl;
     exit(2);
   }
-  char s[1000];
-  while (!inputStream){
-    inputStream.getline(s,256);
+  else {
+    std::cout << "Retrieving config from file ---" << datacardName.Data() << "---" << std::endl;
+  }
+  char s[256];
+  while (inputStream.getline(s,256)){
     TString sStr(s);
 
     // loop over vector of available fieldstrings
-
-    if (useInputString(sStr) == -1) {
+    int usecode = useInputString(sStr);
+    std::cout << "String ---" << sStr.Data() << "--- has outputcode " << usecode << std::endl;
+    if (usecode == -1) {
       exit(1);
     }
   }
@@ -277,10 +280,12 @@ int statConfig::useInputString(TString sStr){
     // check if string is among those managed
     if (fieldString.EqualTo(element.first)){
       catchInputString = kTRUE;
+      std::cout << "Field---"<< fieldString.Data();
       
       TString valueString = ((TObjString *)(values->At(1)))->GetString();
       if (element.second == kIntegerField){      
 	int inputstrvalI = valueString.Atoi();
+	std::cout << " has integer value " << inputstrvalI << std::endl;
 
 	if (fieldString.EqualTo("NumberOfGenerations")) fNumberOfGenerations = inputstrvalI;
 	else if (fieldString.EqualTo("NumberOfGenerationsExpectedLimit")) fNumberOfGenerationsExpectedLimit = inputstrvalI;
@@ -295,6 +300,7 @@ int statConfig::useInputString(TString sStr){
       }
       else if (element.second == kDoubleField){      
 	double inputstrvalD = valueString.Atof();
+	std::cout << " has double value " << inputstrvalD << std::endl;
 
 	if (fieldString.EqualTo("WantedMassNObsFromFile")) fWantedMassNObsFromFile = inputstrvalD;
 	else if (fieldString.EqualTo("WantedGveNObsFromFile")) fWantedGveNObsFromFile = inputstrvalD;
@@ -339,6 +345,8 @@ int statConfig::useInputString(TString sStr){
       }
       else if (element.second == kBooleanField){      
 	bool inputstrvalB = valueString.Atoi();
+	std::cout << " has boolean value " << inputstrvalB << std::endl;
+
 	if (fieldString.EqualTo("GeneMode")) fGeneMode = inputstrvalB;
 	else if (fieldString.EqualTo("BkgOnlyGeneMode")) fBkgOnlyGeneMode = inputstrvalB;
 	else if (fieldString.EqualTo("ReadMode")) fReadMode = inputstrvalB;
@@ -356,8 +364,11 @@ int statConfig::useInputString(TString sStr){
       }
       else if (element.second == kStringField){      
 	TString inputstrvalS = valueString.Data();
-	if (fieldString.EqualTo("InputFileName")) fInputFileName = inputstrvalS.Data();
-	else if (fieldString.EqualTo("GeneOutputFileName")) fGeneOutputFileName = inputstrvalS.Data();
+	std::cout << " has string value " << inputstrvalS.Data() << std::endl;
+
+	if (fieldString.EqualTo("GeneOutputFileName")) fGeneOutputFileName = inputstrvalS.Data();
+	else if (fieldString.EqualTo("InputFileNameNObsFromFile")) fInputFileNameNObsFromFile = inputstrvalS.Data();
+	else if (fieldString.EqualTo("InputFileName")) fInputFileName = inputstrvalS.Data();
 	else {
 	  std::cerr << "Wrong input field string for string value: " << fieldString.Data() << std::endl;
 	  return -1;
