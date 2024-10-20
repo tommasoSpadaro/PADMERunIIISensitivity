@@ -72,7 +72,7 @@ int main(int argc, char **argv)
       std::cout << "Generating signal + background pseudodata to output file with name---" << configPtr->GetGeneOutputFileName().Data() << std::endl;
       statT->SimulateSignalPlusBkgPseudoDataToFile(configPtr->GetGeneOutputFileName()); // do the toyoftoy background only simulation
     }
-    printf("...done\n");
+    printf("GeneMode...done\n");
     return 0;
   }    
 
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 
   printf("Initializing statisticalTreatment object...\n");
   statT->Init();
-  printf("...done\n");
+  printf("Init...done\n");
   
 //  printf("Opening necessary input files...\n");
 //  statT->InitFromFile(app.Argv(1),2.,false);
