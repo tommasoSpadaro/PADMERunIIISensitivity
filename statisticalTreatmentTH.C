@@ -140,7 +140,7 @@ void statisticalTreatmentTH::Init(){
   fExpectedErrors.SignalEffiLocalErr.clear();
   fExpectedErrors.BkgErr.clear();
 
-  std::cout << "Reading input file with " << potGraph->GetN() << " points" << std::endl;
+  std::cout << "Reading input file ---" << fInputFileName.Data() << "-- with " << potGraph->GetN() << " points" << std::endl;
 
   double signalEfficiencyFac = 1.;
   double bkgyieldFac = 1;  
@@ -800,7 +800,7 @@ void statisticalTreatmentTH::EvaluateExpectedLimit(){
     }
 
 
-    if (fConfigPtr->GetGeneMode()) SetNObs(GenerateBackgroundPseudoData(fTheta_B));
+    if (fConfigPtr->GetToyOfToyMode()) SetNObs(GenerateBackgroundPseudoData(fTheta_B));
     else {
       if (fConfigPtr->GetBkgOnlyGeneMode()) SetNObsFromFile(fConfigPtr->GetInputFileNameNObsFromFile(),i);
       else           SetNObsFromSBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetWantedMassNObsFromFile(),fConfigPtr->GetWantedGveNObsFromFile(),i);
