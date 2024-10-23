@@ -8,7 +8,9 @@
 #include "TDecompChol.h"
 #include "TMatrixD.h"
 #include "TRolke.h"
-
+#include "TEfficiency.h"
+#include "TGraphAsymmErrors.h"
+#include "TF1.h"
 #include <iostream>
 #include <iomanip>
 
@@ -556,11 +558,21 @@ void statisticalTreatmentTH::ReadOutput(TString filename){
   TGraph* limit90 = new TGraph(); limit90->SetName("Limit90");
   TGraph* limit95 = new TGraph(); limit95->SetName("Limit95");
 
-  vector<TGraph*> gveVSCLs;
-  TGraph* gveVSCLsLoc;
+  vector<TGraphAsymmErrors*> gveVSCLs;
+  TGraphAsymmErrors* gveVSCLsLoc;
   double massOld = -1;
 
   if (fVerbosity > 1) std::cout << "Input CLs tree has " << fCLsTree->GetEntries() << std::endl; 
+  TEfficiency::EStatOption option = static_cast<TEfficiency::EStatOption>(2); //2=Wilson, 5=jeffrey?
+
+  TF1* clsfunInv = new TF1("clsfunInv","[2]*TMath::ATanH(1-x/[0])+[1]",0.,1.);
+  TF1* clsfun = new TF1("clsfun","[0]*(1-TMath::TanH((x-[1])/[2]))",fgveMin-1E-4,fgveMax+1E-4);
+  clsfun->SetParameter(0,0.5);
+  //  clsfun->SetParLimits(0,0.3,0.7);
+  clsfun->SetParameter(1,2E-4);
+  clsfun->SetParameter(2,2E-4);
+
+			
   for (int i=0; i< fCLsTree->GetEntries(); i++){
     fCLsTree->GetEntry(i);
     if (fVerbosity > 2) {
@@ -569,45 +581,128 @@ void statisticalTreatmentTH::ReadOutput(TString filename){
     if (massOld == -1) { // first mass
       // init new tgraph
       massOld = fCLsInfo.massn;
-      gveVSCLsLoc = new TGraph();
+      gveVSCLsLoc = new TGraphAsymmErrors();
       gveVSCLsLoc->SetName(Form("gveVSCLsLoc%f_graph",massOld));
-      gveVSCLsLoc->SetPoint(0,fCLsInfo.CLs,fCLsInfo.gven);
+
+      // evaluate expected error, dominated by Ps
+      
+      TEfficiency effo;
+      effo.SetConfidenceLevel(0.68);
+      effo.SetStatisticOption(option);
+      effo.SetTotalEvents(0,fNumberOfGenerations);
+      effo.SetPassedEvents(0,fCLsInfo.Ps*fNumberOfGenerations);
+
+//      gveVSCLsLoc->SetPoint(0,effo.GetEfficiency(0)/(1.-fCLsInfo.Pb),fCLsInfo.gven);//invece di fCLsInfo.CLs,fCLsInfo.gven);
+//      gveVSCLsLoc->SetPointError(0,effo.GetEfficiencyErrorLow(0)/(1.-fCLsInfo.Pb),effo.GetEfficiencyErrorUp(0)/(1.-fCLsInfo.Pb),0.,0.);
+      gveVSCLsLoc->SetPoint(0,fCLsInfo.gven,effo.GetEfficiency(0)/(1.-fCLsInfo.Pb));//invece di fCLsInfo.CLs,fCLsInfo.gven);
+      gveVSCLsLoc->SetPointError(0,0.,0.,effo.GetEfficiencyErrorLow(0)/(1.-fCLsInfo.Pb),effo.GetEfficiencyErrorUp(0)/(1.-fCLsInfo.Pb));
     }
     else {
       if (fCLsInfo.massn != massOld){ // change of mass
 	if (fVerbosity > 2) {
 	  std::cout << "Printing Graph for mass = " << massOld << std::endl; 
 	  for (int j = 0; j< gveVSCLsLoc->GetN(); j++){
-	    std::cout << "Point: " << j << " CLs = " << gveVSCLsLoc->GetX()[j] << " gven = " << gveVSCLsLoc->GetY()[j]<< std::endl; 
+	    std::cout << "Point: " << j << " gven = " << gveVSCLsLoc->GetX()[j] << " CLs = " << gveVSCLsLoc->GetY()[j]<< std::endl; 
 	  }
 	}
 	// fill limits, if we can interpolate
-	if (gveVSCLsLoc->GetY()[gveVSCLsLoc->GetN()-1] < 0.1) limit90->SetPoint(limit90->GetN(),massOld,gveVSCLsLoc->Eval(0.1));
-	if (gveVSCLsLoc->GetY()[gveVSCLsLoc->GetN()-1] < 0.05) limit95->SetPoint(limit95->GetN(),massOld,gveVSCLsLoc->Eval(0.05));
+	
 
+//	if (gveVSCLsLoc->GetY()[gveVSCLsLoc->GetN()-1] < 0.1) limit90->SetPoint(limit90->GetN(),massOld,gveVSCLsLoc->Eval(0.1));
+//	if (gveVSCLsLoc->GetY()[gveVSCLsLoc->GetN()-1] < 0.05) limit95->SetPoint(limit95->GetN(),massOld,gveVSCLsLoc->Eval(0.05));
+
+	gveVSCLsLoc->Sort(); // sort by gven
+	if (gveVSCLsLoc->GetY()[gveVSCLsLoc->GetN()-1] < 0.1) {
+	  clsfun->SetParameter(0,0.5);
+	  clsfun->SetParameter(1,2E-4);
+	  clsfun->SetParameter(2,2E-4);
+	  TFitResultPtr fitptr = gveVSCLsLoc->Fit("clsfun","MS","",2E-4,1E-3);
+	  if (fitptr.Get()->Status()==0) { // fit OK
+	    for (int q = 0; q<3; q++) clsfunInv->SetParameter(q,clsfun->GetParameter(q));	    
+	    limit90->SetPoint(limit90->GetN(),massOld, clsfunInv->Eval(0.1));
+	    limit95->SetPoint(limit90->GetN(),massOld, clsfunInv->Eval(0.05));
+	  } else { // fit not OK
+	    TGraphAsymmErrors* gveVSCLsLocInv = new TGraphAsymmErrors();
+	    for (int q = 0; q<gveVSCLsLoc->GetN(); q++){ // invert X and Y
+	      gveVSCLsLocInv->SetName(Form("gveVSCLsLoc%f_graphInv",massOld));
+	      gveVSCLsLocInv->SetPoint(q,gveVSCLsLoc->GetY()[q],gveVSCLsLoc->GetX()[q]);
+	      gveVSCLsLocInv->SetPointError(q,gveVSCLsLoc->GetEYlow()[q],gveVSCLsLoc->GetEYhigh()[q],0.,0.);
+	    }
+	    limit90->SetPoint(limit90->GetN(),massOld, gveVSCLsLocInv->Eval(0.1));
+	    limit95->SetPoint(limit95->GetN(),massOld, gveVSCLsLocInv->Eval(0.05)); 
+	    delete gveVSCLsLocInv;
+	  }
+	}
  	// save graph for CLs vs gve at given mass 
 	gveVSCLs.push_back(gveVSCLsLoc);
 
 	// init new tgraph
 	massOld = fCLsInfo.massn;
-	gveVSCLsLoc = new TGraph();
+	gveVSCLsLoc = new TGraphAsymmErrors();
 	gveVSCLsLoc->SetName(Form("gveVSCLsLoc%f_graph",massOld));
-	gveVSCLsLoc->SetPoint(0,fCLsInfo.CLs,fCLsInfo.gven);
 
+      // evaluate expected error, dominated by Ps
+      
+	TEfficiency effo;
+	effo.SetConfidenceLevel(0.68);
+	effo.SetStatisticOption(option);
+	effo.SetTotalEvents(0,fNumberOfGenerations);
+	effo.SetPassedEvents(0,fCLsInfo.Ps*fNumberOfGenerations);
+
+//	gveVSCLsLoc->SetPoint(0,effo.GetEfficiency(0)/(1.-fCLsInfo.Pb),fCLsInfo.gven);//invece di fCLsInfo.CLs,fCLsInfo.gven);
+//	gveVSCLsLoc->SetPointError(0,effo.GetEfficiencyErrorLow(0)/(1.-fCLsInfo.Pb),effo.GetEfficiencyErrorUp(0)/(1.-fCLsInfo.Pb),0.,0.);
+	
+	gveVSCLsLoc->SetPoint(0,fCLsInfo.gven,effo.GetEfficiency(0)/(1.-fCLsInfo.Pb));//invece di fCLsInfo.CLs,fCLsInfo.gven);
+	gveVSCLsLoc->SetPointError(0,0.,0.,effo.GetEfficiencyErrorLow(0)/(1.-fCLsInfo.Pb),effo.GetEfficiencyErrorUp(0)/(1.-fCLsInfo.Pb));
+	
       }
       else {
-	gveVSCLsLoc->SetPoint(gveVSCLsLoc->GetN(),fCLsInfo.CLs,fCLsInfo.gven);
+
+      // evaluate expected error, dominated by Ps
+      
+	TEfficiency effo;
+	effo.SetConfidenceLevel(0.68);
+	effo.SetStatisticOption(option);
+	effo.SetTotalEvents(0,fNumberOfGenerations);
+	effo.SetPassedEvents(0,fCLsInfo.Ps*fNumberOfGenerations);
+	int ipt = gveVSCLsLoc->GetN();
+//	gveVSCLsLoc->SetPoint(ipt,effo.GetEfficiency(0)/(1.-fCLsInfo.Pb),fCLsInfo.gven);//invece di fCLsInfo.CLs,fCLsInfo.gven);
+//	gveVSCLsLoc->SetPointError(ipt,effo.GetEfficiencyErrorLow(0)/(1.-fCLsInfo.Pb),effo.GetEfficiencyErrorUp(0)/(1.-fCLsInfo.Pb),0.,0.);
+
+	gveVSCLsLoc->SetPoint(ipt,fCLsInfo.gven,effo.GetEfficiency(0)/(1.-fCLsInfo.Pb));//invece di fCLsInfo.CLs,fCLsInfo.gven);
+	gveVSCLsLoc->SetPointError(ipt,0.,0.,effo.GetEfficiencyErrorLow(0)/(1.-fCLsInfo.Pb),effo.GetEfficiencyErrorUp(0)/(1.-fCLsInfo.Pb));
+	
       }
     }
   }
   // fill limits, if we can interpolate
-  if (gveVSCLsLoc->GetY()[gveVSCLsLoc->GetN()-1] < 0.1) limit90->SetPoint(limit90->GetN(),massOld,gveVSCLsLoc->Eval(0.1));
-  if (gveVSCLsLoc->GetY()[gveVSCLsLoc->GetN()-1] < 0.05) limit95->SetPoint(limit95->GetN(),massOld,gveVSCLsLoc->Eval(0.05));
-  
+  gveVSCLsLoc->Sort();
+  if (gveVSCLsLoc->GetY()[gveVSCLsLoc->GetN()-1] < 0.1) {
+    clsfun->SetParameter(0,0.5);
+    clsfun->SetParameter(1,2E-4);
+    clsfun->SetParameter(2,2E-4);
+    TFitResultPtr fitptr = gveVSCLsLoc->Fit("clsfun","MS","",2E-4,1E-3);
+    if (fitptr.Get()->Status()==0) { // fit OK
+      for (int q = 0; q<3; q++) clsfunInv->SetParameter(q,clsfun->GetParameter(q));	    
+      limit90->SetPoint(limit90->GetN(),massOld, clsfunInv->Eval(0.1));
+      limit95->SetPoint(limit90->GetN(),massOld, clsfunInv->Eval(0.05));
+    } else { // fit not OK
+      TGraphAsymmErrors* gveVSCLsLocInv = new TGraphAsymmErrors();
+      for (int q = 0; q<gveVSCLsLoc->GetN(); q++){ // invert X and Y
+	gveVSCLsLocInv->SetName(Form("gveVSCLsLoc%f_graphInv",massOld));
+	gveVSCLsLocInv->SetPoint(q,gveVSCLsLoc->GetY()[q],gveVSCLsLoc->GetX()[q]);
+	gveVSCLsLocInv->SetPointError(q,gveVSCLsLoc->GetEYlow()[q],gveVSCLsLoc->GetEYhigh()[q],0.,0.);
+      }
+      limit90->SetPoint(limit90->GetN(),massOld, gveVSCLsLocInv->Eval(0.1));
+      limit95->SetPoint(limit95->GetN(),massOld, gveVSCLsLocInv->Eval(0.05)); 
+      delete gveVSCLsLocInv;
+    }
+  }
+
   if (fVerbosity > 2) {
     std::cout << "Printing Graph for mass = " << massOld << std::endl; 
     for (int j = 0; j< gveVSCLsLoc->GetN(); j++){
-      std::cout << "Point: " << j << " CLs = " << gveVSCLsLoc->GetX()[j] << " gven = " << gveVSCLsLoc->GetY()[j]<< std::endl; 
+      std::cout << "Point: " << j << " gven = " << gveVSCLsLoc->GetX()[j] << " CLs = " << gveVSCLsLoc->GetY()[j]<< std::endl; 
     }
   }
   // save graph for CLs vs gve at given mass 
