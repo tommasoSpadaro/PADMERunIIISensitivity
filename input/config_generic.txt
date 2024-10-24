@@ -7,12 +7,13 @@ InputFileNameNObsFromFile output/geneNObsSigPlusBkg.root
 BkgOnlyNObsFromFile 0
 WantedMassNObsFromFile 0.
 WantedGveNObsFromFile 0.
+FirstEventNObsFromFile 0
 NumberOfGenerations 200
 NumberOfGenerationsExpectedLimit 1
 UseNuisance 1
 CorrectBkgBias 0
 AssumeEffiOverBkgCurve 0
-EvaluateExpectedLimit 1
+EvaluateExpLimit 1
 Seed 0
 Verbosity 0
 MassStep 0.02
@@ -20,7 +21,7 @@ MassMin 16.22
 MassMax 17.62
 NgveBins 20
 gveMin 0.0001
-gvaMax 0.0008
+gveMax 0.0008
 FrequentistNPoints 2
 InputFileName ~/PADME/PADME_sensitivity/input/MCVersion0_POT0.005_BKG0.006_EFF0.011.root
 ManipulateInput 0

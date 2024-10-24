@@ -895,10 +895,18 @@ void statisticalTreatmentTH::EvaluateExpectedLimit(){
     }
 
 
-    if (fConfigPtr->GetToyOfToyMode()) SetNObs(GenerateBackgroundPseudoData(fTheta_B));
-    else {
-      if (fConfigPtr->GetBkgOnlyGeneMode()) SetNObsFromFile(fConfigPtr->GetInputFileNameNObsFromFile(),i);
-      else           SetNObsFromSBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetWantedMassNObsFromFile(),fConfigPtr->GetWantedGveNObsFromFile(),i);
+    if (fConfigPtr->GetToyOfToyMode()) {
+      cout << "StatisticalTreatment - Generating pseudodata in memory" << endl;
+      SetNObs(GenerateBackgroundPseudoData(fTheta_B));
+    } else {
+      if (fConfigPtr->GetBkgOnlyNObsFromFile()) {
+	cout << "StatisticalTreatement - will read Bkg-only NObs from file starting for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << endl;
+	SetNObsFromFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetFirstEventNObsFromFile()+i);
+      } else {
+	cout << "StatisticalTreatment - will read Sig+Bkg NObs from file for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << " for mass,gve = " <<
+	  fConfigPtr->GetWantedMassNObsFromFile() << " , " << fConfigPtr->GetWantedGveNObsFromFile() << endl;
+	SetNObsFromSBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetWantedMassNObsFromFile(),fConfigPtr->GetWantedGveNObsFromFile(),fConfigPtr->GetFirstEventNObsFromFile()+i);
+      }
     }
     
     if (fVerbosity >= 2) {
@@ -1718,6 +1726,7 @@ void statisticalTreatmentTH::SetNObsFromSBFile(TString filename, Double_t mass, 
 }
 
 void statisticalTreatmentTH::SetNObsFromFile(TString filename, Int_t count){
+  cout << "Statistical Treatment - reading NObs from bkg-only file" << filename.Data() << " event " << count << endl;
   TFile* filo = new TFile(filename.Data(), "READ");
   if (!filo->IsOpen()) {
     std::cout << "Cannot open input file " << filename.Data() << endl;

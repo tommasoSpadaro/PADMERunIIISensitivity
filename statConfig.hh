@@ -36,7 +36,8 @@ public:
   Bool_t GetBkgOnlyNObsFromFile(){return fBkgOnlyNObsFromFile;}// use the bkg-only NObs from the input file
   Double_t GetWantedMassNObsFromFile(){return fWantedMassNObsFromFile;} // mass to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
   Double_t GetWantedGveNObsFromFile(){return fWantedGveNObsFromFile;}   // gve  to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
-
+  Int_t    GetFirstEventNObsFromFile(){return fFirstEventNObsFromFile;} // first event to be used when retrieving NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
+  
   // Other settings
   Int_t GetNumberOfGenerations(){return fNumberOfGenerations;} // number of toys
   Int_t GetNumberOfGenerationsExpectedLimit(){return fNumberOfGenerationsExpectedLimit;} // number of pseudo data 
@@ -117,6 +118,7 @@ private:
   Bool_t fBkgOnlyNObsFromFile;        // if ToyOfToyMode == kFALSE: use the bkg-only NObs from the input file
   Double_t fWantedMassNObsFromFile;   // if ToyOfToyMode == kFALSE: mass to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
   Double_t fWantedGveNObsFromFile;    // if ToyOfToyMode == kFALSE: gve  to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
+  Int_t fFirstEventNObsFromFile;      // if ToyOfToyMode == kFALSE: first event to be read from the input file
   
   // other settings
   Int_t fNumberOfGenerations; // number of toys

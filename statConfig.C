@@ -50,6 +50,8 @@ statConfig::statConfig(){
   fWantedGveNObsFromFile = 0;         // if ToyOfToyMode == kFALSE: gve  to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
   fFieldStrings.push_back(std::pair{"WantedGveNObsFromFile",sFFD});
   
+  fFirstEventNObsFromFile = 0;
+  fFieldStrings.push_back(std::pair{"FirstEventNObsFromFile",sFFI});
   // Other settings
   
   fNumberOfGenerations = 200; // number of toys
@@ -247,13 +249,14 @@ void statConfig::readConfigFromFile(TString datacardName){
     std::cout << "statConfig>> ReadMode ON InputFile " << fInputFileName.Data() << std::endl;
   }
   else {
-    std::cout << "Make ToyOfToys? " << fToyOfToyMode << std::endl;
+    std::cout << "statConfig>> Make ToyOfToys? " << fToyOfToyMode << std::endl;
     if (!fToyOfToyMode) {
-      std::cout << "Read NObs from input file " << fInputFileNameNObsFromFile.Data() << std::endl;
+      std::cout << "statConfig>> Will Read NObs from input file " << fInputFileNameNObsFromFile.Data() << std::endl;
+      std::cout << "statConfig>> and I will read starting from event " << fFirstEventNObsFromFile << std::endl;
       if (fBkgOnlyNObsFromFile) {
-	std::cout << "Read the background-only NObs" << std::endl;
+	std::cout << "statConfig>> In particular, will read the background-only NObs" << std::endl;
       } else {
-	std::cout << "Read signal+background NObs with wanted mass and couplings = " << fWantedMassNObsFromFile << " , " << fWantedGveNObsFromFile << std::endl;
+	std::cout << "statConfig>> Read signal+background NObs with wanted mass and couplings = " << fWantedMassNObsFromFile << " , " << fWantedGveNObsFromFile << std::endl;
       }
     }
   }
@@ -289,6 +292,7 @@ int statConfig::useInputString(TString sStr){
 
 	if (fieldString.EqualTo("NumberOfGenerations")) fNumberOfGenerations = inputstrvalI;
 	else if (fieldString.EqualTo("NumberOfGenerationsExpectedLimit")) fNumberOfGenerationsExpectedLimit = inputstrvalI;
+	else if (fieldString.EqualTo("FirstEventNObsFromFile")) fFirstEventNObsFromFile = inputstrvalI;
 	else if (fieldString.EqualTo("Seed")) fSeed = inputstrvalI;
 	else if (fieldString.EqualTo("Verbosity")) fVerbosity = inputstrvalI;
 	else if (fieldString.EqualTo("NgveBins")) fNgveBins = inputstrvalI;
