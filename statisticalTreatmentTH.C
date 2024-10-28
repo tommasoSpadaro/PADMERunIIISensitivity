@@ -260,7 +260,7 @@ void statisticalTreatmentTH::Init(){
 
   // curves for effi/(bkg/pot) vs sqrt(s)
   
-  for (int i=0; i<3; i++){
+  for (int i=0; i<2; i++){
     fObservables.EffiOverBkgObsP0[i] = fConfigPtr->GetEffiOverBkgObsP0(i);
     fObservables.EffiOverBkgObsP1[i] = fConfigPtr->GetEffiOverBkgObsP1(i);
     fExpectedErrors.EffiOverBkgErrP0[i] = fConfigPtr->GetEffiOverBkgErrP0(i);
