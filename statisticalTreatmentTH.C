@@ -291,16 +291,21 @@ void statisticalTreatmentTH::Init(){
   }
 
   delete chole;
+  std::cout << "InitObservables and expectedErrors done" << endl;
 
   // initialise starting values of the nuisance parameters
 
   fTheta_S = InitNuisanceToObservables(fObservables); // init but flagged as nonInitialised
   fTheta_B = InitNuisanceToObservables(fObservables); // init but flagged as nonInitialised
 
+  std::cout << "InitNuisance to Observables done" << endl;
+
   // initialise likelihood
 
   fLikeli.SetObservables(fObservables);
   fLikeli.SetExpectedErrors(fExpectedErrors);
+
+  std::cout << "Observables and expectedErrors passed to likelihood" << endl;
 
   // initialize fitters
 
@@ -433,15 +438,15 @@ nuisancePars statisticalTreatmentTH::InitNuisanceToObservables(observables obs){
   nuisancePars nuis;
   nuis.POTTrue = obs.POTObs; // estimated POT per point
   nuis.SignalEffiLocalTrue = obs.SignalEffiLocalObs; // estimated efficiency 
+  nuis.POTScaleTrue = obs.POTScaleObs;             // estimated value of the POT scale
+  nuis.BkgTrue = obs.BkgObs;                       // estimated value of the ratio Nbkg/POT per point
   nuis.SignalPeakYieldTrue = obs.SignalPeakYieldObs; // yield at the resonance peak
   nuis.SignalLorentzianWidthTrue = obs.SignalLorentzianWidthObs; // lorentzian width of the signal shape [in terms of pbeam]
   nuis.BESTrue = obs.BESObs;  // relative beam energy spread 
-  nuis.POTScaleTrue = obs.POTScaleObs;             // estimated value of the POT scale
-  nuis.BkgTrue = obs.BkgObs;                       // estimated value of the ratio Nbkg/POT per point
 
   nuis.BkgBiasTrueP0 = obs.BkgBiasObsP0;
   nuis.BkgBiasTrueP1 = obs.BkgBiasObsP1;
-  for (int i=0; i<3; i++){
+  for (int i=0; i<2; i++){
     nuis.EffiOverBkgTrueP0[i] = obs.EffiOverBkgObsP0[i];
     nuis.EffiOverBkgTrueP1[i] = obs.EffiOverBkgObsP1[i];
   }  
@@ -736,26 +741,63 @@ void statisticalTreatmentTH::ReadOutput(TString filename){
 
 
 void statisticalTreatmentTH::initFitters(bool bonly){
-  int npts = fObservables.SqrtsObs.size();
 
-  // here, update number of pars, introduce the likelihood schemes possible:
-  // - with/without using the nuisances
+  int npts = fObservables.SqrtsObs.size(); // number of sqrts points accepted
+
+  // The number of fit parameters depend on the likelihood schemes possible:
   // - with/without bias correction
-  // - with/without using the effi/(bkg/pot) parameterisation
-  
-  // must change the likelihood interface and the parameters to map inside it
-  // must change the parameters that are fixed
-  // if NOT using the nuisances --> all the nuisances are fixed 
-  // if the bias is NOT applied --> P0 = 1 and P1 = 0 must be fixed
+  // - with/without using the nuisances
+  // - with/without using the effi/(bkg/pot) parameterisation [only for SB fit]
+  //
+  // Specifically:  
+  //
+  // if NOT using the bias: the bias parameters are fixed P0=1 and P1=1, POTScale is fit
+  // if the bias is used: POTScale = 1 is fixed, P0/P1 are fit
+  //
+  // if NOT using the nuisances --> all the nuisances are fixed, except for:
+  // - the POTscale [if not using the bias]
+  // - the two bias parameters [if using the bias]
+  //
+  // if the effi/bkg/pot curve is NOT used --> fix the EffiOverBkgTrueP0,P1 parameters, leave free the effisig parameters
+  // if using the effi/bkg/pot curve --> the EffiOverBkgTrueP0,P1 parameters are fit, the effisig parameters are fixed
+  //
+  // Parameter Index      Parameter            Comment
+  // 0                    B/B+S fit       <--- always fixed
+  // 1                    Mass value      <--- always fixed
+  // 2                    Coupling value  <--- always fixed
+  // 3       -- 3+npts-1  POT_i                     
+  // 3+npts  -- 3+2npts-1 Effisig_i       
+  // 3+2npts              SignalPeak/POT  
+  // 4+2npts              SignalLorWidth
+  // 5+2npts              BES
+  // 6+2npts              POTScale
+  // 7+2npts -- 7+3npts-1 B_i
+  // 7+3npts              UseBkgBias      <--- always fixed
+  // 8+3npts              BiasP0
+  // 9+3npts              BiasP1
+  // 10+3npts             UseEffiOverB    <--- always fixed
+  // 11+3npts             EffiOverBP0_0 scan period 0
+  // 12+3npts             EffiOverBP1_0 scan period 0
+  // 13+3npts             EffiOverBP0_1 scan period 1
+  // 14+3npts             EffiOverBP1_1 scan period 1
+  //
 
-  // if the effi/bkg/pot curve is NOT used --> must fix the EffiOverBkgTrueP0,P1 parameters, must leave free the effisig parameters
-  // else --> the EffiOverBkgTrueP0,P1 parameters are fit, the effisig parameters are fixed
+  // total number of parameters passed to the likelihood
+  int npars = 15+3*npts; 
 
-  // THE TOY GENERATION PART SHOULD BE CONSISTENT WITH THE CHOICE DONE HERE
-  
-  int npars = 15+3*npts;
-  // aggiungere le due flag di bias/efficurve e 2+4 parametri
-
+  // Number of free parameters:
+  // if (UseNuisance)     
+  //    if (B fit) 
+  //       if (BiasCurve)                2+2npts = 96
+  //       if (!BiasCurve)               1+2npts = 95
+  //    if (SB fit)
+  //       if (EffiCurve && BiasCurve)   3+4+2+2npts = 9+2npts = 103
+  //       if (EffiCurve &&!BiasCurve)   3+4+1+2npts = 8+2npts = 102
+  //       if (!EffiCurve&& BiasCurve)   3+0+2+3npts = 5+3npts = 146
+  //       if (!EffiCurve&&!BiasCurve)   3+0+1+3npts = 4+3npts = 145
+  // if (!UseNuisance)
+  //    if (BiasCurve)                   2
+  //    if (!BiasCurve)                  1
   
   double* parinput = new double[npars];
   double* parstep  = new double[npars];
@@ -763,7 +805,7 @@ void statisticalTreatmentTH::initFitters(bool bonly){
   
   parnames[0] = "IsBonlyFit"; parinput[0] = 1         ; parstep[0] = 0;
   parnames[1] = "mass"      ; parinput[1] = fMassMin  ; parstep[1] = 0; 
-  parnames[2] = "coupling"  ; parinput[2] = fgveMin    ; parstep[2] = 0; 
+  parnames[2] = "coupling"  ; parinput[2] = fgveMin   ; parstep[2] = 0; 
   for (int i=0; i<npts; i++){
     parnames[3+i] = Form("POTTrue_%d",i)        ; parinput[3+i] = fTheta_S.POTTrue.at(i)                 ; parstep[3+i] = fExpectedErrors.POTLocalErr.at(i)*0.01;
     parnames[3+npts+i] = Form("SigEffTrue_%d",i); parinput[3+npts+i] = fTheta_S.SignalEffiLocalTrue.at(i); parstep[3+npts+i] = fExpectedErrors.SignalEffiLocalErr.at(i)*0.01;    
@@ -775,17 +817,17 @@ void statisticalTreatmentTH::initFitters(bool bonly){
   for (int i=0; i<npts; i++){
     parnames[7+2*npts+i] = Form("BkgTruePerPOT_%d",i); parinput[7+2*npts+i] = fTheta_S.BkgTrue.at(i)     ; parstep[7+2*npts+i] = fExpectedErrors.BkgErr.at(i)*0.01;    
   }
-  parnames[7+3*npts] = "CorrectBkgBias"        ; parinput[7+3*npts] = fConfigPtr->GetCorrectBkgBias()        ; parstep[7+3*npts] = 0.1;    
+  parnames[7+3*npts] = "CorrectBkgBias"        ; parinput[7+3*npts] = fConfigPtr->GetCorrectBkgBias()        ; parstep[7+3*npts] = 0;    
   parnames[8+3*npts] = "BkgBiasTrueP0"         ; parinput[8+3*npts] = fTheta_S.BkgBiasTrueP0                 ; parstep[8+3*npts] = fExpectedErrors.BkgBiasErrP0*0.01;    
   parnames[9+3*npts] = "BkgBiasTrueP1"         ; parinput[9+3*npts] = fTheta_S.BkgBiasTrueP1                 ; parstep[9+3*npts] = fExpectedErrors.BkgBiasErrP1*0.01;    
-  parnames[10+3*npts]= "AssumeEffiOverBkgCurve"; parinput[10+3*npts]= fConfigPtr->GetAssumeEffiOverBkgCurve(); parstep[10+3*npts]= 0.1;    
+  parnames[10+3*npts]= "AssumeEffiOverBkgCurve"; parinput[10+3*npts]= fConfigPtr->GetAssumeEffiOverBkgCurve(); parstep[10+3*npts]= 0;    
   parnames[11+3*npts]= "EffiOverBkgTrueP0_0"   ; parinput[11+3*npts]= fTheta_S.EffiOverBkgTrueP0[0]          ; parstep[11+3*npts]= fExpectedErrors.EffiOverBkgErrP0[0]*0.01;    
   parnames[12+3*npts]= "EffiOverBkgTrueP1_0"   ; parinput[12+3*npts]= fTheta_S.EffiOverBkgTrueP1[0]          ; parstep[12+3*npts]= fExpectedErrors.EffiOverBkgErrP1[0]*0.01;    
   parnames[13+3*npts]= "EffiOverBkgTrueP0_1"   ; parinput[13+3*npts]= fTheta_S.EffiOverBkgTrueP0[1]          ; parstep[13+3*npts]= fExpectedErrors.EffiOverBkgErrP0[1]*0.01;    
   parnames[14+3*npts]= "EffiOverBkgTrueP1_1"   ; parinput[14+3*npts]= fTheta_S.EffiOverBkgTrueP1[1]          ; parstep[14+3*npts]= fExpectedErrors.EffiOverBkgErrP1[1]*0.01;    
-//  parnames[15+3*npts]= "EffiOverBkgTrueP0_2"   ; parinput[15+3*npts]= fTheta_S.EffiOverBkgTrueP0[2]          ; parstep[15+3*npts]= fExpectedErrors.EffiOverBkgErrP0[2]*0.01;    
-//  parnames[16+3*npts]= "EffiOverBkgTrueP1_2"   ; parinput[16+3*npts]= fTheta_S.EffiOverBkgTrueP1[2]          ; parstep[16+3*npts]= fExpectedErrors.EffiOverBkgErrP1[2]*0.01;    
 
+  std::cout << "StatisticalTreatement > InitFitter > First fit par settings done for bonly = " << bonly << endl;
+  
   if (bonly){
     fFitterB.SetFCN(npars, fLikeli); // flag_sb/b, mass, gve, signalPeak, LorentzianW, BES, potscale, 3 array: pottrue, signaleffitrue, bkgtrue
     for (int ip=0; ip < npars; ip++) fFitterB.Config().ParSettings(ip) = ROOT::Fit::ParameterSettings(parnames[ip].Data(),parinput[ip],parstep[ip]);
@@ -796,16 +838,19 @@ void statisticalTreatmentTH::initFitters(bool bonly){
     fFitterB.Config().ParSettings(7+3*npts).Fix(); // flag to correct the N2cl/pot/(bkg/pot) bias 
     fFitterB.Config().ParSettings(10+3*npts).Fix(); // flag to assume the Effi/(Bkg/pot) curve
 
-    for (uint i=0; i<(uint)npts; i++)              fFitterB.Config().ParSettings(3+npts+i).Fix(); // fix signal effi parameters, if they had been released
-    for (uint i=3+2*npts; i<(uint)6+2*npts; i++)   fFitterB.Config().ParSettings(i).Fix();        // fix signal shape parameters
-    for (uint i=11+3*npts; i<(uint)15+3*npts; i++) fFitterB.Config().ParSettings(i).Fix();        // fix effi/(bkg/pot) curve parameters, if they had been released
+    for (uint i=0; i<(uint)npts; i++)     fFitterB.Config().ParSettings(3+npts+i).Fix(); // fix signal effi parameters
+    for (uint i=0; i< 3; i++)   fFitterB.Config().ParSettings(i+3+2*npts).Fix();         // fix the 3 signal shape parameters
+    for (uint i=0; i< 4; i++)   fFitterB.Config().ParSettings(i+11+3*npts).Fix();        // fix the 4 effi/(bkg/pot) curve parameters
     
     if (fConfigPtr->GetCorrectBkgBias()){ // USE the bias curve, therefore remove the potscale parameter, substituted by the curve
+      fFitterB.Config().ParSettings(6+2*npts).SetValue(1);
       fFitterB.Config().ParSettings(6+2*npts).Fix();
     } else { // DO NOT USE the bias curve
-      for (uint i=8+3*npts; i<(uint)10+3*npts; i++) fFitterB.Config().ParSettings(i).Fix();       // fix P0,P1 of the bias curve 
+      for (uint i=0; i<2; i++) {
+	fFitterB.Config().ParSettings(8+3*npts+i).SetValue(1-i); // Set P0=1, P1=0 of the bias curve
+	fFitterB.Config().ParSettings(8+3*npts+i).Fix();         // fix P0,P1 of the bias curve
+      }
     }
-
   }
   else {
     fFitterSB.SetFCN(npars, fLikeli); // flag_sb/b, mass, gve, signalPeak, LorentzianW, BES, potscale, 3 array: pottrue, signaleffitrue, bkgtrue
@@ -816,22 +861,32 @@ void statisticalTreatmentTH::initFitters(bool bonly){
     fFitterSB.Config().ParSettings(2).Fix(); // coupling is always fixed
     fFitterSB.Config().ParSettings(7+3*npts).Fix(); // flag to correct the N2cl/pot/(bkg/pot) bias 
     fFitterSB.Config().ParSettings(10+3*npts).Fix(); // flag to assume the Effi/(Bkg/pot) curve
-    //    fFitterSB.Config().ParSettings(4+2*npts).Fix(); // to fix the lorentzian width gamma
 
     if (fConfigPtr->GetCorrectBkgBias()){ // USE the bias curve, therefore remove the potscale parameter, substituted by the curve
+      fFitterSB.Config().ParSettings(6+2*npts).SetValue(1);
       fFitterSB.Config().ParSettings(6+2*npts).Fix();
     } else { // DO NOT use the bias curve
-      for (uint i=8+3*npts; i<(uint)10+3*npts; i++) fFitterSB.Config().ParSettings(i).Fix();       // fix P0,P1 of the bias curve <-- should be protected in the likelihood
+      for (uint i=0; i<2; i++) {
+	fFitterSB.Config().ParSettings(8+3*npts+i).SetValue(1-i); // Set P0=1, P1=0 of the bias curve
+	fFitterSB.Config().ParSettings(8+3*npts+i).Fix();         // fix P0,P1 of the bias curve
+      }
     }
 
     if (fConfigPtr->GetAssumeEffiOverBkgCurve()){ // USE the effi/(bkg/pot) curve
       for (uint i=0; i<(uint)npts; i++)              fFitterSB.Config().ParSettings(3+npts+i).Fix(); // fix signal effi point-by-point, if they had been released
     } else { // DO NOT USE the effi/(bkg/pot) curve
-      for (uint i=11+3*npts; i<(uint)15+3*npts; i++) fFitterSB.Config().ParSettings(i).Fix();       // fix P0,P1 of the bias curve for all scan subsets
+      for (uint j=0; j<2; j++) { // scan subset
+	for (uint i=0; i<2; i++) { // P0,P1
+	  fFitterSB.Config().ParSettings(11+3*npts+i+2*j).SetValue(1-i); // Set P0=1, P1=0 of the effi curve
+	  fFitterSB.Config().ParSettings(11+3*npts+i+2*j).Fix();         // fix P0,P1 of the effi curve
+	}
+      }
     }
   }
 
-  // if nuisances must be blocked, only allow potscale to be fit
+  std::cout << "StatisticalTreatement > InitFitter > Second fit par settings done for bonly = " << bonly << endl;
+  
+  // if nuisances must be blocked, only allow potscale/P0,1 to be fit
   if (!fUseNuisance) { 
     for (uint ip=0; ip < npars; ip++) {
 
@@ -844,6 +899,20 @@ void statisticalTreatmentTH::initFitters(bool bonly){
       else      fFitterSB.Config().ParSettings(ip).Fix(); //fix all the parameters
     }
   }
+
+  std::cout << "StatisticalTreatement > InitFitter > Third fit par settings done for bonly = " << bonly << endl;
+
+  int freePars = 0;
+  for (uint ip=0; ip < npars; ip++) {
+    if (bonly) {
+      if (!fFitterB.Config().ParSettings(ip).IsFixed()) freePars++;
+    } else {
+      if (!fFitterSB.Config().ParSettings(ip).IsFixed()) freePars++;
+    }
+  }
+  std::cout << "StatisticalTreatment >> InitFitter with UseBias " << fConfigPtr->GetCorrectBkgBias() << " assumeEffiCurve = " << fConfigPtr->GetAssumeEffiOverBkgCurve() <<
+    " freeParameters for bOnly = " << bonly << " are " << freePars << endl;
+  
 }
 
 
