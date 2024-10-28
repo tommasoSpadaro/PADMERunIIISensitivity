@@ -35,9 +35,9 @@ BESErr 0.0005
 POTScale 1.
 POTScaleErr 0.01
 BkgBiasObsP0 1.000
-BkgBiasObsP1 0.001
+BkgBiasObsP1 0.000
 BkgBiasErrP0 0.010
-BkgBiasErrP1 0.001
+BkgBiasErrP1 0.000
 BkgBiasErrP0P1Corr 0.0
 EffiOverBkgObsP0_0 20752
 EffiOverBkgObsP1_0 1042.69
