@@ -54,8 +54,8 @@ struct observables{
   Double_t BESObs;                 // estimated value of the BES
   Double_t BkgBiasObsP0;              // estimated value of par0 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
   Double_t BkgBiasObsP1;              // estimated value of par1 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
-  Double_t EffiOverBkgObsP0[3];       // estimated value of par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
-  Double_t EffiOverBkgObsP1[3];       // estimated value of par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
+  Double_t EffiOverBkgObsP0[2];       // estimated value of par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2]
+  Double_t EffiOverBkgObsP1[2];       // estimated value of par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2]
 };
 
 struct expectedErrors{
@@ -70,9 +70,9 @@ struct expectedErrors{
   Double_t BkgBiasErrP0;              // estimated error on par0 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
   Double_t BkgBiasErrP1;              // estimated error on par1 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
   Double_t BkgBiasErrP0P1Corr;        // estimated correlation on the errors of par0 and par1 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
-  Double_t EffiOverBkgErrP0[3];       // estimated error on par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
-  Double_t EffiOverBkgErrP1[3];       // estimated error on par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
-  Double_t EffiOverBkgErrP0P1Corr[3]; // estimated correlation on the errors of par0 and par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
+  Double_t EffiOverBkgErrP0[2];       // estimated error on par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2]
+  Double_t EffiOverBkgErrP1[2];       // estimated error on par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2]
+  Double_t EffiOverBkgErrP0P1Corr[2]; // estimated correlation on the errors of par0 and par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2]
   //  vector<Double_t> SqrtsErr;      // error on the sqrts per point
 };
 
@@ -87,8 +87,8 @@ struct nuisancePars{
   Double_t BESTrue;              // true value of the BES
   Double_t BkgBiasTrueP0;              // true value of par0 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
   Double_t BkgBiasTrueP1;              // true value of par1 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
-  Double_t EffiOverBkgTrueP0[3];       // true value of par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
-  Double_t EffiOverBkgTrueP1[3];       // true value of par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, entire scan]
+  Double_t EffiOverBkgTrueP0[2];       // true value of par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2]
+  Double_t EffiOverBkgTrueP1[2];       // true value of par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2]
   //  vector<Double_t> SqrtsTrue;       // true sqrts per point
 };
 
