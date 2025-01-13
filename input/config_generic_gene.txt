@@ -11,7 +11,7 @@ NumberOfGenerations 200
 NumberOfGenerationsExpectedLimit 100
 UseNuisance 1
 CorrectBkgBias 0
-AssumeEffiOverBkgCurve 1
+AssumeEffiOverBkgCurve 0
 EvaluateExpLimit 1
 Seed 2100
 Verbosity 0
