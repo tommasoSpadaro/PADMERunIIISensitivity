@@ -147,8 +147,8 @@ void statisticalTreatmentTH::Init(){
   double signalEfficiencyFac = 1.;
   double bkgyieldFac = 1;  
   if (fConfigPtr->GetManipulateInput()){ 
-    signalEfficiencyFac = 0.8;
-    bkgyieldFac = 0.8;
+    signalEfficiencyFac = 0.5;
+    bkgyieldFac = 0.5;
   }
 
   
@@ -788,11 +788,11 @@ void statisticalTreatmentTH::initFitters(bool bonly){
   // Number of free parameters:
   // if (UseNuisance)     
   //    if (B fit) 
-  //       if (BiasCurve)                2+2npts = 96
+  //       if (BiasCurve)                2+2npts = 96 <-- input obs = nfitpar + npts
   //       if (!BiasCurve)               1+2npts = 95
   //    if (SB fit)
-  //       if (EffiCurve && BiasCurve)   3+4+2+2npts = 9+2npts = 103
-  //       if (EffiCurve &&!BiasCurve)   3+4+1+2npts = 8+2npts = 102
+  //       if (EffiCurve && BiasCurve)   3+4+2+2npts = 9+2npts = 103 
+  //       if (EffiCurve &&!BiasCurve)   3+4+1+2npts = 8+2npts = 102 
   //       if (!EffiCurve&& BiasCurve)   3+0+2+3npts = 5+3npts = 146
   //       if (!EffiCurve&&!BiasCurve)   3+0+1+3npts = 4+3npts = 145
   // if (!UseNuisance)
@@ -1545,19 +1545,47 @@ nuisancePars statisticalTreatmentTH::MaximizeLSBGivenNObs(double mass, double gv
   fFitterSB.Config().ParSettings(1).SetValue(mass); 
   fFitterSB.Config().ParSettings(2).SetValue(gve); 
 
+  if (fVerbosity >= 2){
+    for (int i=0; i<fFitterSB.Config().NPar(); i++){
+      std::cout << "S+B Fit parameter " << i << " set at " << fFitterSB.Config().ParamsValues().at(i) << " isFixed? " << fFitterSB.Config().ParSettings(i).IsFixed() << std::endl;
+    }
+  }
 
   fLikeli.SetObservables(fObservables);
-  
   bool okfit = fFitterSB.FitFCN();
   if (!okfit) {
-    std::cerr << "LSB Fit failed" << std::endl;
+    if (fVerbosity >= 2){
+      std::cout << "LSB Fit failed" << std::endl;
+      const ROOT::Fit::FitResult & result = fFitterSB.Result();    
+      cout << "Fit status " << result.Status() << " isValid " << result.IsValid() << endl;
+      result.Print(std::cout);
+    }
+    initFitters(kFALSE);
+    fFitterSB.Config().ParSettings(0).SetValue(0); // S+B fit
+    fFitterSB.Config().ParSettings(1).SetValue(mass); 
+    fFitterSB.Config().ParSettings(2).SetValue(gve); 
+    okfit = fFitterSB.FitFCN();
+    if (fVerbosity >= 0){
+      if (okfit) std::cout << "LSB Fit failed but recovered " << std::endl;
+      else       std::cout << "LSB Fit failed and failed " << std::endl;
+    }
+    if (!okfit && fVerbosity >= 2){
+      const ROOT::Fit::FitResult & result = fFitterSB.Result();    
+      cout << "Fit status " << result.Status() << " isValid " << result.IsValid() << endl;
+      result.Print(std::cout);
+    }
+  }
+  if (!okfit) {
     fitNuisance.isNotFilled = true;
     *lsb = -1;
   }
   else {
     const ROOT::Fit::FitResult & result = fFitterSB.Result();    
-    if (fVerbosity == 3) result.Print(std::cout);
-
+    if (fVerbosity >= 2) cout << "Fit status " << result.Status() << " isValid " << result.IsValid() << endl;
+    if (fVerbosity == 3) {
+      result.Print(std::cout);
+      std::cout << "Total params " << result.NTotalParameters() << " free params " << result.NFreeParameters() << " Chi2 " << result.Chi2() << " Edm " << result.Edm() << " minFCNvalue " << result.MinFcnValue() << " minimizer type " << result.MinimizerType() << " Ncalls " << result.NCalls() << " Ndf " << result.Ndf() << " prob " << result.Prob() << std::endl;
+    }
     // store output fit results into the nuisance parameters
     const double* parRes = result.GetParams();    
     for (int i=0; i<npts; i++){
