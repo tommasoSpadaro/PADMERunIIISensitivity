@@ -172,21 +172,21 @@ class Likelihood {
        chisq += delta + 2.*TMath::Log(fExpectedErrors.BkgBiasErrP0*fExpectedErrors.BkgBiasErrP1*TMath::Sqrt(oneMinusRho2)) + 2*log2pi;
      } else {
        delta = (fObservables.POTScaleObs - potScaleTrue)/(fExpectedErrors.POTScaleErr); // absolute scale of the POT
-       chisq += delta*delta + 2.*TMath::Log(fExpectedErrors.POTScaleErr) + log2pi;
+       chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.POTScaleErr) + log2pi;
      }
 
-
+     //     std::cout << "chisq step 1 is " << chisq << endl;
      if (isSBfit){ // signal + background fit
 
        // signal shape nuisances
        delta = (fObservables.SignalPeakYieldObs - signalPeakYieldTrue)/(fExpectedErrors.SignalPeakYieldErr); // error on peak yield
-       chisq += delta*delta + 2.*TMath::Log(fExpectedErrors.SignalPeakYieldErr) + log2pi;
+       chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.SignalPeakYieldErr) + log2pi;
 
        delta = (fObservables.SignalLorentzianWidthObs - signalLorentzianWidthTrue)/(fExpectedErrors.SignalLorentzianWidthErr); // error on lorentzian width
-       chisq += delta*delta + 2.*TMath::Log(fExpectedErrors.SignalLorentzianWidthErr) + log2pi;
+       chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.SignalLorentzianWidthErr) + log2pi;
 
        delta = (fObservables.BESObs - BESTrue)/(fExpectedErrors.BESErr); // error on relative BES
-       chisq += delta*delta + 2.*TMath::Log(fExpectedErrors.BESErr) + log2pi;
+       chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.BESErr) + log2pi;
 
        // if using effi/bkg curve, include the errors on the parameters in the likelihood 
        if (assumeEffiOverBkgCurve){ // parameterisation of the effi/(bkg/pot) vs sqrt(s)
@@ -197,20 +197,22 @@ class Likelihood {
 	     pow((fObservables.EffiOverBkgObsP1[k] - effiOverBkgTrueP1[k])/fExpectedErrors.EffiOverBkgErrP1[k],2)/oneMinusRho2 
 	     -2*(fObservables.EffiOverBkgObsP0[k] - effiOverBkgTrueP0[k])*(fObservables.EffiOverBkgObsP1[k] - effiOverBkgTrueP1[k])*
 	     fExpectedErrors.EffiOverBkgErrP0P1Corr[k]/(fExpectedErrors.EffiOverBkgErrP0[k]*fExpectedErrors.EffiOverBkgErrP1[k]*oneMinusRho2);
-	   chisq += delta + 2.*TMath::Log(fExpectedErrors.EffiOverBkgErrP0[k]*fExpectedErrors.EffiOverBkgErrP1[k]*TMath::Sqrt(oneMinusRho2)) + 2*log2pi;
+	   chisq += delta;// + 2.*TMath::Log(fExpectedErrors.EffiOverBkgErrP0[k]*fExpectedErrors.EffiOverBkgErrP1[k]*TMath::Sqrt(oneMinusRho2)) + 2*log2pi;
 	 }
        } // else -> will use errors on the single-point efficiencies
      }
+
+     //     std::cout << "chisq step 1a is " << chisq << endl;
      
      for (uint i=0; i < npts; i++) {        
        // bkg/pot per point nuisances
        delta = (fObservables.BkgObs.at(i) - par[bkgTrueIdx + i])/fExpectedErrors.BkgErr.at(i); // true values of bkg/pot vs sqrt(s)
-       chisq += delta*delta + 2.*TMath::Log(fExpectedErrors.BkgErr.at(i)) + log2pi;
+       chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.BkgErr.at(i)) + log2pi;
 
        // local error on the pot
        double errpotloc = fExpectedErrors.POTLocalErr.at(i);
        delta = (fObservables.POTObs.at(i) - par[potTrueIdx + i])/errpotloc; // true values of the POT per point
-       chisq += delta*delta + 2.*TMath::Log(errpotloc) + log2pi;
+       chisq += delta*delta;// + 2.*TMath::Log(errpotloc) + log2pi;
 
        // expected number of bkg events       
        double bc = par[bkgTrueIdx + i]*par[potTrueIdx + i]*1E10; // (Nbkg/POT)true x POT_i_true
@@ -229,24 +231,27 @@ class Likelihood {
 	 else            sc *= potScaleTrue;                                                         // POT_scale_true
 
 	 if (assumeEffiOverBkgCurve){
-	   sc *= par[bkgTrueIdx + i]*(effiOverBkgTrueP0[fObservables.ScanPeriod.at(i)] + effiOverBkgTrueP1[fObservables.ScanPeriod.at(i)]*(fObservables.SqrtsObs.at(i)-16.92)); // effi = (bkg/pot)*(linear func)
+	   sc *= par[bkgTrueIdx + i]*(effiOverBkgTrueP0[fObservables.ScanPeriod.at(i)] + effiOverBkgTrueP1[fObservables.ScanPeriod.at(i)]*(fObservables.SqrtsObs.at(i)-SQRTSMID)); // effi = (bkg/pot)*(linear func)
 	 } else {
 	   sc *= par[effiTrueIdx+i]; // effi
 	   delta = (fObservables.SignalEffiLocalObs.at(i)-par[effiTrueIdx + i])/fExpectedErrors.SignalEffiLocalErr.at(i); 
-	   chisq += delta*delta + 2.*TMath::Log(fExpectedErrors.SignalEffiLocalErr.at(i)) + log2pi; // chi^2 from effi_i
+	   chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.SignalEffiLocalErr.at(i)) + log2pi; // chi^2 from effi_i
 	 }
 	 
 	 //PROVA	 sc = signalPeakYieldTrue*gve*gve*par[potTrueIdx + i]*1E10*potScaleTrue*par[effiTrueIdx + i]*TMath::Voigt(eBeam-eRes,BESTrue*eBeam,signalLorentzianWidthTrue*2,4);
 	 //	 std::cout << "mass = " << mass << " gve = " << gve << " eRes = " << eRes << " eBeam = " << eBeam << " signal = " << sc << endl;
 
+	 //	 if (i==23 || i==46) std::cout << "chisq step 2 i = " << i << " is " << chisq << endl;
+	 
        } 
 
        // statistical term
        double errcount = TMath::Sqrt(sc+bc);
        delta = (fObservables.NObs.at(i) - sc - bc)/errcount;
-       chisq += delta*delta + 2.*TMath::Log(errcount) + log2pi;	 
+       chisq += delta*delta;// + 2.*TMath::Log(errcount) + log2pi;	 
      }
 
+     //     std::cout << "chisq step 3 is " << chisq << endl;
      return chisq;
    }
 };
