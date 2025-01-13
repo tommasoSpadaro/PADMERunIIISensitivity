@@ -2,5 +2,26 @@ Statistical Treatment for the PADME RunIII analysis
 
 source compileStatisticalTreatment.sh to compile <-- need to modify clang on certain machines
 
-3 executables are obtained: geneStatisticalTreatment	readStatisticalTreatment	runStatisticalTreatment 
-later will explain how they work
+1 executables is obtained: runStatisticalTreatment 
+
+./bin/runStatisticalTreatment works with a config file. Example generic config files are:
+
+- input/config_generic.txt <-- runs standalone
+  > simulates 1 pseudoevent, then use it with:
+  > 200 toy-of-toy simulations.
+  > Use Nuisance errors.
+  > Do not assume B/epsilon curve.
+  > Start with seed 0.
+  > input file (POT, B, eps vs sqrt(s) handled by fitRatio.C, now using MCVersion2.
+
+- input/config_generic_gene.txt ONLY generates 100 pseudoevents in output using MCVersion2 input.
+
+When you want to evaluate the sensitivity for a number of pseudoevents to do the coverage, you need to:
+
+- run scanSens.pl to execute many times config_generic with different seeds starting from a given seed number (to be changed for every production). (some seetings are in scanSens.pl)
+  > produce a number of output root files equal to the number of pseudoevents (there's a tree with CLs values)
+  
+- run scanSens_read.pl giving the unique tag related to the production (number of mass steps and mass range) and the starting seed number (the same of the production)
+  > produce 1 output root file with the UL for each input root file (UL values)
+  
+- rereadLimit_newsens.C you give in input the starting seed
