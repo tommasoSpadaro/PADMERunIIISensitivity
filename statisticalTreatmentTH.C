@@ -783,13 +783,13 @@ void statisticalTreatmentTH::initFitters(bool bonly){
   //
 
   // total number of parameters passed to the likelihood
-  int npars = 15+3*npts; 
+  int npars = 15+3*npts; // 5 always fixed, 10 + 3 * npts depending on the setup 
 
   // Number of free parameters:
   // if (UseNuisance)     
   //    if (B fit) 
-  //       if (BiasCurve)                2+2npts = 96 <-- input obs = nfitpar + npts
-  //       if (!BiasCurve)               1+2npts = 95
+  //       if (BiasCurve)                2+2npts = 96 <-- BiasP0, BiasP1, {POT_i}, {B_i}<-- input obs = nfitpar + npts
+  //       if (!BiasCurve)               1+2npts = 95 <-- POTScale, {POT_i}, {B_i}
   //    if (SB fit)
   //       if (EffiCurve && BiasCurve)   3+4+2+2npts = 9+2npts = 103 
   //       if (EffiCurve &&!BiasCurve)   3+4+1+2npts = 8+2npts = 102 
