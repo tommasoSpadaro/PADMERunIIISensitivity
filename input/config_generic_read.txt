@@ -3,7 +3,7 @@ BkgOnlyGeneMode 0
 GeneOutputFileName output/geneToyMC.root
 ReadMode 1
 ToyOfToyMode 1
-InputFileName ~/PADME/PADME_sensitivity/output/statisticalTest_massSteps_71_massRange_16.22_17.62_UseNuis1_seed0_save.root
+InputFileName ~/PADME/PADME_sensitivity/output/statisticalTest_massSteps_71_massRange_16.22_17.62_UseNuis1_UseEffi0_NObsWithEffi_seed2000.root
 InputFileNameNObsFromFile output/geneNObsSigPlusBkg.root
 BkgOnlyNObsFromFile 0
 WantedMassNObsFromFile 0.
