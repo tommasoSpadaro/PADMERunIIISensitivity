@@ -1218,6 +1218,108 @@ void statisticalTreatmentTH::EvaluateExpectedLimit(){
   
 }
 
+void statisticalTreatmentTH::EvaluateExpectedLimitFreqOnly(){
+  if (!fIsInitialized){
+    std::cout << "Cannot Evaluate expected limit - no init done " << endl;
+    exit(1);
+  }
+
+  // define temporary structures to be stored in memory 
+  double** gveFreqRolke = new double*[fNMassBins]; 
+  double** gveFreqFeldman = new double*[fNMassBins]; //90, 95% CL
+
+  // zero temporary structures
+  for (uint im = 0; im < (uint) fNMassBins; im++) {
+    gveFreqRolke[im] = new double[2];
+    gveFreqFeldman[im] = new double[2];
+  }
+
+
+  
+  for (uint i=0; i< (uint) fNumberOfGenerationsExpectedLimit; i++){
+    
+    // simulate background only counts
+    if (i%10 == 0) cout << "Simulating pseudo data, event " << i << endl;
+    
+    if (fVerbosity >= 2) {
+      cout << "Sqrts = ";
+      for (uint j=0; j<(uint) fObservables.SqrtsObs.size(); j++) std::cout << " " << fObservables.SqrtsObs.at(j);
+      cout << endl;
+      cout << "NObs = ";
+      for (uint j=0; j<(uint) fObservables.NObs.size(); j++) std::cout << " " << fObservables.NObs.at(j) ;
+      cout << endl;
+    }
+
+
+    if (fConfigPtr->GetToyOfToyMode()) {
+      cout << "StatisticalTreatment - Generating pseudodata in memory" << endl;
+      SetNObs(GenerateBackgroundPseudoData(fTheta_B));
+    } else {
+      if (fConfigPtr->GetBkgOnlyNObsFromFile()) {
+	cout << "StatisticalTreatement - will read Bkg-only NObs from file starting for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << endl;
+	SetNObsFromFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetFirstEventNObsFromFile()+i);
+      } else {
+	cout << "StatisticalTreatment - will read Sig+Bkg NObs from file for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << " for mass,gve = " <<
+	  fConfigPtr->GetWantedMassNObsFromFile() << " , " << fConfigPtr->GetWantedGveNObsFromFile() << endl;
+	SetNObsFromSBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetWantedMassNObsFromFile(),fConfigPtr->GetWantedGveNObsFromFile(),fConfigPtr->GetFirstEventNObsFromFile()+i);
+      }
+    }
+    
+    if (fVerbosity >= 2) {
+      cout << "After generation of pseudo data Nobs = ";
+      for (uint j=0; j<(uint) fObservables.NObs.size(); j++) std::cout << " " << fObservables.NObs.at(j) ;
+      cout << endl;
+    }
+
+        
+    for (uint im = 0; im < (uint) fNMassBins; im++){
+      double massn = fMassMin + im*fMassStep;
+
+      // evaluation of upper limits using frequentist methods
+      
+      if (fVerbosity >= 2) {
+	cout << "Evaluate frequentist upper limits " << massn << " " << gveFreqRolke[im][0] << " " << gveFreqRolke[im][1] << " " << gveFreqFeldman[im][0] << " " << gveFreqFeldman[im][1] << endl;
+      }
+      EvaluateFrequentist(massn,gveFreqRolke[im],gveFreqFeldman[im]);
+      if (fVerbosity >= 2) {
+	cout << "... done " << massn << " " << gveFreqRolke[im][0] << " " << gveFreqRolke[im][1] << " " << gveFreqFeldman[im][0] << " " << gveFreqFeldman[im][1] << endl;
+      }
+
+    } // close mass loop
+
+    // signal + background toys
+
+    for (uint im = 0; im < (uint) fNMassBins; im++){
+      double massn = fMassMin + im*fMassStep;
+
+      fFreqInfo.ipseudodata = i;
+      fFreqInfo.startingSeed = fSeed;
+      fFreqInfo.im = im;
+      fFreqInfo.massn = massn;
+      fFreqInfo.rolke90 = gveFreqRolke[im][0];
+      fFreqInfo.rolke95 = gveFreqRolke[im][1];
+      fFreqInfo.feldman90 = gveFreqFeldman[im][0];
+      fFreqInfo.feldman95 = gveFreqFeldman[im][1];
+
+      fFreqTree->Fill();
+
+
+    } // loop over mass bins
+    
+  } // pseudo-data generation
+
+  // delete temporary arrays
+  
+  for (uint im = 0; im < (uint) fNMassBins; im++) {
+    delete[] gveFreqRolke[im];
+    delete[] gveFreqFeldman[im];
+  }
+  delete[] gveFreqRolke;
+  delete[] gveFreqFeldman;
+  
+}
+
+
 
 void statisticalTreatmentTH::EvaluateFrequentist(double massn, double* rolkegveUL, double* feldmangveUL){
 

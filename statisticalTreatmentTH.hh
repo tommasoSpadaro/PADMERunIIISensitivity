@@ -278,6 +278,8 @@ public:
   
   // to be run only AFTER INIT:
   void EvaluateExpectedLimit();//Bool_t toyOfToy, Bool_t bOnlyFile, Double_t wantedMass, Double_t wantedGve, TString filename);// if toyOfToy == false -> nobs from filename. if bOnlyFile == false -> use SBfile 
+  void EvaluateExpectedLimitFreqOnly(); // Only do the frequentist method and fill the frequentist tree
+
   void SimulateBkgPseudoDataToFile(TString filename); // can generate and write to a file pseudodata background-only distributions
   void SimulateSignalPlusBkgPseudoDataToFile(TString filename); // can generate and write to a file pseudodata signal + bkg distributions scanning over the mass,gve grid
 

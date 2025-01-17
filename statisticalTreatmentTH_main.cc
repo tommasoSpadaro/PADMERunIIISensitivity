@@ -99,7 +99,11 @@ int main(int argc, char **argv)
 //  printf("...done\n");
 
   printf("Launching expected limit evaluation...\n");
-  statT->EvaluateExpectedLimit();//true,false,0.,0.,"null"); // do the toyoftoy expected limit
+  if (configPtr->GetEvaluateExpLimit()){
+    statT->EvaluateExpectedLimit();//true,false,0.,0.,"null"); // do the toyoftoy expected limit + the frequentist evaluation
+  } else { 
+    statT->EvaluateExpectedLimitFreqOnly(); // only do the frequentist evaluation
+  }
   //  statT->EvaluateExpectedLimit(false,false,16.8,6.E-4,"output/geneNObsSigPlusBkg.root"); // read from file the nobs to evaluate the expected limit
   //  statT->EvaluateExpectedLimit(false,false,16.8,8.E-4,"output/geneNObsSigPlusBkg.root"); // read from file the nobs to evaluate the expected limit
   printf("...done\n");
