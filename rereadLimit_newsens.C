@@ -199,13 +199,14 @@ void rereadfulllim(int seedStem){ // for example 8000
   na64lim->SetFillStyle(3001);
   na64lim->Draw("3same");
 
+  // PATCH FOR POT ERROR IMPROVEMENT - WITH 5E10 POT / point and 47 points and 0.3% error on efficiency and 0.3% error on B
+  const double improvementFactor = 1.;//0.77; // sqrt(0.6/2. \oplus 0.3)/sqrt(0.6 \oplus 0.3)
+
   if (jgood) {
     limit90Exp[0]->SetFillColor(kGreen);
     limit90Exp[0]->SetFillStyle(3001);
     limit90Exp[0]->Draw("3same");
 
-  // PATCH FOR POT ERROR IMPROVEMENT - WITH 5E10 POT / point and 47 points and 0.3% error on efficiency and 0.3% error on B
-    const double improvementFactor = 1.;//0.77; // sqrt(0.6/2. \oplus 0.3)/sqrt(0.6 \oplus 0.3)
     for (int i=0; i<2; i++){
       for (int j=0; j<limit90Exp[i]->GetN(); j++){
 	limit90Exp[i]->SetPoint(j,limit90Exp[i]->GetX()[j],limit90Exp[i]->GetY()[j]*improvementFactor);
