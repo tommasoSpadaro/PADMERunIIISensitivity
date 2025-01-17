@@ -72,7 +72,7 @@ void rereadfulllim(int seedStem){ // for example 8000
   }
 
   cout << "Graphs and upper limits retrieved for " << jgood << " pseudo events for standard limit and " << jgoodRL << " for RL limits" << endl;
-  return;
+
   // evaluate quantiles: 2.5%, 16%, 50%, 66%, 97.5%
   Double_t* qqq = new Double_t[5];
   qqq[0] = 1.-0.5*(1+TMath::Erf(2./TMath::Sqrt(2.))); // -2sigma
