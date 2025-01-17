@@ -47,7 +47,6 @@ void rereadfulllim(int seedStem){ // for example 8000
     if (grafo->GetN()) {
       cout << "file j = " << j << endl;
       limit90s[jgood] = new TGraph(); limit90s[jgood]->SetName(Form("Lim90_%d",seedStem+j));
-      limit90sRL[jgood] = new TGraph(); limit90sRL[jgood]->SetName(Form("Lim90RL_%d",seedStem+j));
 
       for (int k=0; k < grafo->GetN(); k++){
 	limit90s[jgood]->SetPoint(limit90s[jgood]->GetN(),grafo->GetX()[k],grafo->GetY()[k]);
@@ -60,6 +59,7 @@ void rereadfulllim(int seedStem){ // for example 8000
     TGraph* grafoRL = (TGraph*) filo->Get("RolkeLopezLimit90");      
       
     if (grafoRL->GetN()) {
+      limit90sRL[jgood] = new TGraph(); limit90sRL[jgood]->SetName(Form("Lim90RL_%d",seedStem+j));
       for (int k=0; k < grafoRL->GetN(); k++){
 	limit90sRL[jgoodRL]->SetPoint(limit90sRL[jgoodRL]->GetN(),grafoRL->GetX()[k],grafoRL->GetY()[k]);
 	if (grafoRL->GetY()[k] < limitMinRL) limitMinRL = grafoRL->GetY()[k];
