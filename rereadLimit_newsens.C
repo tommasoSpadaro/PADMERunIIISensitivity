@@ -59,7 +59,7 @@ void rereadfulllim(int seedStem){ // for example 8000
     TGraph* grafoRL = (TGraph*) filo->Get("RolkeLopezLimit90");      
       
     if (grafoRL->GetN()) {
-      limit90sRL[jgood] = new TGraph(); limit90sRL[jgood]->SetName(Form("Lim90RL_%d",seedStem+j));
+      limit90sRL[jgoodRL] = new TGraph(); limit90sRL[jgoodRL]->SetName(Form("Lim90RL_%d",seedStem+j));
       for (int k=0; k < grafoRL->GetN(); k++){
 	limit90sRL[jgoodRL]->SetPoint(limit90sRL[jgoodRL]->GetN(),grafoRL->GetX()[k],grafoRL->GetY()[k]);
 	if (grafoRL->GetY()[k] < limitMinRL) limitMinRL = grafoRL->GetY()[k];
@@ -71,8 +71,8 @@ void rereadfulllim(int seedStem){ // for example 8000
     filo->Close();    
   }
 
-  cout << "Graphs and upper limits retrieved for " << jgood << " pseudo events " << endl;
-
+  cout << "Graphs and upper limits retrieved for " << jgood << " pseudo events for standard limit and " << jgoodRL << " for RL limits" << endl;
+  return;
   // evaluate quantiles: 2.5%, 16%, 50%, 66%, 97.5%
   Double_t* qqq = new Double_t[5];
   qqq[0] = 1.-0.5*(1+TMath::Erf(2./TMath::Sqrt(2.))); // -2sigma
@@ -95,12 +95,16 @@ void rereadfulllim(int seedStem){ // for example 8000
 
   // evaluate quantiles for the standard limits
 
-  int npts = limit90s[0]->GetN(); // mass points
+  int npts = 0;
+  TH1D** limitsPerPoint = 0; // define an histogram of limits for each mass point
+
+  if (jgood) {
+    npts = limit90s[0]->GetN(); // mass points
+    limitsPerPoint = new TH1D*[npts]; // define an histogram of limits for each mass point
+  }
   
   cout << "Analyse standard mass limits per mass point " << npts << " limits " << limitMin << " , " << limitMax << endl;
   
-  TH1D** limitsPerPoint = new TH1D*[npts]; // define an histogram of limits for each mass point
-
   for (int k=0; k<npts; k++) {
     
     //    cout << "Book limit histograms " << k << " / " << npts << endl;
@@ -195,35 +199,38 @@ void rereadfulllim(int seedStem){ // for example 8000
   na64lim->SetFillStyle(3001);
   na64lim->Draw("3same");
 
-  limit90Exp[0]->SetFillColor(kGreen);
-  limit90Exp[0]->SetFillStyle(3001);
-  limit90Exp[0]->Draw("3same");
-
-
+  if (jgood) {
+    limit90Exp[0]->SetFillColor(kGreen);
+    limit90Exp[0]->SetFillStyle(3001);
+    limit90Exp[0]->Draw("3same");
 
   // PATCH FOR POT ERROR IMPROVEMENT - WITH 5E10 POT / point and 47 points and 0.3% error on efficiency and 0.3% error on B
-  const double improvementFactor = 1.;//0.77; // sqrt(0.6/2. \oplus 0.3)/sqrt(0.6 \oplus 0.3)
-  for (int i=0; i<2; i++){
-    for (int j=0; j<limit90Exp[i]->GetN(); j++){
-      limit90Exp[i]->SetPoint(j,limit90Exp[i]->GetX()[j],limit90Exp[i]->GetY()[j]*improvementFactor);
-      limit90Exp[i]->SetPointError(j,0.,0.,limit90Exp[i]->GetEYlow()[j]*improvementFactor,limit90Exp[i]->GetEYhigh()[j]*improvementFactor);
+    const double improvementFactor = 1.;//0.77; // sqrt(0.6/2. \oplus 0.3)/sqrt(0.6 \oplus 0.3)
+    for (int i=0; i<2; i++){
+      for (int j=0; j<limit90Exp[i]->GetN(); j++){
+	limit90Exp[i]->SetPoint(j,limit90Exp[i]->GetX()[j],limit90Exp[i]->GetY()[j]*improvementFactor);
+	limit90Exp[i]->SetPointError(j,0.,0.,limit90Exp[i]->GetEYlow()[j]*improvementFactor,limit90Exp[i]->GetEYhigh()[j]*improvementFactor);
+      }
+    }
+    for (int j=0; j<limit90ExpMedian->GetN(); j++){
+      limit90ExpMedian->SetPoint(j,limit90ExpMedian->GetX()[j],limit90ExpMedian->GetY()[j]*improvementFactor);
     }
   }
-  for (int j=0; j<limit90ExpMedian->GetN(); j++){
-    limit90ExpMedian->SetPoint(j,limit90ExpMedian->GetX()[j],limit90ExpMedian->GetY()[j]*improvementFactor);
-  }
+
   for (int j=0; j<limit90ExpMedianRL->GetN(); j++){
     limit90ExpMedianRL->SetPoint(j,limit90ExpMedianRL->GetX()[j],limit90ExpMedianRL->GetY()[j]*improvementFactor);
   }
   
-  limit90Exp[1]->SetFillColor(kYellow);
-  limit90Exp[1]->SetFillStyle(3001);
-  limit90Exp[1]->Draw("3same");
+  if (jgood) {
+    limit90Exp[1]->SetFillColor(kYellow);
+    limit90Exp[1]->SetFillStyle(3001);
+    limit90Exp[1]->Draw("3same");
 
-  limit90ExpMedian->SetLineColor(2);
-  limit90ExpMedian->SetLineWidth(2);
-  limit90ExpMedian->SetLineStyle(1);
-  limit90ExpMedian->Draw("Lsame");
+    limit90ExpMedian->SetLineColor(2);
+    limit90ExpMedian->SetLineWidth(2);
+    limit90ExpMedian->SetLineStyle(1);
+    limit90ExpMedian->Draw("Lsame");
+  }
 
   limitStat->SetLineColor(4);
   limitStat->SetLineWidth(1);
