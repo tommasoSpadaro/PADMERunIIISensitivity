@@ -24,6 +24,7 @@ void rereadfulllim(int seedStem){ // for example 8000
   // 20000+j for efficurveOFF events analysed with efficurve OFF and the FINAL analysis of RunIII with 0.5% POT error
   // 21000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5% POT error
   // 22000+j for efficurveOFF events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5% POT error
+  // 23000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 1.0% POT error
 
   TGraph* limit90s[NPseudo]; // UL for the various pseudoevents
   TGraph* limit90sRL[NPseudo]; // RL UL for the various pseudoevents
@@ -36,6 +37,8 @@ void rereadfulllim(int seedStem){ // for example 8000
   double limitMinRL = 999999;
   double limitMaxRL = -99999;
   int jgood = 0;
+  int jgoodRL = 0;
+
   for (int j=0; j<NPseudo; j++){
     TFile* filo = new TFile(Form("%s%d.root_limits.root",inputFilesStem.Data(),seedStem+j),"OLD");
     TGraph* grafo = (TGraph*) filo->Get("Limit90");
@@ -51,15 +54,20 @@ void rereadfulllim(int seedStem){ // for example 8000
 	if (grafo->GetY()[k] < limitMin) limitMin = grafo->GetY()[k];
 	if (grafo->GetY()[k] > limitMax) limitMax = grafo->GetY()[k];
       }
-      TGraph* grafoRL = (TGraph*) filo->Get("RolkeLopezLimit90");      
+      jgood++;
+    }
+
+    TGraph* grafoRL = (TGraph*) filo->Get("RolkeLopezLimit90");      
       
+    if (grafoRL->GetN()) {
       for (int k=0; k < grafoRL->GetN(); k++){
-	limit90sRL[jgood]->SetPoint(limit90sRL[jgood]->GetN(),grafoRL->GetX()[k],grafoRL->GetY()[k]);
+	limit90sRL[jgoodRL]->SetPoint(limit90sRL[jgoodRL]->GetN(),grafoRL->GetX()[k],grafoRL->GetY()[k]);
 	if (grafoRL->GetY()[k] < limitMinRL) limitMinRL = grafoRL->GetY()[k];
 	if (grafoRL->GetY()[k] > limitMaxRL) limitMaxRL = grafoRL->GetY()[k];
       }
-      jgood++;
+      jgoodRL++;
     }
+
     filo->Close();    
   }
 
@@ -89,20 +97,53 @@ void rereadfulllim(int seedStem){ // for example 8000
 
   int npts = limit90s[0]->GetN(); // mass points
   
-  cout << "Analyse mass limits per mass point " << npts << " limits " << limitMin << " , " << limitMax <<  " RL: " << limitMinRL << " , " << limitMaxRL << endl;
+  cout << "Analyse standard mass limits per mass point " << npts << " limits " << limitMin << " , " << limitMax << endl;
   
   TH1D** limitsPerPoint = new TH1D*[npts]; // define an histogram of limits for each mass point
-  TH1D** limitsPerPointRL = new TH1D*[npts]; // define an histogram of limits for each mass point
 
   for (int k=0; k<npts; k++) {
     
     //    cout << "Book limit histograms " << k << " / " << npts << endl;
     limitsPerPoint[k] = new TH1D(Form("limitPerPoint_%d",k),Form("Limits for mass = %f",limit90s[0]->GetX()[k]),1000.,limitMin,limitMax);
-    //    cout << "Book RLlimit histograms " << k << " / " << npts << endl;
-    limitsPerPointRL[k] = new TH1D(Form("limitPerPointRL_%d",k),Form("RL Limits for mass = %f",limit90s[0]->GetX()[k]),1000.,limitMinRL,limitMaxRL);
+
     for (int j=0; j< jgood; j++){
       //      cout << "About to fill limit histograms " << k << " / " << npts << " " << j << " / " << jgood << endl;
       limitsPerPoint[k]->Fill(limit90s[j]->GetY()[k]);
+    }
+
+    // evaluate quantiles
+    cout << "About to Compute integrals of the limit histograms " << k << " / " << npts << endl;
+
+    limitsPerPoint[k]->ComputeIntegral(); // just a precaution
+
+    cout << "Compute integrals of the limit histograms " << k << " / " << npts << endl;
+
+    for (int i=0; i<5; i++){
+      limitsPerPoint[k]->GetQuantiles(1, xxx+i, qqq+i);
+      //      std::cout << " point " << k << " mass = " << limit90s[0]->GetX()[k] << "quantile = " << i << " " << xxxRL[i] << std::endl;
+    }
+
+    cout << "quantiles of the limit histograms evaluated " << k << " / " << npts << endl;
+    limit90ExpMedian->SetPoint(k,limit90s[0]->GetX()[k],xxx[2]);
+    for (int i=0; i<2; i++){
+      limit90Exp[i]->SetPoint(k,limit90s[0]->GetX()[k],xxx[2]); // median exp limit
+      limit90Exp[i]->SetPointError(k,0.,0.,xxx[2]-xxx[i],xxx[4-i]-xxx[2]); // i=0 -> 2sigma coverage, i=1 -> 1sigma coverage
+    }
+  }
+
+
+  // evaluate quantiles for the RL evaluation
+
+  int nptsRL = limit90sRL[0]->GetN(); // mass points
+  TH1D** limitsPerPointRL = new TH1D*[nptsRL]; // define an histogram of limits for each mass point
+  
+  cout << "Analyse mass limits per mass point " << npts << " RL: " << limitMinRL << " , " << limitMaxRL << endl;
+  
+  for (int k=0; k<nptsRL; k++) {
+    
+    //    cout << "Book RLlimit histograms " << k << " / " << npts << endl;
+    limitsPerPointRL[k] = new TH1D(Form("limitPerPointRL_%d",k),Form("RL Limits for mass = %f",limit90sRL[0]->GetX()[k]),1000.,limitMinRL,limitMaxRL);
+    for (int j=0; j< jgoodRL; j++){
       //      cout << "About to fill RLlimit histograms " << k << " / " << npts << " " << j << " / " << jgood << endl;
       limitsPerPointRL[k]->Fill(limit90sRL[j]->GetY()[k]);
     }
@@ -110,28 +151,24 @@ void rereadfulllim(int seedStem){ // for example 8000
     // evaluate quantiles
     cout << "About to Compute integrals of the limit histograms " << k << " / " << npts << endl;
 
-    limitsPerPoint[k]->ComputeIntegral(); // just a precaution
     limitsPerPointRL[k]->ComputeIntegral(); // just a precaution
 
     cout << "Compute integrals of the limit histograms " << k << " / " << npts << endl;
 
     for (int i=0; i<5; i++){
-      limitsPerPoint[k]->GetQuantiles(1, xxx+i, qqq+i);
       limitsPerPointRL[k]->GetQuantiles(1, xxxRL+i, qqq+i);
       //      std::cout << " point " << k << " mass = " << limit90s[0]->GetX()[k] << "quantile = " << i << " " << xxxRL[i] << std::endl;
     }
 
     cout << "quantiles of the limit histograms evaluated " << k << " / " << npts << endl;
-    limit90ExpMedian->SetPoint(k,limit90s[0]->GetX()[k],xxx[2]);
     limit90ExpMedianRL->SetPoint(k,limit90sRL[0]->GetX()[k],xxxRL[2]);
     for (int i=0; i<2; i++){
-      limit90Exp[i]->SetPoint(k,limit90s[0]->GetX()[k],xxx[2]); // median exp limit
-      limit90Exp[i]->SetPointError(k,0.,0.,xxx[2]-xxx[i],xxx[4-i]-xxx[2]); // i=0 -> 2sigma coverage, i=1 -> 1sigma coverage
       limit90ExpRL[i]->SetPoint(k,limit90sRL[0]->GetX()[k],xxxRL[2]); // median exp limit
       limit90ExpRL[i]->SetPointError(k,0.,0.,xxxRL[2]-xxxRL[i],xxxRL[4-i]-xxxRL[2]);
     }
   }
 
+  
   
   cout << "Analyse mass limits per mass point " << npts << endl;
   
