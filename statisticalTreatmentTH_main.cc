@@ -70,7 +70,7 @@ int main(int argc, char **argv)
     }
     else {
       std::cout << "Generating signal + background pseudodata to output file with name---" << configPtr->GetGeneOutputFileName().Data() << std::endl;
-      statT->SimulateSignalPlusBkgPseudoDataToFile(configPtr->GetGeneOutputFileName()); // do the toyoftoy background only simulation
+      statT->SimulateSignalPlusBkgPseudoDataToFile(configPtr->GetGeneOutputFileName()); // do the toyoftoy signal+background simulation
     }
     printf("GeneMode...done\n");
     return 0;
