@@ -1,6 +1,6 @@
 GeneMode 1
 BkgOnlyGeneMode 1
-GeneOutputFileName output/geneToyMCVersion2_seed3100_useNuis1_useEffiOverBkgCurve1.root
+GeneOutputFileName output/geneToyMCVersion2_POTErrorScanLevel_seed6100_useNuis1_useEffiOverBkgCurve1.root
 ReadMode 0
 ToyOfToyMode 1
 InputFileNameNObsFromFile output/geneNObsSigPlusBkg.root
@@ -12,8 +12,9 @@ NumberOfGenerationsExpectedLimit 100
 UseNuisance 1
 CorrectBkgBias 0
 AssumeEffiOverBkgCurve 1
+StraightFitMode 0
 EvaluateExpLimit 1
-Seed 2100
+Seed 6100
 Verbosity 0
 MassStep 0.02
 MassMin 16.22
@@ -22,7 +23,7 @@ NgveBins 20
 gveMin 0.0001
 gveMax 0.0008
 FrequentistNPoints 2
-InputFileName ~/PADME/PADME_sensitivity/input/MCVersion2_POT0.005_BKG0.006_EFF0.004.root
+InputFileName ~/PADME/PADME_sensitivity/input/MCVersion2_POTErrorScanLevel_BKG0.006_EFF0.004.root
 ManipulateInput 0
 ErrorImprove 1.
 SignalPeakYield 13.56

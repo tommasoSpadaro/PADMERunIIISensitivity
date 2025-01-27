@@ -13,6 +13,7 @@ NumberOfGenerationsExpectedLimit 1
 UseNuisance 1
 CorrectBkgBias 0
 AssumeEffiOverBkgCurve 0
+StraightFitMode 0
 EvaluateExpLimit 1
 Seed 0
 Verbosity 0
