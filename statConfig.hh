@@ -31,6 +31,7 @@ public:
   // Standard mode [if no readmode and no genemode]
 
   Bool_t GetToyOfToyMode(){return fToyOfToyMode;} // if true -> generate background pseudo data while making the expected limit
+
   // if ToyOfToyMode == kFALSE:
   TString GetInputFileNameNObsFromFile(){return fInputFileNameNObsFromFile;} // filename where the input NObs must be retrieved
   Bool_t GetBkgOnlyNObsFromFile(){return fBkgOnlyNObsFromFile;}// use the bkg-only NObs from the input file
@@ -40,11 +41,12 @@ public:
   
   // Other settings
   Int_t GetNumberOfGenerations(){return fNumberOfGenerations;} // number of toys
-  Int_t GetNumberOfGenerationsExpectedLimit(){return fNumberOfGenerationsExpectedLimit;} // number of pseudo data 
+  Int_t GetNumberOfGenerationsExpectedLimit(){return fNumberOfGenerationsExpectedLimit;} // number of pseudo data events
 
   Bool_t GetUseNuisance(){return fUseNuisance;} // by default true = use nuisances
   Bool_t GetCorrectBkgBias(){return fCorrectBkgBias;} // by default false = do not correct bkg bias
   Bool_t GetAssumeEffiOverBkgCurve(){return fAssumeEffiOverBkgCurve;} // by default false = do not assume sqrt(s) dependence of effi/(bkg/pot)
+  Bool_t GetStraightFitMode(){return fStraightFitMode;} // by default false. If true -> greatly reduce number of nuisances fitting N2/POT/B with functions of sqrt(s)
   Bool_t GetEvaluateExpLimit(){return fEvaluateExpLimit;}
   Int_t GetSeed(){return fSeed;}
   Int_t GetVerbosity(){return fVerbosity;}
@@ -127,6 +129,7 @@ private:
   Bool_t fUseNuisance; // by default use nuisance
   Bool_t fCorrectBkgBias; // by default do not correct it
   Bool_t fAssumeEffiOverBkgCurve; // by default do not assume it
+  Bool_t fStraightFitMode; // by default do not use it
   Bool_t fEvaluateExpLimit;
   Int_t fSeed;
   Int_t fVerbosity;

@@ -198,7 +198,7 @@ void statisticalTreatmentTH::Init(){
   }
 
 
-  // iniialise the other observables
+  // initialise the other observables
 
   fObservables.SignalPeakYieldObs = fConfigPtr->GetSignalPeakYield();   // 13.56, times the voigt value at the peak gives a signal yield at the peak of 2.26 x gve^2 for BES = 0.0022 (1.80 x gve^2 at BES=0.005)
   //fObservables.SignalPeakYieldObs = 12.46;          // this, times the voigt value at the peak gives a signal yield at the peak of 2.26 x gve^2 for BES = 0.0022 (1.80 x gve^2 at BES=0.005)
@@ -571,7 +571,7 @@ void statisticalTreatmentTH::ReadOutput(TString filename){
   TEfficiency::EStatOption option = static_cast<TEfficiency::EStatOption>(2); //2=Wilson, 5=jeffrey?
 
   TF1* clsfunInv = new TF1("clsfunInv","[2]*TMath::ATanH(1-x/[0])+[1]",0.,1.);
-  TF1* clsfun = new TF1("clsfun","[0]*(1-TMath::TanH((x-[1])/[2]))",fgveMin-1E-4,fgveMax+1E-4);
+  TF1* clsfun = new TF1("clsfun","TMath::Abs([0])*(1-TMath::TanH((x-TMath::Abs([1]))/TMath::Abs([2])))",fgveMin-1E-4,fgveMax+4E-4);
   clsfun->SetParameter(0,0.5);
   //  clsfun->SetParLimits(0,0.3,0.7);
   clsfun->SetParameter(1,2E-4);
@@ -617,16 +617,17 @@ void statisticalTreatmentTH::ReadOutput(TString filename){
 //	if (gveVSCLsLoc->GetY()[gveVSCLsLoc->GetN()-1] < 0.05) limit95->SetPoint(limit95->GetN(),massOld,gveVSCLsLoc->Eval(0.05));
 
 	gveVSCLsLoc->Sort(); // sort by gven
-	if (gveVSCLsLoc->GetY()[gveVSCLsLoc->GetN()-1] < 0.1) {
+	if (gveVSCLsLoc->GetY()[gveVSCLsLoc->GetN()-1] < 0.5) {
 	  clsfun->SetParameter(0,0.5);
 	  clsfun->SetParameter(1,2E-4);
 	  clsfun->SetParameter(2,2E-4);
 	  TFitResultPtr fitptr = gveVSCLsLoc->Fit("clsfun","MS","",2E-4,1E-3);
-	  if (fitptr.Get()->Status()==0) { // fit OK
+	  if (fitptr.Get()->IsValid()) { // fit OK
 	    for (int q = 0; q<3; q++) clsfunInv->SetParameter(q,clsfun->GetParameter(q));	    
 	    limit90->SetPoint(limit90->GetN(),massOld, clsfunInv->Eval(0.1));
 	    limit95->SetPoint(limit90->GetN(),massOld, clsfunInv->Eval(0.05));
 	  } else { // fit not OK
+	    cout << "Fit " << massOld << " Not OK " << (int( fitptr.Get()->Status())) << endl;
 	    TGraphAsymmErrors* gveVSCLsLocInv = new TGraphAsymmErrors();
 	    for (int q = 0; q<gveVSCLsLoc->GetN(); q++){ // invert X and Y
 	      gveVSCLsLocInv->SetName(Form("gveVSCLsLoc%f_graphInv",massOld));
@@ -683,16 +684,17 @@ void statisticalTreatmentTH::ReadOutput(TString filename){
   // fill limits, if we can interpolate
   if (fCLsTree->GetEntries()){
     gveVSCLsLoc->Sort();
-    if (gveVSCLsLoc->GetY()[gveVSCLsLoc->GetN()-1] < 0.1) {
+    if (gveVSCLsLoc->GetY()[gveVSCLsLoc->GetN()-1] < 0.5) {
       clsfun->SetParameter(0,0.5);
       clsfun->SetParameter(1,2E-4);
       clsfun->SetParameter(2,2E-4);
       TFitResultPtr fitptr = gveVSCLsLoc->Fit("clsfun","MS","",2E-4,1E-3);
-      if (fitptr.Get()->Status()==0) { // fit OK
+      if (fitptr.Get()->IsValid()) { // fit OK
 	for (int q = 0; q<3; q++) clsfunInv->SetParameter(q,clsfun->GetParameter(q));	    
 	limit90->SetPoint(limit90->GetN(),massOld, clsfunInv->Eval(0.1));
 	limit95->SetPoint(limit90->GetN(),massOld, clsfunInv->Eval(0.05));
       } else { // fit not OK
+	cout << "Last fit " << massOld << " Not OK " << (int( fitptr.Get()->Status())) << endl;
 	TGraphAsymmErrors* gveVSCLsLocInv = new TGraphAsymmErrors();
 	for (int q = 0; q<gveVSCLsLoc->GetN(); q++){ // invert X and Y
 	  gveVSCLsLocInv->SetName(Form("gveVSCLsLoc%f_graphInv",massOld));
@@ -781,10 +783,10 @@ void statisticalTreatmentTH::initFitters(bool bonly){
   // 12+3npts             EffiOverBP1_0 scan period 0
   // 13+3npts             EffiOverBP0_1 scan period 1
   // 14+3npts             EffiOverBP1_1 scan period 1
-  //
+  // 15+3npts             StraightFitMode <--- always fixed
 
   // total number of parameters passed to the likelihood
-  int npars = 15+3*npts; // 5 always fixed, 10 + 3 * npts depending on the setup 
+  int npars = 16+3*npts; // 6 always fixed, 10 + 3 * npts depending on the setup 
 
   // Number of free parameters:
   // if (UseNuisance)     
@@ -826,6 +828,7 @@ void statisticalTreatmentTH::initFitters(bool bonly){
   parnames[12+3*npts]= "EffiOverBkgTrueP1_0"   ; parinput[12+3*npts]= fTheta_S.EffiOverBkgTrueP1[0]          ; parstep[12+3*npts]= fExpectedErrors.EffiOverBkgErrP1[0]*0.01;    
   parnames[13+3*npts]= "EffiOverBkgTrueP0_1"   ; parinput[13+3*npts]= fTheta_S.EffiOverBkgTrueP0[1]          ; parstep[13+3*npts]= fExpectedErrors.EffiOverBkgErrP0[1]*0.01;    
   parnames[14+3*npts]= "EffiOverBkgTrueP1_1"   ; parinput[14+3*npts]= fTheta_S.EffiOverBkgTrueP1[1]          ; parstep[14+3*npts]= fExpectedErrors.EffiOverBkgErrP1[1]*0.01;    
+  parnames[15+3*npts]= "IsStraightFit"         ; parinput[15+3*npts]= fConfigPtr->GetStraightFitMode()       ; parstep[15+3*npts]= 0; // if true -> override AssumeEffiOverBkg and sets it to TRUE
 
   std::cout << "StatisticalTreatement > InitFitter > First fit par settings done for bonly = " << bonly << endl;
   
@@ -838,6 +841,7 @@ void statisticalTreatmentTH::initFitters(bool bonly){
     fFitterB.Config().ParSettings(2).Fix(); // coupling is always fixed
     fFitterB.Config().ParSettings(7+3*npts).Fix(); // flag to correct the N2cl/pot/(bkg/pot) bias 
     fFitterB.Config().ParSettings(10+3*npts).Fix(); // flag to assume the Effi/(Bkg/pot) curve
+    fFitterB.Config().ParSettings(15+3*npts).Fix(); // flag to apply a fit to N2/(POT B)
 
     for (uint i=0; i<(uint)npts; i++)     fFitterB.Config().ParSettings(3+npts+i).Fix(); // fix signal effi parameters
     for (uint i=0; i< 3; i++)   fFitterB.Config().ParSettings(i+3+2*npts).Fix();         // fix the 3 signal shape parameters
@@ -852,9 +856,14 @@ void statisticalTreatmentTH::initFitters(bool bonly){
 	fFitterB.Config().ParSettings(8+3*npts+i).Fix();         // fix P0,P1 of the bias curve
       }
     }
+    // straight fit mode: only fit POT bias
+    if (fConfigPtr->GetStraightFitMode()){
+      for (uint i=0; i<(uint)npts; i++)              fFitterB.Config().ParSettings(3+i).Fix(); // fix POT point-by-point
+      for (uint i=0; i<(uint)npts; i++)              fFitterB.Config().ParSettings(7+2*npts+i).Fix(); // fix B point-by-point
+    }
   }
   else {
-    fFitterSB.SetFCN(npars, fLikeli); // flag_sb/b, mass, gve, signalPeak, LorentzianW, BES, potscale, 3 array: pottrue, signaleffitrue, bkgtrue
+    fFitterSB.SetFCN(npars, fLikeli); // flag_sb/b, mass, gve, signalPeak, LorentzianW, BES, potscale, 3 array: pottrue, signaleffitrue, bkgtrue; straightFitMode
     for (int ip=0; ip < npars; ip++) fFitterSB.Config().ParSettings(ip) = ROOT::Fit::ParameterSettings(parnames[ip].Data(),parinput[ip],parstep[ip]);
   
     fFitterSB.Config().ParSettings(0).Fix(); // used to define S+B or B fits
@@ -862,6 +871,7 @@ void statisticalTreatmentTH::initFitters(bool bonly){
     fFitterSB.Config().ParSettings(2).Fix(); // coupling is always fixed
     fFitterSB.Config().ParSettings(7+3*npts).Fix(); // flag to correct the N2cl/pot/(bkg/pot) bias 
     fFitterSB.Config().ParSettings(10+3*npts).Fix(); // flag to assume the Effi/(Bkg/pot) curve
+    fFitterSB.Config().ParSettings(15+3*npts).Fix(); // flag to apply a fit to N2/(POT B)
 
     if (fConfigPtr->GetCorrectBkgBias()){ // USE the bias curve, therefore remove the potscale parameter, substituted by the curve
       fFitterSB.Config().ParSettings(6+2*npts).SetValue(1);
@@ -883,6 +893,14 @@ void statisticalTreatmentTH::initFitters(bool bonly){
 	}
       }
     }
+
+    // straight fit mode: only fit POT bias, signal shape parameters, effi/bkg curve parameters
+    if (fConfigPtr->GetStraightFitMode()){
+      for (uint i=0; i<(uint)npts; i++)              fFitterSB.Config().ParSettings(3+i).Fix(); // fix POT point-by-point
+      for (uint i=0; i<(uint)npts; i++)              fFitterSB.Config().ParSettings(7+2*npts+i).Fix(); // fix B point-by-point
+    }
+
+    
   }
 
   std::cout << "StatisticalTreatement > InitFitter > Second fit par settings done for bonly = " << bonly << endl;
@@ -911,7 +929,10 @@ void statisticalTreatmentTH::initFitters(bool bonly){
       if (!fFitterSB.Config().ParSettings(ip).IsFixed()) freePars++;
     }
   }
-  std::cout << "StatisticalTreatment >> InitFitter with UseBias " << fConfigPtr->GetCorrectBkgBias() << " assumeEffiCurve = " << fConfigPtr->GetAssumeEffiOverBkgCurve() <<
+  std::cout << "StatisticalTreatment >> InitFitter with" <<
+    " UseBias " << fConfigPtr->GetCorrectBkgBias() <<
+    " assumeEffiCurve = " << fConfigPtr->GetAssumeEffiOverBkgCurve() <<
+    " straightFitMode = " << fConfigPtr->GetStraightFitMode() << 
     " freeParameters for bOnly = " << bonly << " are " << freePars << endl;
   
 }

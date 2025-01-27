@@ -139,7 +139,7 @@ class Likelihood {
      // par[12+3*npts]= EffiOverBkgTrueP1_0 <-- slope, first period of the scan
      // par[13+3*npts]= EffiOverBkgTrueP0_1 <-- constant term, second period of the scan
      // par[14+3*npts]= EffiOverBkgTrueP1_1 <-- slope, second period of the scan
-
+     // par[15+3*npts]= StraightFitMode     <-- always fixed. If true, fit N2/(POT x B) instead of N2 
      
      bool isSBfit = (par[0]==0);
      double mass = par[1];
@@ -157,6 +157,7 @@ class Likelihood {
      bool assumeEffiOverBkgCurve = par[10+3*npts];
      double effiOverBkgTrueP0[2] = {par[11+3*npts],par[13+3*npts]};
      double effiOverBkgTrueP1[2] = {par[12+3*npts],par[14+3*npts]};
+     bool isStraightFit = (par[15+3*npts]==1);
 
      //calculate -2log(likelihood)
 
@@ -189,7 +190,7 @@ class Likelihood {
        chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.BESErr) + log2pi;
 
        // if using effi/bkg curve, include the errors on the parameters in the likelihood 
-       if (assumeEffiOverBkgCurve){ // parameterisation of the effi/(bkg/pot) vs sqrt(s)
+       if (assumeEffiOverBkgCurve || isStraightFit){ // parameterisation of the effi/(bkg/pot) vs sqrt(s)
 	 for (int k=0; k<2; k++){ // two scan periods
 	   double oneMinusRho2 = (1.-fExpectedErrors.EffiOverBkgErrP0P1Corr[k]*fExpectedErrors.EffiOverBkgErrP0P1Corr[k]);
 	   delta =
@@ -203,58 +204,89 @@ class Likelihood {
      }
 
      //     std::cout << "chisq step 1a is " << chisq << endl;
-     
-     for (uint i=0; i < npts; i++) {        
-       // bkg/pot per point nuisances
-       delta = (fObservables.BkgObs.at(i) - par[bkgTrueIdx + i])/fExpectedErrors.BkgErr.at(i); // true values of bkg/pot vs sqrt(s)
-       chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.BkgErr.at(i)) + log2pi;
 
-       // local error on the pot
-       double errpotloc = fExpectedErrors.POTLocalErr.at(i);
-       delta = (fObservables.POTObs.at(i) - par[potTrueIdx + i])/errpotloc; // true values of the POT per point
-       chisq += delta*delta;// + 2.*TMath::Log(errpotloc) + log2pi;
+     if (isStraightFit){ // do not fit B, POT but only use N2/(B POT). Assume effi/b as a linear function of sqrt(s)
 
-       // expected number of bkg events       
-       double bc = par[bkgTrueIdx + i]*par[potTrueIdx + i]*1E10; // (Nbkg/POT)true x POT_i_true
-       if (useBkgBias) bc *= (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (Nbkg/POT)true x POT_i_true x (BiasP0 + BiasP1*(sqrt(s)-16.92))
-       else            bc *= potScaleTrue;                                                         // (Nbkg/POT)true x POT_i_true x POT_scale_true
+       for (uint i=0; i < npts; i++) {        
+	 delta = (fObservables.NObs.at(i)/(fObservables.POTObs.at(i)*1E10*fObservables.BkgObs.at(i))); // N2/(POT B) 
 
-       // expected number of signal events
-       double sc = 0;
-       if (isSBfit) {
+	 double relerrsq = 
+	   (fExpectedErrors.BkgErr.at(i)/fObservables.BkgObs.at(i))*(fExpectedErrors.BkgErr.at(i)/fObservables.BkgObs.at(i)) +
+	   (fExpectedErrors.POTLocalErr.at(i)/fObservables.POTObs.at(i))*(fExpectedErrors.POTLocalErr.at(i)/fObservables.POTObs.at(i)) +
+	   (1./fObservables.NObs.at(i));
 
-	 //PROVA	 double eRes = (mass*mass - 2*me*me)/(2.*(me+Wb));
-	 //PROVA	 double eBeam = (fObservables.SqrtsObs.at(i)*fObservables.SqrtsObs.at(i) - 2*me*me)/(2.*me); // s = 2me^2 + 2meEbeam -> eBeam = (s-2me^2) / 2me
+	 // bias on the POT
+	 double expval = 0;
+	 if (useBkgBias) expval = (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
+	 else            expval = potScaleTrue;                                                            // POT_scale_true
 
-	 sc = gve*gve*par[potTrueIdx+i]*1E10*Likelihood::SignalShape(signalPeakYieldTrue,BESTrue,signalLorentzianWidthTrue,mass,fObservables.SqrtsObs.at(i));
-	 if (useBkgBias) sc *= (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
-	 else            sc *= potScaleTrue;                                                         // POT_scale_true
-
-	 if (assumeEffiOverBkgCurve){
-	   sc *= par[bkgTrueIdx + i]*(effiOverBkgTrueP0[fObservables.ScanPeriod.at(i)] + effiOverBkgTrueP1[fObservables.ScanPeriod.at(i)]*(fObservables.SqrtsObs.at(i)-SQRTSMID)); // effi = (bkg/pot)*(linear func)
-	 } else {
-	   sc *= par[effiTrueIdx+i]; // effi
-	   delta = (fObservables.SignalEffiLocalObs.at(i)-par[effiTrueIdx + i])/fExpectedErrors.SignalEffiLocalErr.at(i); 
-	   chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.SignalEffiLocalErr.at(i)) + log2pi; // chi^2 from effi_i
+	 // expected number of signal events (0 if background-only fit)
+	 double sc = 0;
+	 if (isSBfit) {
+	   sc = gve*gve*Likelihood::SignalShape(signalPeakYieldTrue,BESTrue,signalLorentzianWidthTrue,mass,fObservables.SqrtsObs.at(i));
+	   sc *= (effiOverBkgTrueP0[fObservables.ScanPeriod.at(i)] + effiOverBkgTrueP1[fObservables.ScanPeriod.at(i)]*(fObservables.SqrtsObs.at(i)-SQRTSMID)); // effi/B = (linear func)
 	 }
-	 
-	 //PROVA	 sc = signalPeakYieldTrue*gve*gve*par[potTrueIdx + i]*1E10*potScaleTrue*par[effiTrueIdx + i]*TMath::Voigt(eBeam-eRes,BESTrue*eBeam,signalLorentzianWidthTrue*2,4);
-	 //	 std::cout << "mass = " << mass << " gve = " << gve << " eRes = " << eRes << " eBeam = " << eBeam << " signal = " << sc << endl;
 
-	 //	 if (i==23 || i==46) std::cout << "chisq step 2 i = " << i << " is " << chisq << endl;
-	 
-       } 
+	 expval *= (1.+sc);
+	 chisq += (delta-expval)*(delta-expval)/(delta*delta*relerrsq);
+       }
 
-       // statistical term
-       double errcount = TMath::Sqrt(sc+bc);
-       delta = (fObservables.NObs.at(i) - sc - bc)/errcount;
-       chisq += delta*delta;// + 2.*TMath::Log(errcount) + log2pi;	 
+
      }
+     else {
 
+       for (uint i=0; i < npts; i++) {        
+
+       // bkg/pot per point nuisances
+	 delta = (fObservables.BkgObs.at(i) - par[bkgTrueIdx + i])/fExpectedErrors.BkgErr.at(i); // true values of bkg/pot vs sqrt(s)
+	 chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.BkgErr.at(i)) + log2pi;
+
+	 // local error on the pot
+	 double errpotloc = fExpectedErrors.POTLocalErr.at(i);
+	 delta = (fObservables.POTObs.at(i) - par[potTrueIdx + i])/errpotloc; // true values of the POT per point
+	 chisq += delta*delta;// + 2.*TMath::Log(errpotloc) + log2pi;
+
+	 // expected number of bkg events       
+	 double bc = par[bkgTrueIdx + i]*par[potTrueIdx + i]*1E10; // (Nbkg/POT)true x POT_i_true
+	 if (useBkgBias) bc *= (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (Nbkg/POT)true x POT_i_true x (BiasP0 + BiasP1*(sqrt(s)-16.92))
+	 else            bc *= potScaleTrue;                                                         // (Nbkg/POT)true x POT_i_true x POT_scale_true
+
+	 // expected number of signal events
+	 double sc = 0;
+	 if (isSBfit) {
+
+	   //PROVA	 double eRes = (mass*mass - 2*me*me)/(2.*(me+Wb));
+	   //PROVA	 double eBeam = (fObservables.SqrtsObs.at(i)*fObservables.SqrtsObs.at(i) - 2*me*me)/(2.*me); // s = 2me^2 + 2meEbeam -> eBeam = (s-2me^2) / 2me
+
+	   sc = gve*gve*par[potTrueIdx+i]*1E10*Likelihood::SignalShape(signalPeakYieldTrue,BESTrue,signalLorentzianWidthTrue,mass,fObservables.SqrtsObs.at(i));
+	   if (useBkgBias) sc *= (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
+	   else            sc *= potScaleTrue;                                                         // POT_scale_true
+
+	   if (assumeEffiOverBkgCurve){
+	     sc *= par[bkgTrueIdx + i]*(effiOverBkgTrueP0[fObservables.ScanPeriod.at(i)] + effiOverBkgTrueP1[fObservables.ScanPeriod.at(i)]*(fObservables.SqrtsObs.at(i)-SQRTSMID)); // effi = (bkg/pot)*(linear func)
+	   } else {
+	     sc *= par[effiTrueIdx+i]; // effi
+	     delta = (fObservables.SignalEffiLocalObs.at(i)-par[effiTrueIdx + i])/fExpectedErrors.SignalEffiLocalErr.at(i); 
+	     chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.SignalEffiLocalErr.at(i)) + log2pi; // chi^2 from effi_i
+	   }
+	 
+	   //PROVA	 sc = signalPeakYieldTrue*gve*gve*par[potTrueIdx + i]*1E10*potScaleTrue*par[effiTrueIdx + i]*TMath::Voigt(eBeam-eRes,BESTrue*eBeam,signalLorentzianWidthTrue*2,4);
+	   //	 std::cout << "mass = " << mass << " gve = " << gve << " eRes = " << eRes << " eBeam = " << eBeam << " signal = " << sc << endl;
+
+	   //	 if (i==23 || i==46) std::cout << "chisq step 2 i = " << i << " is " << chisq << endl;
+	 
+	 } 
+
+	 // statistical term
+	 double errcount = TMath::Sqrt(sc+bc);
+	 delta = (fObservables.NObs.at(i) - sc - bc)/errcount;
+	 chisq += delta*delta;// + 2.*TMath::Log(errcount) + log2pi;	 
+       }
+     } // standard fit mode: N2  = F(s) POT x (B + epsilon S ) or F(s) POT B (1 + G(s) S)
      //     std::cout << "chisq step 3 is " << chisq << endl;
      return chisq;
-   }
-};
+   } // operator ()
+}; // Likelihood class
 
 
 
