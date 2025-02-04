@@ -66,11 +66,11 @@ statConfig::statConfig(){
   fCorrectBkgBias = false; // by default do not correct for bkg bias vs sqrt(s)
   fFieldStrings.push_back(std::pair{"CorrectBkgBias",sFFB});
 
-  fAssumeEffiOverBkgCurve = false; // by default do not assume a curve for effi/(bkg/pot) vs sqrt(s)
-  fFieldStrings.push_back(std::pair{"AssumeEffiOverBkgCurve",sFFB});
+  fAssumeEffiOverBkgCurve = 0; // by default do not assume a curve for effi/(bkg/pot) vs sqrt(s)
+  fFieldStrings.push_back(std::pair{"AssumeEffiOverBkgCurve",sFFI});
 
-  fStraightFitMode = false; // by default do not use the straight fit mode
-  fFieldStrings.push_back(std::pair{"StraightFitMode",sFFB});
+  fStraightFitMode = 0; // by default do not use the straight fit mode
+  fFieldStrings.push_back(std::pair{"StraightFitMode",sFFI});
 
   fEvaluateExpLimit = true;
   fFieldStrings.push_back(std::pair{"EvaluateExpLimit",sFFB});
@@ -264,9 +264,9 @@ void statConfig::readConfigFromFile(TString datacardName){
     }
   }
 
-  if (fStraightFitMode){
-    std::cout << "statCondig>> SetStraightFitMode to TRUE --> override AssumeEffiOverBkgCurve to TRUE" << endl;
-    fAssumeEffiOverBkgCurve = kTRUE;
+  if (fStraightFitMode && fAssumeEffiOverBkgCurve == 0){
+    std::cout << "statCondig>> SetStraightFitMode to TRUE --> override AssumeEffiOverBkgCurve to 2" << endl;
+    fAssumeEffiOverBkgCurve = 2;
   }
   
   return;
@@ -305,6 +305,8 @@ int statConfig::useInputString(TString sStr){
 	else if (fieldString.EqualTo("Verbosity")) fVerbosity = inputstrvalI;
 	else if (fieldString.EqualTo("NgveBins")) fNgveBins = inputstrvalI;
 	else if (fieldString.EqualTo("FrequentistNPoints")) fFrequentistNPoints = inputstrvalI;
+	else if (fieldString.EqualTo("AssumeEffiOverBkgCurve")) fAssumeEffiOverBkgCurve = inputstrvalI;
+	else if (fieldString.EqualTo("StraightFitMode")) fStraightFitMode = inputstrvalI;
 	else {
 	  std::cerr << "Wrong input field string for integer value: " << fieldString.Data() << std::endl;
 	  return -1;	  
@@ -366,8 +368,6 @@ int statConfig::useInputString(TString sStr){
 	else if (fieldString.EqualTo("BkgOnlyNObsFromFile")) fBkgOnlyNObsFromFile = inputstrvalB;
 	else if (fieldString.EqualTo("UseNuisance")) fUseNuisance = inputstrvalB;
 	else if (fieldString.EqualTo("CorrectBkgBias")) fCorrectBkgBias = inputstrvalB;
-	else if (fieldString.EqualTo("AssumeEffiOverBkgCurve")) fAssumeEffiOverBkgCurve = inputstrvalB;
-	else if (fieldString.EqualTo("StraightFitMode")) fStraightFitMode = inputstrvalB;
 	else if (fieldString.EqualTo("EvaluateExpLimit")) fEvaluateExpLimit = inputstrvalB;
 	else if (fieldString.EqualTo("ManipulateInput")) fManipulateInput = inputstrvalB;
 	else {

@@ -12,8 +12,60 @@
 void rereadfulllim(int seedStem){ // for example 8000
 
   TString inputFilesStem = "./output/statisticalTest_massSteps_71_massRange_16.22_17.62_UseNuis1_seed";
-  if (seedStem==8000) inputFilesStem = "PADME_sensitivity/output/statisticalTest_massSteps_60_massRange_16.32_17.52_UseNuis1_seed";
-  const int NPseudo = 30;
+  int NPseudo = 30;
+  double massMin = 16.22;
+  double massMax = 17.62;
+  if (seedStem==8000) inputFilesStem = "./output/statisticalTest_massSteps_60_massRange_16.32_17.52_UseNuis1_seed";
+  if (seedStem==28000 || seedStem==40000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_24_massRange_16.22_17.62_UseNuis1_seed";
+    NPseudo = 90; // maybe 91
+  }
+  if (seedStem==50000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 98; // maybe 91
+    massMax = 17.74;
+  }
+  if (seedStem==60000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 100; 
+    massMax = 17.74;
+  }
+  if (seedStem==70000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 100; 
+    massMax = 17.74;
+  }
+  if (seedStem==80000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 200; 
+    massMax = 17.74;
+  }
+  if (seedStem==90000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 98; 
+    massMax = 17.74;
+  }
+  if (seedStem==100000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 48; 
+    massMax = 17.74;
+  }
+  if (seedStem==110000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 199; 
+    massMax = 17.74;
+  }
+  if (seedStem==120000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 40; 
+    massMax = 17.74;
+  }
+  if (seedStem==130000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_errorDownBy10.0_seed";
+    NPseudo = 140; 
+    massMax = 17.74;
+  }
+   
   //use 100+j for the normal events
   // 3000+j for efficurveON events analysed with efficurveON
   // 5000+j for efficurveON events analysed with efficurve ON but yield down by 0.5
@@ -25,12 +77,23 @@ void rereadfulllim(int seedStem){ // for example 8000
   // 21000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5% POT error
   // 22000+j for efficurveOFF events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5% POT error
   // 23000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 1.0% POT error
-
-  TGraph* limit90s[NPseudo]; // UL for the various pseudoevents
-  TGraph* limit90sRL[NPseudo]; // RL UL for the various pseudoevents
+  // 24000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5%/1.0% POT error depending on the scan part
+  // 25000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5%/1.0% POT error depending on the scan part and signal(16.90, 8E-4) + bkg
+  // 26000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5%/1.0% POT error depending on the scan part and signal(16.90, 7E-4) + bkg
+  // 27000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5%/1.0% POT error depending on the scan part and signal(16.90, 1E-4) + bkg
+  // 28000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5%/1.0% POT error depending on the scan part with bkg-only pseudoevents
+  // 28000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5%/1.0% POT error depending on the scan part with bkg-only pseudoevents fewer mass points, 90 evts
+  // 50000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5%/1.0% POT error depending on the scan part with bkg-only pseudoevents + straightFitMode ON
+  // 70000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5%/1.0% POT error depending on the scan part with signal(16.90, 6E-4) pseudoevents + straightFitMode ON
+  // 80000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5%/1.0% POT error depending on the scan part with bkg-only pseudoevents + straightFitMode ON POT=1E10
+  // 90000+j for efficurveON events analysed with efficurve ON and the FINAL analysis of RunIII with 0.5%/1.0% POT error depending on the scan part with bkg-only pseudoevents + straightFitMode ON POT=1E10 and single curve for effi/bkg for the entire scan
+  // 100000+j effcurvON, FINAL analysis RunIII with 0.5%/1.0% POT error, bkg-only pseudoevents + straightFitMode ON POT=1E10, single effi/b curve, DO NOT MINIMIZE ON THE TOYS
+  // 110000+j effcurvON, FINAL analysis RunIII with 0.5%/1.0% POT error, bkg-only pseudoevents + straightFitMode=1 POT=1E10, single effi/b curve, DO NOT MINIMIZE ON THE TOYS
+  // 120000+j effcurvON, FINAL analysis RunIII with 0.5%/1.0% POT error, bkg-only pseudoevents + straightFitMode=2 POT=1E10, assumeeffioverb=2, DO NOT MINIMIZE ON THE TOYS, new code
+  // 130000+j effcurvON, FINAL analysis RunIII with 0.5%/1.0% POT error, bkg-only pseudoevents + straightFitMode=2 POT=1E10, assumeeffioverb=1, DO NOT MINIMIZE ON THE TOYS, new code, Error on B down by x10
+  TGraph** limit90s = new TGraph*[NPseudo]; // UL for the various pseudoevents
+  TGraph** limit90sRL = new TGraph*[NPseudo]; // RL UL for the various pseudoevents
   TGraph* limitStat;
-  const double massmin = 16.22;
-  const double massmax = 17.62;
 
   double limitMin = 999999;
   double limitMax = -99999;
@@ -38,7 +101,9 @@ void rereadfulllim(int seedStem){ // for example 8000
   double limitMaxRL = -99999;
   int jgood = 0;
   int jgoodRL = 0;
-
+  int pseudoev[10000] = {0};
+  TCanvas* canvaAllLim = new TCanvas("canvaAllLim");
+  canvaAllLim->Divide(6,5);
   for (int j=0; j<NPseudo; j++){
     TFile* filo = new TFile(Form("%s%d.root_limits.root",inputFilesStem.Data(),seedStem+j),"OLD");
     TGraph* grafo = (TGraph*) filo->Get("Limit90");
@@ -50,9 +115,12 @@ void rereadfulllim(int seedStem){ // for example 8000
 
       for (int k=0; k < grafo->GetN(); k++){
 	limit90s[jgood]->SetPoint(limit90s[jgood]->GetN(),grafo->GetX()[k],grafo->GetY()[k]);
-	if (grafo->GetY()[k] < limitMin) limitMin = grafo->GetY()[k];
-	if (grafo->GetY()[k] > limitMax) limitMax = grafo->GetY()[k];
+	if (grafo->GetY()[k] < limitMin && grafo->GetY()[k] > 0) limitMin = grafo->GetY()[k];
+	if (grafo->GetY()[k] > limitMax && grafo->GetY()[k] < 1) limitMax = grafo->GetY()[k];
       }
+      canvaAllLim->cd(jgood+1);
+      limit90s[jgood]->Draw("AP");
+      pseudoev[jgood] = seedStem+j;
       jgood++;
     }
 
@@ -95,6 +163,8 @@ void rereadfulllim(int seedStem){ // for example 8000
 
   // evaluate quantiles for the standard limits
 
+  TCanvas* canvaQuantileAllLim = new TCanvas("canvaQuantileAllLim");
+  canvaQuantileAllLim->Divide(6,5);
   int npts = 0;
   TH1D** limitsPerPoint = 0; // define an histogram of limits for each mass point
 
@@ -113,8 +183,14 @@ void rereadfulllim(int seedStem){ // for example 8000
     for (int j=0; j< jgood; j++){
       //      cout << "About to fill limit histograms " << k << " / " << npts << " " << j << " / " << jgood << endl;
       limitsPerPoint[k]->Fill(limit90s[j]->GetY()[k]);
+      if (limit90s[j]->GetY()[k] < 0.24E-3) {
+	cout << " Mass " << limit90s[0]->GetX()[k] << " coupling limit " << limit90s[j]->GetY()[k] << " event = " << pseudoev[j] << endl;
+      }
     }
 
+    canvaQuantileAllLim->cd(k+1);
+    limitsPerPoint[k]->Draw("");
+    
     // evaluate quantiles
     cout << "About to Compute integrals of the limit histograms " << k << " / " << npts << endl;
 
@@ -275,8 +351,8 @@ void rereadfulllim(int seedStem){ // for example 8000
   // evaluate look-elsewhere effect at 2, 3, 4, 5 sigma
 
   // use mass range
-  const double massminLE = 16.22;
-  const double massmaxLE = 17.62;
+  const double massminLE = massMin;
+  const double massmaxLE = massMax;
   
   const int nLookEpts = 4;
   double probLookE[nLookEpts];
@@ -291,7 +367,7 @@ void rereadfulllim(int seedStem){ // for example 8000
       for (int j=0; j<nLookEpts; j++){
 	double ylim = limit90Exp[0]->GetY()[k]+limit90Exp[0]->GetEYhigh()[k]*(1+j*0.5);
 	if (limit90s[idx]->GetY()[k] > ylim) {
-	  std::cout << "limit outside boundary " << j << " " << limit90s[idx]->GetY()[k] << " " << limit90Exp[0]->GetY()[k] << " " << limit90Exp[0]->GetEYhigh()[k] << " " << ylim << std::endl;
+	  std::cout << "limit outside boundary " << limit90s[idx]->GetX()[k] << " " << j << " " << limit90s[idx]->GetY()[k] << " " << limit90Exp[0]->GetY()[k] << " " << limit90Exp[0]->GetEYhigh()[k] << " " << ylim << std::endl;
 	  outside[j] = true;
 	}
       }

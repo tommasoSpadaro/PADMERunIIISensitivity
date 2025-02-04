@@ -13,7 +13,7 @@ NumberOfGenerationsExpectedLimit 1
 UseNuisance 1
 CorrectBkgBias 0
 AssumeEffiOverBkgCurve 0
-StraightFitMode 0
+StraightFitMode 1
 EvaluateExpLimit 1
 Seed 0
 Verbosity 0
@@ -23,7 +23,7 @@ MassMax 17.62
 NgveBins 20
 gveMin 0.0001
 gveMax 0.0008
-FrequentistNPoints 2
+FrequentistNPoints 5
 InputFileName ~/PADME/PADME_sensitivity/input/MCVersion2_POT0.005_BKG0.006_EFF0.004.root
 ManipulateInput 0
 ErrorImprove 1.
