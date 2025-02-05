@@ -113,9 +113,14 @@ statisticalTreatmentTH::~statisticalTreatmentTH(){
   if(fPotGraphUsed  != nullptr) delete fPotGraphUsed ;
   if(fEffiGraphUsed != nullptr) delete fEffiGraphUsed;
   if(fBkgGraphUsed  != nullptr) delete fBkgGraphUsed ;
-  if(fNormBkgGraphUsed  != nullptr) delete fNormBkgGraphUsed ;
-
+  for (int i=0; i<3; i++){
+    if(fNormBkgGraphUsed[i]  != nullptr) delete fNormBkgGraphUsed[i] ;
+  }
   delete fLBHisto;
+  if (fitfunB != nullptr) delete fitfunB;
+  for (int i=0; i<3; i++){
+    if(fitfunEpsOverB[i]  != nullptr) delete fitfunEpsOverB[i] ;
+  }
   
   fLSBHisto.clear(); 
   fQobsHisto.clear(); 
@@ -187,7 +192,9 @@ void statisticalTreatmentTH::Init(){
   fPotGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fPotGraphUsed  ->SetName("fPotGraphUsed");
   fEffiGraphUsed = new TGraphErrors(fObservables.SqrtsObs.size()); fEffiGraphUsed ->SetName("fEffiGraphUsed");
   fBkgGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fBkgGraphUsed  ->SetName("fBkgGraphUsed");
-  fNormBkgGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fNormBkgGraphUsed  ->SetName("fNormBkgGraphUsed");
+  for (uint i=0; i<3; i++){ // scan1, 2, all
+    fNormBkgGraphUsed[i]  = new TGraphErrors(fObservables.SqrtsObs.size()); fNormBkgGraphUsed[i]  ->SetName(Form("fNormBkgGraphUsed_period_%d",i));
+  }
   for (uint i=0; i<fObservables.SqrtsObs.size(); i++){
     fPotGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.POTObs.at(i));
     fPotGraphUsed  ->SetPointError(i,0.,fExpectedErrors.POTLocalErr.at(i));
@@ -197,22 +204,61 @@ void statisticalTreatmentTH::Init(){
 
     fBkgGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i));
     fBkgGraphUsed  ->SetPointError(i,0.,fExpectedErrors.BkgErr.at(i));
-
-    fNormBkgGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i)/fObservables.SignalEffiLocalObs.at(i));
-    fNormBkgGraphUsed  ->SetPointError(i,0.,fNormBkgGraphUsed->GetY()[i]*TMath::Sqrt(
-										     pow(fExpectedErrors.BkgErr.at(i)/fObservables.BkgObs.at(i),2)+
-										     pow(fExpectedErrors.SignalEffiLocalErr.at(i)/fObservables.SignalEffiLocalObs.at(i),2)
-										     ));
+    int period = fObservables.ScanPeriod.at(i);
+    int noldpts = fNormBkgGraphUsed[period]->GetN();
+    double effioverbkg = fObservables.SignalEffiLocalObs.at(i)/fObservables.BkgObs.at(i);
+    fNormBkgGraphUsed[period]  ->SetPoint(noldpts,fObservables.SqrtsObs.at(i),effioverbkg);
+    fNormBkgGraphUsed[period]  ->SetPointError(noldpts,0.,effioverbkg*TMath::Sqrt(
+										  pow(fExpectedErrors.BkgErr.at(i)/fObservables.BkgObs.at(i),2)+
+										  pow(fExpectedErrors.SignalEffiLocalErr.at(i)/fObservables.SignalEffiLocalObs.at(i),2)
+										  ));
+    int nallpts = fNormBkgGraphUsed[2]->GetN();
+    fNormBkgGraphUsed[2]  ->SetPoint(nallpts,fObservables.SqrtsObs.at(i),effioverbkg);
+    fNormBkgGraphUsed[2]  ->SetPointError(nallpts,0.,effioverbkg*TMath::Sqrt(
+									     pow(fExpectedErrors.BkgErr.at(i)/fObservables.BkgObs.at(i),2)+
+									     pow(fExpectedErrors.SignalEffiLocalErr.at(i)/fObservables.SignalEffiLocalObs.at(i),2)
+									     ));
   }
 
   // fit of B/POT vs sqrt(s)
 
-  TF1* fitfunB = new TF1("fitfunB","[0]+[1]*(x-16.92)",15.,19.);
+  fitfunB = new TF1("fitfunB","[0]+[1]*(x-16.92)",15.,19.);
   fitfunB->SetParameter(0,3E-6);
   fitfunB->SetParameter(1,3E-7);
-  fBkgGraphUsed->Fit(fitfunB,"REMQ");
+  TFitResultPtr fitres = fBkgGraphUsed->Fit(fitfunB,"ESQ");
+  for (int i=0; i<2; i++) {
+    fObservables.BkgPerPOTVsSqrtsParObs[i] = fitfunB->GetParameter(i);
+    fExpectedErrors.BkgPerPOTVsSqrtsParErr[i] = fitfunB->GetParError(i);
+  }
+  TMatrixDSym cors(2);
+  cors = fitres->GetCorrelationMatrix();
+  fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr = cors[0][1];
+  std::cout << "Init: determination of B/POT vs sqrt(s) parameters (pol1 fit):" << 
+    " par0 = " << fObservables.BkgPerPOTVsSqrtsParObs[0] << " +- " << fExpectedErrors.BkgPerPOTVsSqrtsParErr[0] <<
+    " par1 = " << fObservables.BkgPerPOTVsSqrtsParObs[1] << " +- " << fExpectedErrors.BkgPerPOTVsSqrtsParErr[1] <<
+    " corr = " << fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr << endl;
   
+  // fit of epsilon_sig/(B/Pot) vs sqrt(s)
 
+  for (int i=0; i<3; i++){ // scan1, scan2, scan all
+    fitfunEpsOverB[i] = new TF1(Form("fitfunEpsOverB_period%d",i),"[0]+[1]*(x-16.92)",15.,19.);
+    fitfunEpsOverB[i]->SetParameter(0,2E5);
+    fitfunEpsOverB[i]->SetParameter(1,2E3);
+    TFitResultPtr fitres = fNormBkgGraphUsed[i]->Fit(fitfunEpsOverB[i],"ESQ");
+    fObservables.EffiOverBkgObsP0[i] = fitfunEpsOverB[i]->GetParameter(0);
+    fObservables.EffiOverBkgObsP1[i] = fitfunEpsOverB[i]->GetParameter(1);
+    fExpectedErrors.EffiOverBkgErrP0[i] = fitfunEpsOverB[i]->GetParError(0);
+    fExpectedErrors.EffiOverBkgErrP1[i] = fitfunEpsOverB[i]->GetParError(1);
+    TMatrixDSym cors(2);
+    cors = fitres->GetCorrelationMatrix();
+    fExpectedErrors.EffiOverBkgErrP0P1Corr[i] = cors[0][1];
+
+    std::cout << "Init: determination of eps_sig/(B/POT) vs sqrt(s) parameters (pol1 fit) for period " << i << 
+    " par0 = " << fObservables.EffiOverBkgObsP0[i] << " +- " << fExpectedErrors.EffiOverBkgErrP0[i] <<
+    " par1 = " << fObservables.EffiOverBkgObsP1[i] << " +- " << fExpectedErrors.EffiOverBkgErrP1[i] <<
+    " corr = " << fExpectedErrors.EffiOverBkgErrP0P1Corr[i] << endl;
+  }
+  
   
   // IF USING EFFIOVERBKG -> USE ONLY (POTxB)_i as fit variable, not POT_i and B_i separately. POT_i will be FIXED, B_i will be varying 
 
@@ -295,14 +341,6 @@ void statisticalTreatmentTH::Init(){
 
   // curves for effi/(bkg/pot) vs sqrt(s)
   
-  for (int i=0; i<3; i++){
-    fObservables.EffiOverBkgObsP0[i] = fConfigPtr->GetEffiOverBkgObsP0(i);
-    fObservables.EffiOverBkgObsP1[i] = fConfigPtr->GetEffiOverBkgObsP1(i);
-    fExpectedErrors.EffiOverBkgErrP0[i] = fConfigPtr->GetEffiOverBkgErrP0(i);
-    fExpectedErrors.EffiOverBkgErrP1[i] = fConfigPtr->GetEffiOverBkgErrP1(i);
-    fExpectedErrors.EffiOverBkgErrP0P1Corr[i] = fConfigPtr->GetEffiOverBkgErrP0P1Corr(i);
-  }
-
   if (fConfigPtr->GetAssumeEffiOverBkgCurve()){ 
     for (int k=0; k<3; k++){ // first, second periods of the scan, all scan
       double elements[4] = {
@@ -2272,8 +2310,9 @@ void statisticalTreatmentTH::SaveAllHistos(){
   if(fPotGraphUsed  != nullptr) fPotGraphUsed ->Write();
   if(fEffiGraphUsed != nullptr) fEffiGraphUsed->Write();
   if(fBkgGraphUsed  != nullptr) fBkgGraphUsed ->Write();
-  if(fNormBkgGraphUsed  != nullptr) fNormBkgGraphUsed ->Write();
-
+  for (int i=0; i<3; i++){
+    if(fNormBkgGraphUsed[i]  != nullptr) fNormBkgGraphUsed[i] ->Write();
+  }
   fLBHisto->Write();
   for (uint im = 0; im < (uint) fNMassBins; im++){
     fLSBHisto.at(im)->Write(); // LSB vs gven for each pseudo-data event at a given mass

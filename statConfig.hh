@@ -91,13 +91,6 @@ public:
   Double_t GetBkgBiasErrP1(){return fBkgBiasErrP1;}
   Double_t GetBkgBiasErrP0P1Corr(){return fBkgBiasErrP0P1Corr;}
 
-  // P0,P1 parameters of the effi/(bkg/pot) vs sqrt(s) shape
-  Double_t GetEffiOverBkgObsP0(int iperiod){return fEffiOverBkgObsP0[iperiod];}
-  Double_t GetEffiOverBkgObsP1(int iperiod){return fEffiOverBkgObsP1[iperiod];}
-  Double_t GetEffiOverBkgErrP0(int iperiod){return fEffiOverBkgErrP0[iperiod];}
-  Double_t GetEffiOverBkgErrP1(int iperiod){return fEffiOverBkgErrP1[iperiod];}
-  Double_t GetEffiOverBkgErrP0P1Corr(int iperiod){return fEffiOverBkgErrP0P1Corr[iperiod];}
-
 private:
   statConfig();
   ~statConfig();
@@ -170,14 +163,5 @@ private:
   Double_t fBkgBiasErrP0;
   Double_t fBkgBiasErrP1;
   Double_t fBkgBiasErrP0P1Corr;
-
-  // In case effi_sig/(pot/bkg) is fit with a linear function of sqrt(s)
-
-  Double_t fEffiOverBkgObsP0[3]; // one value for each scan set: 0->first part of the scan [period < 23], 1->second part [period > 23, not below res], 2 [all periods together]
-  Double_t fEffiOverBkgObsP1[3];
-  Double_t fEffiOverBkgErrP0[3];
-  Double_t fEffiOverBkgErrP1[3];
-  Double_t fEffiOverBkgErrP0P1Corr[3];
-
 };
 #endif

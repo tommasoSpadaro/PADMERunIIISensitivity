@@ -420,8 +420,9 @@ private:
   TGraphErrors* fPotGraphUsed;
   TGraphErrors* fEffiGraphUsed;
   TGraphErrors* fBkgGraphUsed;
-  TGraphErrors* fNormBkgGraphUsed;
-  
+  TGraphErrors* fNormBkgGraphUsed[3];
+  TF1* fitfunB;
+  TF1* fitfunEpsOverB[3];
   // obs histograms on pseudo-data
   TH1D* fLBHisto; // LB   for each pseudo-data event
   vector<TH2D*> fLSBHisto; // LSB vs gven for each pseudo-data event at a given mass
