@@ -45,7 +45,8 @@ public:
 
   Bool_t GetUseNuisance(){return fUseNuisance;} // by default true = use nuisances
   Bool_t GetCorrectBkgBias(){return fCorrectBkgBias;} // by default false = do not correct bkg bias
-  Int_t   GetAssumeEffiOverBkgCurve(){return fAssumeEffiOverBkgCurve;} // by default false = do not assume sqrt(s) dependence of effi/(bkg/pot)
+  Bool_t GetAssumeBkgOverPotCurve(){return fAssumeBkgOverPotCurve;} // by default false
+  Int_t  GetAssumeEffiOverBkgCurve(){return fAssumeEffiOverBkgCurve;} // by default false = do not assume sqrt(s) dependence of effi/(bkg/pot)
   Int_t GetStraightFitMode(){return fStraightFitMode;} // by default false. If true -> greatly reduce number of nuisances fitting N2/POT/B with functions of sqrt(s)
   Bool_t GetEvaluateExpLimit(){return fEvaluateExpLimit;}
   Int_t GetSeed(){return fSeed;}
@@ -121,6 +122,7 @@ private:
 
   Bool_t fUseNuisance; // by default use nuisance
   Bool_t fCorrectBkgBias; // by default do not correct it
+  Bool_t fAssumeBkgOverPotCurve; // by default do not use it
   Int_t fAssumeEffiOverBkgCurve; // by default do not assume it
   Int_t fStraightFitMode; // by default do not use it (0). If set to 1: simple likelihood without B,POT nuisance. If set to 2: likelihood of ratiofit + B,POT nuisances
   Bool_t fEvaluateExpLimit;

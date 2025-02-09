@@ -65,6 +65,26 @@ void rereadfulllim(int seedStem){ // for example 8000
     NPseudo = 140; 
     massMax = 17.74;
   }
+  if (seedStem==140000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 200; 
+    massMax = 17.74;
+  }
+  if (seedStem==150000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 200; 
+    massMax = 17.74;
+  }
+  if (seedStem==160000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 135; 
+    massMax = 17.74;
+  }
+  if (seedStem==170000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 200; 
+    massMax = 17.74;
+  }
    
   //use 100+j for the normal events
   // 3000+j for efficurveON events analysed with efficurveON
@@ -91,6 +111,11 @@ void rereadfulllim(int seedStem){ // for example 8000
   // 110000+j effcurvON, FINAL analysis RunIII with 0.5%/1.0% POT error, bkg-only pseudoevents + straightFitMode=1 POT=1E10, single effi/b curve, DO NOT MINIMIZE ON THE TOYS
   // 120000+j effcurvON, FINAL analysis RunIII with 0.5%/1.0% POT error, bkg-only pseudoevents + straightFitMode=2 POT=1E10, assumeeffioverb=2, DO NOT MINIMIZE ON THE TOYS, new code
   // 130000+j effcurvON, FINAL analysis RunIII with 0.5%/1.0% POT error, bkg-only pseudoevents + straightFitMode=2 POT=1E10, assumeeffioverb=1, DO NOT MINIMIZE ON THE TOYS, new code, Error on B down by x10
+  // 140000+j effcurvON, FINAL anal RunIII with 0.5%/1.0% dPOT, pot 1E10, bkg-only pseudoevents with b error down by 10, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new code, use B fit vs sqrt(s) (but bkg from pseudoevents was not using it!)
+  // 150000+j effcurvON, FINAL anal RunIII with 0.5%/1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new code, use B fit vs sqrt(s)
+  // 160000+j effcurvON, FINAL anal RunIII with 0.5%/1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=2, assumeeffioverb=2, MINIMIZE ON THE TOYS, new code, use B fit vs sqrt(s)
+  // 170000+j effcurvON, FINAL anal RunIII with 0.5%/1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=2, assumeeffioverb=2, MINIMIZE ON THE TOYS, new code, use B fit vs sqrt(s), carry the POT as observables!
+  
   TGraph** limit90s = new TGraph*[NPseudo]; // UL for the various pseudoevents
   TGraph** limit90sRL = new TGraph*[NPseudo]; // RL UL for the various pseudoevents
   TGraph* limitStat;
@@ -105,6 +130,8 @@ void rereadfulllim(int seedStem){ // for example 8000
   TCanvas* canvaAllLim = new TCanvas("canvaAllLim");
   canvaAllLim->Divide(6,5);
   for (int j=0; j<NPseudo; j++){
+    if (seedStem==170000 && j==23) continue;
+    
     TFile* filo = new TFile(Form("%s%d.root_limits.root",inputFilesStem.Data(),seedStem+j),"OLD");
     TGraph* grafo = (TGraph*) filo->Get("Limit90");
     limitStat = (TGraph*) filo->Get("FeldmanCousinsLimit90");

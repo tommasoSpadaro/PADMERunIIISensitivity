@@ -66,6 +66,9 @@ statConfig::statConfig(){
   fCorrectBkgBias = false; // by default do not correct for bkg bias vs sqrt(s)
   fFieldStrings.push_back(std::pair{"CorrectBkgBias",sFFB});
 
+  fAssumeBkgOverPotCurve = false; // dy default false
+  fFieldStrings.push_back(std::pair{"AssumeBkgOverPotCurve",sFFB});
+
   fAssumeEffiOverBkgCurve = 0; // by default do not assume a curve for effi/(bkg/pot) vs sqrt(s)
   fFieldStrings.push_back(std::pair{"AssumeEffiOverBkgCurve",sFFI});
 
@@ -214,7 +217,12 @@ void statConfig::readConfigFromFile(TString datacardName){
     std::cout << "statCondig>> SetStraightFitMode to TRUE --> override AssumeEffiOverBkgCurve to 2" << endl;
     fAssumeEffiOverBkgCurve = 2;
   }
-  
+
+  if (fStraightFitMode && !fAssumeBkgOverPotCurve){
+    std::cout << "statCondig>> SetStraightFitMode to TRUE --> override AssumeBkgOverPotCurveCurve to TRUE" << endl;
+    fAssumeBkgOverPotCurve = true;
+  }
+
   return;
 }
 
@@ -299,6 +307,7 @@ int statConfig::useInputString(TString sStr){
 	else if (fieldString.EqualTo("BkgOnlyNObsFromFile")) fBkgOnlyNObsFromFile = inputstrvalB;
 	else if (fieldString.EqualTo("UseNuisance")) fUseNuisance = inputstrvalB;
 	else if (fieldString.EqualTo("CorrectBkgBias")) fCorrectBkgBias = inputstrvalB;
+	else if (fieldString.EqualTo("AssumeBkgOverPotCurve")) fAssumeBkgOverPotCurve = inputstrvalB;
 	else if (fieldString.EqualTo("EvaluateExpLimit")) fEvaluateExpLimit = inputstrvalB;
 	else if (fieldString.EqualTo("ManipulateInput")) fManipulateInput = inputstrvalB;
 	else {

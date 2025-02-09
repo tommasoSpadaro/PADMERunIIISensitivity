@@ -4,7 +4,7 @@ $maxjobs = $ARGV[0]; # max number of jobs simultaneously running together
 $username = $ARGV[1]; # needed to retrieve number of jobs running
 $seedStem = $ARGV[2]; # starting seed value
 
-$nSteps = 199; #number of pseudo-events
+$nSteps = 199;#9;#199; #number of pseudo-events
 $iStep = -1;
 
 $loopCond = 1;
@@ -30,7 +30,7 @@ while ($loopCond == 1){
 	while (<CONFIG>){
 	    chomp;
 	    if (/^Seed/) {print CONFIGOUT "Seed $seed\n";}
-#	    elsif (/^Verbosity/) {print CONFIGOUT "Verbosity 2\n";}
+	    elsif (/^Verbosity/) {print CONFIGOUT "Verbosity 0\n";}
 # mass window
 	    elsif (/^MassStep/){print CONFIGOUT "MassStep 0.06\n";} # instead of 0.02
 	    elsif (/^MassMin/){print CONFIGOUT "MassMin 16.22\n";} # instead of 16.22
@@ -52,8 +52,9 @@ while ($loopCond == 1){
 #	    elsif (/^InputFileNameNObsFromFile/) {print CONFIGOUT "InputFileNameNObsFromFile /Users/Tommaso1/PADME/PADME_sensitivity/output/geneToyMCVersion2_POTErrorScanLevel_seed7100_useNuis1_useEffiOverBkgCurve1.root\n";} # bkg only
 #	    elsif (/^InputFileNameNObsFromFile/) {print CONFIGOUT "InputFileNameNObsFromFile /Users/Tommaso1/PADME/PADME_sensitivity/output/geneToyMCVersion2_POTErrorScanLevel_seed8100_useNuis1_useEffiOverBkgCurve1.root\n";} # bkg+signal 0.06-MeV spaced mass points, 40 points linear scale in gve in the range 1,8 x 10^-4 
 #	    elsif (/^InputFileNameNObsFromFile/) {print CONFIGOUT "InputFileNameNObsFromFile /Users/Tommaso1/PADME/PADME_sensitivity/output/geneToyMCVersion2_POTErrorScanLevel_seed9200_useNuis1_useEffiOverBkgCurve1.root\n";} # bkg only, 1000 pseudoevents, POT=1E10
-	    elsif (/^InputFileNameNObsFromFile/) {print CONFIGOUT "InputFileNameNObsFromFile /Users/Tommaso1/PADME/PADME_sensitivity/output/geneToyMCVersion2_POTErrorScanLevel_seed9200_useNuis1_useEffiOverBkgCurve1.root\n";} # bkg only, 1000 pseudoevents, POT=1E10, error on the background down by x10
-	    elsif (/^ErrorImprove/) {print CONFIGOUT "ErrorImprove 10.\n";}
+#	    elsif (/^InputFileNameNObsFromFile/) {print CONFIGOUT "InputFileNameNObsFromFile /Users/Tommaso1/PADME/PADME_sensitivity/output/geneToyMCVersion2_POTErrorScanLevel_seed9200_useNuis1_useEffiOverBkgCurve1.root\n";} # bkg only, 1000 pseudoevents, POT=1E10, error on the background down by x10
+	    elsif (/^InputFileNameNObsFromFile/) {print CONFIGOUT "InputFileNameNObsFromFile /Users/Tommaso1/PADME/PADME_sensitivity/output/geneToyMCVersion2_POTErrorScanLevel_seed9300_useNuis1_useEffiOverBkgCurve1.root\n";} # bkg only, 1000 pseudoevents, POT=1E10, error on the background from the b/pot curve
+#	    elsif (/^ErrorImprove/) {print CONFIGOUT "ErrorImprove 10.\n";}
 	    # BKG-ONLY PSEUDOEVENTS
 	    elsif (/^BkgOnlyNObsFromFile/) {print CONFIGOUT "BkgOnlyNObsFromFile 1\n";} # read bkg-only input
 #	    elsif (/^NumberOfGenerations /) {print CONFIGOUT "NumberOfGenerations 800\n";} # read bkg-only input
@@ -67,8 +68,8 @@ while ($loopCond == 1){
 	    elsif (/^FirstEventNObsFromFile/){print CONFIGOUT "FirstEventNObsFromFile $iStep\n";}
 	    elsif (/^ManipulateInput/){print CONFIGOUT "ManipulateInput 0\n";} # to decrease the yield
 	    elsif (/^AssumeEffiOverBkgCurve/){print CONFIGOUT "AssumeEffiOverBkgCurve 2\n";}
-	    elsif (/^StraightFitMode/){print CONFIGOUT "StraightFitMode 1\n";}
-#	    elsif (/^StraightFitMode/){print CONFIGOUT "StraightFitMode 2\n";}
+#	    elsif (/^StraightFitMode/){print CONFIGOUT "StraightFitMode 1\n";}
+	    elsif (/^StraightFitMode/){print CONFIGOUT "StraightFitMode 2\n";}
 	    # TO PUT FREQ ONLY EVALUATION:
 #	    elsif (/^EvaluateExpLimit/){print CONFIGOUT "EvaluateExpLimit 0\n";} # ONLY FREQUENTIST
 

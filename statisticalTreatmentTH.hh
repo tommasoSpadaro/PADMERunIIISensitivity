@@ -168,9 +168,9 @@ class Likelihood {
      double effiOverBkgTrueP0[3] = {par[11+3*npts],par[13+3*npts],par[15+3*npts]};
      double effiOverBkgTrueP1[3] = {par[12+3*npts],par[14+3*npts],par[16+3*npts]};
      int straightFitMode = par[17+3*npts];
-//     int bkgFitMode = par[18+3*npts];
-//     double bkgFitP0 = par[19+3*npts];
-//     double bkgFitP1 = par[20+3*npts];
+     bool bkgFitMode = par[18+3*npts];
+     double bkgFitP0 = par[19+3*npts];
+     double bkgFitP1 = par[20+3*npts];
 
      //calculate -2log(likelihood)
 
@@ -188,6 +188,17 @@ class Likelihood {
      } else {
        delta = (fObservables.POTScaleObs - potScaleTrue)/(fExpectedErrors.POTScaleErr); // absolute scale of the POT
        chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.POTScaleErr) + log2pi;
+     }
+
+     // BKG/POT vs sqrt(s)
+     if (bkgFitMode){ 
+       double oneMinusRho2 = (1.-fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr*fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr);
+       delta =
+	 pow((fObservables.BkgPerPOTVsSqrtsParObs[0] - bkgFitP0)/fExpectedErrors.BkgPerPOTVsSqrtsParErr[0],2)/oneMinusRho2 +  
+	 pow((fObservables.BkgPerPOTVsSqrtsParObs[1] - bkgFitP1)/fExpectedErrors.BkgPerPOTVsSqrtsParErr[1],2)/oneMinusRho2 
+	 -2*(fObservables.BkgPerPOTVsSqrtsParObs[0] - bkgFitP0)*(fObservables.BkgPerPOTVsSqrtsParObs[1] - bkgFitP1)*fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr/
+	 (fExpectedErrors.BkgPerPOTVsSqrtsParErr[0]*fExpectedErrors.BkgPerPOTVsSqrtsParErr[1]*oneMinusRho2);
+       chisq += delta;// + 2.*TMath::Log(fExpectedErrors.BkgBiasErrP0*fExpectedErrors.BkgBiasErrP1*TMath::Sqrt(oneMinusRho2)) + 2*log2pi;
      }
 
      if (isSBfit){ // signal + background fit
@@ -227,10 +238,10 @@ class Likelihood {
      if (straightFitMode == 1){ // do not fit B, POT but only use N2/(B POT). ALWAYS Assume effi/b as a linear function of sqrt(s)
 
        for (uint i=0; i < npts; i++) {        
-	 delta = (fObservables.NObs.at(i)/(fObservables.BkgObs.at(i)*1E10)); // N2/((POT B)x1E10) 
+	 delta = (fObservables.NObs.at(i)/(fObservables.POTObs.at(i)*1E10)); // N2/(POTx1E10) 
 
 	 double relerrsq = 
-	   (fExpectedErrors.BkgErr.at(i)/fObservables.BkgObs.at(i))*(fExpectedErrors.BkgErr.at(i)/fObservables.BkgObs.at(i)) +
+	   (fExpectedErrors.POTLocalErr.at(i)/fObservables.POTObs.at(i))*(fExpectedErrors.POTLocalErr.at(i)/fObservables.POTObs.at(i)) +
 	   (1./fObservables.NObs.at(i));
 
 	 // bias on the POT
@@ -238,6 +249,7 @@ class Likelihood {
 	 if (useBkgBias) expval = (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
 	 else            expval = potScaleTrue;                                                            // POT_scale_true
 
+	 expval *= (fObservables.BkgPerPOTVsSqrtsParObs[0] + fObservables.BkgPerPOTVsSqrtsParObs[1]*(fObservables.SqrtsObs.at(i)-SQRTSMID));
 	 // expected number of signal events (0 if background-only fit)
 	 double sc = 0;
 	 if (isSBfit) {
@@ -253,20 +265,20 @@ class Likelihood {
 
        //       if (!isSBfit) cout << " and at the end " << chisq << endl;
 
-     } else if (straightFitMode == 2){ // Fit N2/(B POT) but use BxPOT as nuisances
+     } else if (straightFitMode == 2){ // Fit N2/POT = bc (1+sc) use POT_i as nuisances
 
        for (uint i=0; i < npts; i++) {        
-
-       // bkg/pot per point nuisances
-	 delta = (fObservables.BkgObs.at(i) - par[bkgTrueIdx + i])/fExpectedErrors.BkgErr.at(i); // true values of bkg x pot vs sqrt(s)
-	 chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.BkgErr.at(i)) + log2pi;
-
-	 // bias on the POT
-	 double expval = 0;
-	 if (useBkgBias) expval = (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
-	 else            expval = potScaleTrue;                                                            // POT_scale_true
 	 
-	 // expected number of signal events (0 if background-only fit)
+	 // local error on the pot
+	 delta = (fObservables.POTObs.at(i) - par[potTrueIdx + i])/fExpectedErrors.POTLocalErr.at(i); // true values of the POT per point
+	 chisq += delta*delta;// + 2.*TMath::Log(errpotloc) + log2pi;
+
+	 double expval = (fObservables.BkgPerPOTVsSqrtsParObs[0] + fObservables.BkgPerPOTVsSqrtsParObs[1]*(fObservables.SqrtsObs.at(i)-SQRTSMID));
+	 if (useBkgBias) expval *= (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
+	 else            expval *= potScaleTrue;                                                            // POT_scale_true
+	 
+
+	 // expected number of signal/bkg events (0 if background-only fit)
 	 double sc = 0;
 	 if (isSBfit) {
 	   int iperiod = 2;
@@ -278,22 +290,25 @@ class Likelihood {
 	 expval *= (1.+sc);
 
 	 // statistical term
-	 double bc = par[bkgTrueIdx + i]*1E10; // (Nbkg/POT)true x POT_i_true
-	 delta = (fObservables.NObs.at(i)/bc - expval)/(TMath::Sqrt(fObservables.NObs.at(i))/bc);
-	 chisq += delta*delta;// + 2.*TMath::Log(errcount) + log2pi;	 
+	 delta = (fObservables.NObs.at(i)/(par[potTrueIdx + i]*1E10) - expval)/(TMath::Sqrt(fObservables.NObs.at(i))/(par[potTrueIdx + i]*1E10));
+	 chisq += delta*delta;// + 2.*TMath::Log(errcount) + log2pi;
        }
      } else { // standard fit mode: N2  = F(s) POT x (B + epsilon S ) or F(s) POT B (1 + G(s) S)
 
        for (uint i=0; i < npts; i++) {        
-	 double bc = par[bkgTrueIdx + i]*1E10;
+	 double bc = par[potTrueIdx + i]*1E10;
 
-	 delta = (fObservables.BkgObs.at(i) - par[bkgTrueIdx + i])/fExpectedErrors.BkgErr.at(i); // true values of bkg/pot vs sqrt(s)
-	 chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.BkgErr.at(i)) + log2pi;
-
+	 if (bkgFitMode){
+	   bc *= (fObservables.BkgPerPOTVsSqrtsParObs[0] + fObservables.BkgPerPOTVsSqrtsParObs[1]*(fObservables.SqrtsObs.at(i)-SQRTSMID));
+	 }
+	 else {
+	   bc *= par[bkgTrueIdx + i];
+	   
+	   delta = (fObservables.BkgObs.at(i) - par[bkgTrueIdx + i])/fExpectedErrors.BkgErr.at(i); // true values of bkg/pot vs sqrt(s)
+	   chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.BkgErr.at(i)) + log2pi;
+	 }
+	 
 	 if (!assumeEffiOverBkgCurve){
-	   // expected number of bkg events       
-	   bc *= par[potTrueIdx + i]; // (Nbkg/POT)true x POT_i_true
-
 	   // local error on the pot
 	   double errpotloc = fExpectedErrors.POTLocalErr.at(i);
 	   delta = (fObservables.POTObs.at(i) - par[potTrueIdx + i])/errpotloc; // true values of the POT per point
@@ -384,7 +399,7 @@ public:
   // The NObs distribution can be overridden via SetNObs:
   void SetNObs(vector<Double_t> val){fObservables.NObs.clear(); fObservables.NObs = val; fObservables.isNotFilled = false;} 
   // The NObs distribution can be readout from an external file:
-  void SetObservablesFromFile(TString filename, Int_t count); // read instance #count from the file of observables graphs
+  void SetObservablesFromBFile(TString filename, Int_t count); // read instance #count from the file of observables graphs
   void SetObservablesFromSBFile(TString filename, Double_t mass, Double_t gve, Int_t count); // read instance #count from the file of observable graphs, retrieve the mass,gve point closest to the wanted
   
 // definition of the mass-epsilon grid with public methods
@@ -450,7 +465,10 @@ private:
   // inverse transpose of the matrix to generate correlated parameters for the bkgBiasCurve
   double fInvCholeTransBkgBias[2][2];
 
-  // inverse transpose of the matrix to generate correlated parameters for the effi/(bkg/pot) curve (one curve for each scan period)
+  // inverse transpose of the matrix to generate correlated parameters for the bkg Vs sqrts curve (single curve for all the points) 
+  double fInvCholeTransBkgVsSqrts[2][2];
+
+  // inverse transpose of the matrix to generate correlated parameters for the effi/(bkg/pot) curve (one curve for each scan period, one curve overall)
   double fInvCholeTransEffiOverBkgScan1st[2][2];
   double fInvCholeTransEffiOverBkgScan2nd[2][2];
   double fInvCholeTransEffiOverBkgScanAll[2][2];
