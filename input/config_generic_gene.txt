@@ -1,6 +1,6 @@
 GeneMode 1
 BkgOnlyGeneMode 1
-GeneOutputFileName output/geneToyMCVersion2_POTErrorScanLevel_seed9200_useNuis1_useEffiOverBkgCurve1.root
+GeneOutputFileName output/geneToyMCVersion2_POTErrorScanLevel_seed9300_useNuis1_useEffiOverBkgCurve1.root
 ReadMode 0
 ToyOfToyMode 1
 InputFileNameNObsFromFile output/geneNObsSigPlusBkg.root
@@ -11,10 +11,11 @@ NumberOfGenerations 200
 NumberOfGenerationsExpectedLimit 1000
 UseNuisance 1
 CorrectBkgBias 0
-AssumeEffiOverBkgCurve 1
+AssumeBkgOverPotCurve 1
+AssumeEffiOverBkgCurve 2
 StraightFitMode 1
 EvaluateExpLimit 1
-Seed 9200
+Seed 9300
 Verbosity 0
 MassStep 0.06
 MassMin 16.22
