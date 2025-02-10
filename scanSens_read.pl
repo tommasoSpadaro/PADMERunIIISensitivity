@@ -4,6 +4,7 @@ $seedStem = $ARGV[0]; #e.g.: statisticalTest_massSteps_71_massRange_16.22_17.62_
 $seedStart = $ARGV[1]; #e.g. 8000
 $stemdir = ".";#/Users/Tommaso1/PADME/PADME_sensitivity";
 opendir (INPUTDIR, "$stemdir/output") or die "cannot open the output dir\n";
+$launched = 0;
 while ($filein = readdir(INPUTDIR)){
     if ($filein =~ /^${seedStem}_seed(\d+).root$/){
 	$seed = $1;
@@ -19,9 +20,13 @@ while ($filein = readdir(INPUTDIR)){
 		else         {print CONFIGOUT "$_\n";}
 	    }
 	    close CONFIGOUT;
+	    if ($launched > 0 && ($launched % 20 == 0)) {
+		system("sleep 5");
+	    }
 	    $command = "./bin/runStatisticalTreatment $configOut > logs/runEvent_seed${seed}_read.log &";
 	    print "execute $command\n";
 	    system($command);
+	    $launched++;
 	}
     }
 }
