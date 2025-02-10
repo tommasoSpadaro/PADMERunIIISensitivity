@@ -2342,7 +2342,7 @@ void statisticalTreatmentTH::SimulateBkgPseudoDataToFile(TString filename){
     nobsGraph[j]->Write();
     nbkgGraph[j]->Write();
     npotGraph[j]->Write();
-    cout << " pseudoevent " << j << " / " << fNumberOfGenerationsExpectedLimit << " done" << endl;
+    if (j%50 == 0) cout << " pseudoevent " << j << " / " << fNumberOfGenerationsExpectedLimit << " done" << endl;
   }
 
   filo->Close();
