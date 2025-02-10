@@ -12,6 +12,7 @@ NumberOfGenerations 200
 NumberOfGenerationsExpectedLimit 1
 UseNuisance 1
 CorrectBkgBias 0
+AssumeBkgOverPotCurve 0
 AssumeEffiOverBkgCurve 0
 StraightFitMode 1
 EvaluateExpLimit 1
