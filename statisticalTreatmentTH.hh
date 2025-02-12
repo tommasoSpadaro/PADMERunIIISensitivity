@@ -9,6 +9,7 @@
 #include "TH2D.h"
 #include "TTree.h"
 #include "TGraphErrors.h"
+#include "TGraphAsymmErrors.h"
 #include "TRandom3.h"
 
 using namespace std;
@@ -399,6 +400,7 @@ public:
   // The NObs distribution can be overridden via SetNObs:
   void SetNObs(vector<Double_t> val){fObservables.NObs.clear(); fObservables.NObs = val; fObservables.isNotFilled = false;} 
   // The NObs distribution can be readout from an external file:
+  void SetObservablesAsimov(nuisancePars); // set obs without any fluctuation
   void SetObservablesFromBFile(TString filename, Int_t count); // read instance #count from the file of observables graphs
   void SetObservablesFromSBFile(TString filename, Double_t mass, Double_t gve, Int_t count); // read instance #count from the file of observable graphs, retrieve the mass,gve point closest to the wanted
   
@@ -411,11 +413,13 @@ private:
   nuisancePars InitNuisanceToObservables(observables obs); // init Starting values of the nuisances to the observables
   void initHistograms();
   void initFitters(bool bonly); // pass 1 for b-only fit, 0 otherwise; the value of fUseNuisance set to 0 will fix all the parameters
-  void GenerateBackgroundPseudoData(nuisancePars nuis); // generate observables under B hypothesis using input nuisance Nuis, modifies fObservables
-  void GenerateSignalPlusBackgroundPseudoData(double massn, double gven, nuisancePars nuis); // generate observables under S+B hypothesis using input nuisance Nuis, modifies fObservables
 
-  void GenerateBackground(nuisancePars nuis); // generate observables under B hypothesis using input nuisance Nuis, modifies fObservables
-  void GenerateSignalPlusBackground(double mass, double gve, nuisancePars nuis); // generate observable under S+B hypothesis using input nuisance Nuis, modifies fObservables
+  void GenerateGeneralPseudoData(nuisancePars nuis, bool sbmode, double massn, double gven, bool toyoftoy);
+
+//  void GenerateBackgroundPseudoData(nuisancePars nuis); // generate observables under B hypothesis using input nuisance Nuis, modifies fObservables
+//  void GenerateSignalPlusBackgroundPseudoData(double massn, double gven, nuisancePars nuis); // generate observables under S+B hypothesis using input nuisance Nuis, modifies fObservables
+//  void GenerateBackground(nuisancePars nuis); // generate observables under B hypothesis using input nuisance Nuis, modifies fObservables
+//  void GenerateSignalPlusBackground(double mass, double gve, nuisancePars nuis); // generate observable under S+B hypothesis using input nuisance Nuis, modifies fObservables
 
   nuisancePars MaximizeLSBGivenNObs(double mass, double gve, double* lsb); // given M,eps maximize Lsb wrt nuisance pars, return "profiled" nuisance pars
   nuisancePars MaximizeLBGivenNObs(double* lb); //  maximize Lb wrt store nuisance pars, return "profiled" nuisance pars q_s
@@ -438,6 +442,12 @@ private:
   TGraphErrors* fNormBkgGraphUsed[3];
   TF1* fitfunB;
   TF1* fitfunEpsOverB[3];
+
+  vector<TGraphAsymmErrors*> fAsimov_a[2]; // [k=0->90%CL, k=1->95%CL]: one-sigma and two-sigma bands exploiting Asimov data
+  vector<TGraph*> fQobs_a; // Qobs vs gven for asimov data set at a given mass
+  vector<TGraph*> fQmuProfile; // Qobs vs gven for pseudo data (LSB(mu,theta)/LSB(mu_hat,theta_hat) set at a given mass
+  vector<TGraph*> fPprimeProfile; // gven vs pprime at a given mass
+
   // obs histograms on pseudo-data
   TH1D* fLBHisto; // LB   for each pseudo-data event
   vector<TH2D*> fLSBHisto; // LSB vs gven for each pseudo-data event at a given mass
@@ -521,6 +531,8 @@ private:
   // evaluation using frequentist methods
   int fFrequentistNPoints;
   void EvaluateFrequentist(double, double*, double*); // rolkelopez[2] and feldmancousins[2] results for 90% and 95% CL
+  double PhiFun(double);
+  double PhiFunInv(double);
 };
 
 #endif
