@@ -412,8 +412,9 @@ private:
   Bool_t fIsInitialized;
   nuisancePars InitNuisanceToObservables(observables obs); // init Starting values of the nuisances to the observables
   void initHistograms();
-  void initFitters(bool bonly); // pass 1 for b-only fit, 0 otherwise; the value of fUseNuisance set to 0 will fix all the parameters
-
+  void initFitters(bool bonly, nuisancePars nuis); // pass 1 for b-only fit, 0 otherwise; the value of fUseNuisance set to 0 will fix all the parameters
+  void initPullHistograms();
+  void fillPullHistograms(bool sbfitmode, double massn, double gven, bool sbtoy, bool pseudo);//mass,gv are: FIT pars for SBfit on Btoy, TOY pars for Bfit on SBtoy
   void GenerateGeneralPseudoData(nuisancePars nuis, bool sbmode, double massn, double gven, bool toyoftoy);
 
 //  void GenerateBackgroundPseudoData(nuisancePars nuis); // generate observables under B hypothesis using input nuisance Nuis, modifies fObservables
@@ -421,10 +422,12 @@ private:
 //  void GenerateBackground(nuisancePars nuis); // generate observables under B hypothesis using input nuisance Nuis, modifies fObservables
 //  void GenerateSignalPlusBackground(double mass, double gve, nuisancePars nuis); // generate observable under S+B hypothesis using input nuisance Nuis, modifies fObservables
 
-  nuisancePars MaximizeLSBGivenNObs(double mass, double gve, double* lsb); // given M,eps maximize Lsb wrt nuisance pars, return "profiled" nuisance pars
-  nuisancePars MaximizeLBGivenNObs(double* lb); //  maximize Lb wrt store nuisance pars, return "profiled" nuisance pars q_s
-  double EvaluateLSBGivenNObs(double mass, double gve, nuisancePars nuis, bool* okfit); // given M,eps evaluate Lsb with frozen nuisance pars
-  double EvaluateLBGivenNObs(nuisancePars nuis, bool* okfit); // evaluate Lb with frozen nuisance pars
+// minimize L with a given input nuis for parameter start. Returns fit nuisance pars, Lmin, fitstatus
+  nuisancePars MaximizeL(nuisancePars nuis, bool sbmode, double mass, double gve, double* lsb, bool* fitstatus);
+//  nuisancePars MaximizeLSBGivenNObs(double mass, double gve, double* lsb); // given M,eps maximize Lsb wrt nuisance pars, return "profiled" nuisance pars
+//  nuisancePars MaximizeLBGivenNObs(double* lb); //  maximize Lb wrt store nuisance pars, return "profiled" nuisance pars q_s
+//  double EvaluateLSBGivenNObs(double mass, double gve, nuisancePars nuis, bool* okfit); // given M,eps evaluate Lsb with frozen nuisance pars
+//  double EvaluateLBGivenNObs(nuisancePars nuis, bool* okfit); // evaluate Lb with frozen nuisance pars
 
 private:
   statConfig* fConfigPtr;
@@ -463,7 +466,11 @@ private:
   vector<TH2D*> fLB_SBtoyHisto; // LB vs gven for each pseudo-data event and for each generated SB toy event 
   vector<TH2D*> fLSB_SBtoyHisto; // LSB vs gven for each pseudo-data event and for each generated SB toy event 
   vector<TH2D*> fQsRelHisto;     // Qs-Qobs vs gven for each pseudo-data event and for each generated SB toy event 
-
+  // pull histograms
+  vector<TH1D*> fPullBFitOnBToy[2]; // b-only fit on b-only toy: 0,1 for toy-of-toy, bkg-only pseudoevents
+  vector<TH2D*> fPullBFitOnSBToy; // b-only fit on sb toy. X axis: variable, Y axis: coupling,mass value
+  vector<TH2D*> fPullSBFitOnBToy[2]; // sb fit on b-only toy: 0,1 for toy-of-toy, bkg-only pseudoevents. X axis: variable, Y axis: coupling,mass value
+  vector<TH2D*> fPullSBFitOnSBToy; // sb fit on sb toy. X axis: variable, Y axis: coupling,mass value
 
   // observables  
   observables fObservables;
@@ -517,7 +524,8 @@ private:
   // fitter objects
   ROOT::Fit::Fitter fFitterSB;
   ROOT::Fit::Fitter fFitterB;
-  
+  vector<double> fInitialPars[2]; // initial parameters for the b-only/sb fits
+  vector<double> fInitialErr[2];  // initial errors for the b-only/sb fits
   // grid parameters
   int fNMassBins;
   double fMassMin;
