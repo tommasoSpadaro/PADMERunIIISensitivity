@@ -85,6 +85,31 @@ void rereadfulllim(int seedStem){ // for example 8000
     NPseudo = 200; 
     massMax = 17.74;
   }
+  if (seedStem==180000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 193; 
+    massMax = 17.74;
+  }
+  if (seedStem==190000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 30; 
+    massMax = 17.74;
+  }
+  if (seedStem==200000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 200; 
+    massMax = 17.74;
+  }
+  if (seedStem==210000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 129; 
+    massMax = 17.74;
+  }
+  if (seedStem==220000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 30; 
+    massMax = 17.74;
+  }
    
   //use 100+j for the normal events
   // 3000+j for efficurveON events analysed with efficurveON
@@ -115,10 +140,14 @@ void rereadfulllim(int seedStem){ // for example 8000
   // 150000+j effcurvON, FINAL anal RunIII with 0.5%/1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new code, use B fit vs sqrt(s)
   // 160000+j effcurvON, FINAL anal RunIII with 0.5%/1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=2, assumeeffioverb=2, MINIMIZE ON THE TOYS, new code, use B fit vs sqrt(s)
   // 170000+j effcurvON, FINAL anal RunIII with 0.5%/1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=2, assumeeffioverb=2, MINIMIZE ON THE TOYS, new code, use B fit vs sqrt(s), carry the POT as observables!
+  // 180000+j effcurvON, RunIII with 0.5%/1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=2, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits
+  // 190000+j effcurvON, RunIII with 0.5%/1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits
+  // 210000+j effcurvON, RunIII with 1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls
+  // 220000+j effcurvON, RunIII with 2.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls, NEW CODE FOR EVENT GENERATION
   
   TGraph** limit90s = new TGraph*[NPseudo]; // UL for the various pseudoevents
   TGraph** limit90sRL = new TGraph*[NPseudo]; // RL UL for the various pseudoevents
-  TGraph* limitStat;
+  TGraph* limitStat = nullptr;
 
   double limitMin = 999999;
   double limitMax = -99999;
@@ -131,6 +160,7 @@ void rereadfulllim(int seedStem){ // for example 8000
   canvaAllLim->Divide(6,5);
   for (int j=0; j<NPseudo; j++){
     if (seedStem==170000 && j==23) continue;
+    if (seedStem==190000 && j==170) continue;
     
     TFile* filo = new TFile(Form("%s%d.root_limits.root",inputFilesStem.Data(),seedStem+j),"OLD");
     TGraph* grafo = (TGraph*) filo->Get("Limit90");
@@ -210,7 +240,7 @@ void rereadfulllim(int seedStem){ // for example 8000
     for (int j=0; j< jgood; j++){
       //      cout << "About to fill limit histograms " << k << " / " << npts << " " << j << " / " << jgood << endl;
       limitsPerPoint[k]->Fill(limit90s[j]->GetY()[k]);
-      if (limit90s[j]->GetY()[k] < 0.24E-3) {
+      if (limit90s[j]->GetY()[k] > 0.66E-3) {
 	cout << " Mass " << limit90s[0]->GetX()[k] << " coupling limit " << limit90s[j]->GetY()[k] << " event = " << pseudoev[j] << endl;
       }
     }
