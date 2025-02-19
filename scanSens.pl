@@ -4,8 +4,8 @@ $maxjobs = $ARGV[0]; # max number of jobs simultaneously running together
 $username = $ARGV[1]; # needed to retrieve number of jobs running
 $seedStem = $ARGV[2]; # starting seed value
 
-$nSteps = 199;#9;#199; #number of pseudo-events
-$iStep = 29;
+$nSteps = 249;#9;#199; #number of pseudo-events
+$iStep = 49;
 
 $loopCond = 1;
 

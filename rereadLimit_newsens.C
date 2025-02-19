@@ -110,6 +110,16 @@ void rereadfulllim(int seedStem){ // for example 8000
     NPseudo = 30; 
     massMax = 17.74;
   }
+  if (seedStem==230000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 100; 
+    massMax = 17.74;
+  }
+  if (seedStem==240000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 95; 
+    massMax = 17.74;
+  }
    
   //use 100+j for the normal events
   // 3000+j for efficurveON events analysed with efficurveON
@@ -144,6 +154,8 @@ void rereadfulllim(int seedStem){ // for example 8000
   // 190000+j effcurvON, RunIII with 0.5%/1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits
   // 210000+j effcurvON, RunIII with 1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls
   // 220000+j effcurvON, RunIII with 2.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls, NEW CODE FOR EVENT GENERATION
+  // 230000+j effcurvON, RunIII with 1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=2, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls
+  // 240000+j effcurvON, RunIII with 1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls, BUG FIX ON P0,P1 of B/pot curve
   
   TGraph** limit90s = new TGraph*[NPseudo]; // UL for the various pseudoevents
   TGraph** limit90sRL = new TGraph*[NPseudo]; // RL UL for the various pseudoevents
@@ -161,6 +173,7 @@ void rereadfulllim(int seedStem){ // for example 8000
   for (int j=0; j<NPseudo; j++){
     if (seedStem==170000 && j==23) continue;
     if (seedStem==190000 && j==170) continue;
+    if (seedStem==230000 && j<30) continue;
     
     TFile* filo = new TFile(Form("%s%d.root_limits.root",inputFilesStem.Data(),seedStem+j),"OLD");
     TGraph* grafo = (TGraph*) filo->Get("Limit90");
