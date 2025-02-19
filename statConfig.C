@@ -38,13 +38,13 @@ statConfig::statConfig(){
   fInputFileNameNObsFromFile = "output/geneNObsSigPlusBkg.root"; // if ToyOfToyMode == kFALSE: filename where the input NObs must be retrieved
   fFieldStrings.push_back(std::pair{"InputFileNameNObsFromFile",sFFS});
 
-  fBkgOnlyPseudoEvents = kFALSE;      // if ToyOfToyMode == kFALSE: use the bkg-only NObs from the input file
+  fBkgOnlyPseudoEvents = kTRUE;      // if kFALSE: use observables of signal+bkg type
   fFieldStrings.push_back(std::pair{"BkgOnlyPseudoEvents",sFFB});
 
-  fWantedMassPseudoEvents = 0;        // if ToyOfToyMode == kFALSE: mass to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyPseudoEvents = kFALSE]
+  fWantedMassPseudoEvents = 0;        // if BkgOnlyPseudoEvents = kFALSE: mass to be used to for S+B Observables
   fFieldStrings.push_back(std::pair{"WantedMassPseudoEvents",sFFD});
 
-  fWantedGvePseudoEvents = 0;         // if ToyOfToyMode == kFALSE: gve  to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyPseudoEvents = kFALSE]
+  fWantedGvePseudoEvents = 0;         // if BkgOnlyPseudoEvents = kFALSE: gve to be used for S+B Observables
   fFieldStrings.push_back(std::pair{"WantedGvePseudoEvents",sFFD});
   
   fFirstEventNObsFromFile = 0;
