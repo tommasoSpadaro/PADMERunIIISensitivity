@@ -4,8 +4,8 @@ $maxjobs = $ARGV[0]; # max number of jobs simultaneously running together
 $username = $ARGV[1]; # needed to retrieve number of jobs running
 $seedStem = $ARGV[2]; # starting seed value
 
-$nSteps = 249;#9;#199; #number of pseudo-events
-$iStep = 49;
+$nSteps = 19;#9;#199; #number of pseudo-events
+$iStep = -1;
 
 $loopCond = 1;
 
@@ -62,9 +62,9 @@ while ($loopCond == 1){
 	    elsif (/^NumberOfGenerations /) {print CONFIGOUT "NumberOfGenerations 200\n";} # read bkg-only input
 
 	    # SIG+BKG PSEUDOEVENTS
-#	    elsif (/^BkgOnlyNObsFromFile/) {print CONFIGOUT "BkgOnlyNObsFromFile 0\n";} # read sig+bkg input
-#	    elsif (/^WantedMassNObsFromFile/) {print CONFIGOUT "WantedMassNObsFromFile 16.92\n";} # use sig+bkg input
-#	    elsif (/^WantedGveNObsFromFile/) {print CONFIGOUT "WantedGveNObsFromFile 0.0006\n";}  # use sig+bkg input
+	    elsif (/^BkgOnlyPseudoEvents/) {print CONFIGOUT "BkgOnlyPseudoEvents 0\n";} # read sig+bkg input
+	    elsif (/^WantedMassPseudoEvents/) {print CONFIGOUT "WantedMassPseudoEvents 16.92\n";} # use sig+bkg input
+	    elsif (/^WantedGvePseudoEvents/) {print CONFIGOUT "WantedGvePseudoEvents 0.00065\n";}  # use sig+bkg input
 
 #	    elsif (/^InputFileNameNObsFromFile/) {print CONFIGOUT "InputFileNameNObsFromFile /Users/Tommaso1/PADME/PADME_sensitivity/output/geneToyMCVersionRunIV_seed1400_useNuis1_useEffiOverBkgCurve1.root\n";}
 #	    elsif (/^FirstEventNObsFromFile/){print CONFIGOUT "FirstEventNObsFromFile $iStep\n";}
