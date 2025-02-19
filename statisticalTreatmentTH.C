@@ -2809,53 +2809,53 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
   TGraph** nbkgGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];
   TGraph** npotGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];
   TGraph** effiGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];
-  TGraph** otherParsGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];// poscale,signalpeak,lorewidth,bes,bkgbiasp0/p1,effioverbkgp0/p1[scan0,1,2],bkgoverpotp0/1
+  TGraph** otherParsGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit]; // other observables
   for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++){
     GenerateGeneralPseudoData(fTheta_B,false,0.,0., false); // sbmode = false, ..., toyoftoy = false  
-    for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++){
-      nobsGraphBkgOnly[j] = new TGraph(); nobsGraphBkgOnly[j]->SetName(Form("gNObs_%d",j));
-      nbkgGraphBkgOnly[j] = new TGraph(); nbkgGraphBkgOnly[j]->SetName(Form("gNBkg_%d",j));
-      npotGraphBkgOnly[j] = new TGraph(); npotGraphBkgOnly[j]->SetName(Form("gNPOT_%d",j));
-      effiGraphBkgOnly[j] = new TGraph(); effiGraphBkgOnly[j]->SetName(Form("gEffi_%d",j));
-      otherParsGraphBkgOnly[j] = new TGraph(14); otherParsGraphBkgOnly[j]->SetName(Form("gOther_%d",j));
-      for (uint i=0; i<fObservables.SqrtsObs.size(); i++){
-	nobsGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.NObs.at(i)); // sqrt(s) observed
-	nbkgGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i)); 
-	npotGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.POTObs.at(i)); 
-	effiGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.SignalEffiLocalObs.at(i));
-      }
+
+    nobsGraphBkgOnly[j] = new TGraph(); nobsGraphBkgOnly[j]->SetName(Form("gNObs_%d",j));
+    nbkgGraphBkgOnly[j] = new TGraph(); nbkgGraphBkgOnly[j]->SetName(Form("gNBkg_%d",j));
+    npotGraphBkgOnly[j] = new TGraph(); npotGraphBkgOnly[j]->SetName(Form("gNPOT_%d",j));
+    effiGraphBkgOnly[j] = new TGraph(); effiGraphBkgOnly[j]->SetName(Form("gEffi_%d",j));
+    otherParsGraphBkgOnly[j] = new TGraph(14); otherParsGraphBkgOnly[j]->SetName(Form("gOther_%d",j));
+    for (uint i=0; i<fObservables.SqrtsObs.size(); i++){
+      nobsGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.NObs.at(i)); // sqrt(s) observed
+      nbkgGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i)); 
+      npotGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.POTObs.at(i)); 
+      effiGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.SignalEffiLocalObs.at(i));
+    }
       // fill other pars
-      otherParsGraphBkgOnly[j]->SetPoint(0,0,fObservables.POTScaleObs);
-      otherParsGraphBkgOnly[j]->SetPoint(1,1,fObservables.SignalPeakYieldObs);
-      otherParsGraphBkgOnly[j]->SetPoint(2,2,fObservables.SignalLorentzianWidthObs);
-      otherParsGraphBkgOnly[j]->SetPoint(3,3,fObservables.BESObs);
-      otherParsGraphBkgOnly[j]->SetPoint(4,4,fObservables.BkgBiasObsP0);
-      otherParsGraphBkgOnly[j]->SetPoint(5,5,fObservables.BkgBiasObsP1);
-      for (int i=0; i<3; i++) {
-	otherParsGraphBkgOnly[j]->SetPoint(6+2*i,6+2*i,fObservables.EffiOverBkgObsP0[i]);
-	otherParsGraphBkgOnly[j]->SetPoint(7+2*i,7+2*i,fObservables.EffiOverBkgObsP1[i]);
-      }
-      for (int i=0; i<2; i++) otherParsGraphBkgOnly[j]->SetPoint(12+i,12+i,fObservables.BkgPerPOTVsSqrtsParObs[i]);
+    otherParsGraphBkgOnly[j]->SetPoint(0,0,fObservables.POTScaleObs);
+    otherParsGraphBkgOnly[j]->SetPoint(1,1,fObservables.SignalPeakYieldObs);
+    otherParsGraphBkgOnly[j]->SetPoint(2,2,fObservables.SignalLorentzianWidthObs);
+    otherParsGraphBkgOnly[j]->SetPoint(3,3,fObservables.BESObs);
+    otherParsGraphBkgOnly[j]->SetPoint(4,4,fObservables.BkgBiasObsP0);
+    otherParsGraphBkgOnly[j]->SetPoint(5,5,fObservables.BkgBiasObsP1);
+    for (int i=0; i<3; i++) {
+      otherParsGraphBkgOnly[j]->SetPoint(6+2*i,6+2*i,fObservables.EffiOverBkgObsP0[i]);
+      otherParsGraphBkgOnly[j]->SetPoint(7+2*i,7+2*i,fObservables.EffiOverBkgObsP1[i]);
+    }
+    for (int i=0; i<2; i++) otherParsGraphBkgOnly[j]->SetPoint(12+i,12+i,fObservables.BkgPerPOTVsSqrtsParObs[i]);
       
-      nobsGraphBkgOnly[j]->Write();	
-      nbkgGraphBkgOnly[j]->Write();	
-      npotGraphBkgOnly[j]->Write();	
-      effiGraphBkgOnly[j]->Write();
-      otherParsGraphBkgOnly[j]->Write();
-    }
-    for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++) {
-      delete nobsGraphBkgOnly[j];
-      delete nbkgGraphBkgOnly[j];
-      delete npotGraphBkgOnly[j];
-      delete effiGraphBkgOnly[j];
-      delete otherParsGraphBkgOnly[j];
-    }
-    delete[] nobsGraphBkgOnly;
-    delete[] nbkgGraphBkgOnly;
-    delete[] npotGraphBkgOnly;
-    delete[] effiGraphBkgOnly;
-    delete[] otherParsGraphBkgOnly;
-  }  
+    nobsGraphBkgOnly[j]->Write();	
+    nbkgGraphBkgOnly[j]->Write();	
+    npotGraphBkgOnly[j]->Write();	
+    effiGraphBkgOnly[j]->Write();
+    otherParsGraphBkgOnly[j]->Write();
+  }
+
+  for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++) {
+    delete nobsGraphBkgOnly[j];
+    delete nbkgGraphBkgOnly[j];
+    delete npotGraphBkgOnly[j];
+    delete effiGraphBkgOnly[j];
+    delete otherParsGraphBkgOnly[j];
+  }
+  delete[] nobsGraphBkgOnly;
+  delete[] nbkgGraphBkgOnly;
+  delete[] npotGraphBkgOnly;
+  delete[] effiGraphBkgOnly;
+  delete[] otherParsGraphBkgOnly;
 
   // signal plus background pseudoevents
   for (uint im = 0; im < (uint) fNMassBins; im++){
@@ -2871,7 +2871,7 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
 	nobsGraph[j] = new TGraph(); nobsGraph[j]->SetName(Form("gNObs_Mass_%f_gve_%f_%d",massn,gven,j));
 	nbkgGraph[j] = new TGraph(); nbkgGraph[j]->SetName(Form("gNBkg_Mass_%f_gve_%f_%d",massn,gven,j));
 	npotGraph[j] = new TGraph(); npotGraph[j]->SetName(Form("gNPOT_Mass_%f_gve_%f_%d",massn,gven,j));
-	effiGraph[j] = new TGraph(); effiGraphBkgOnly[j]->SetName(Form("gEffi_Mass_%f_gve_%f_%d",massn,gven,j));
+	effiGraph[j] = new TGraph(); effiGraph[j]->SetName(Form("gEffi_Mass_%f_gve_%f_%d",massn,gven,j));
 	otherParsGraph[j] = new TGraph(14); otherParsGraph[j]->SetName(Form("gOther_Mass_%f_gve_%f_%d",massn,gven,j));
 	//	GenerateSignalPlusBackgroundPseudoData(massn,gven,fTheta_B);
 	GenerateGeneralPseudoData(fTheta_S,true,massn,gven,false); // sbmode, mass, gve, toyoftoy
