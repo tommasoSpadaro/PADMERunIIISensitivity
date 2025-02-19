@@ -21,7 +21,6 @@ public:
   // Gene mode
   
   Bool_t GetGeneMode(){return fGeneMode;}
-  Bool_t GetBkgOnlyGeneMode(){return fBkgOnlyGeneMode;}
   TString GetGeneOutputFileName(){return fGeneOutputFileName;}
 
   // Read mode
@@ -34,10 +33,10 @@ public:
 
   // if ToyOfToyMode == kFALSE:
   TString GetInputFileNameNObsFromFile(){return fInputFileNameNObsFromFile;} // filename where the input NObs must be retrieved
-  Bool_t GetBkgOnlyNObsFromFile(){return fBkgOnlyNObsFromFile;}// use the bkg-only NObs from the input file
-  Double_t GetWantedMassNObsFromFile(){return fWantedMassNObsFromFile;} // mass to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
-  Double_t GetWantedGveNObsFromFile(){return fWantedGveNObsFromFile;}   // gve  to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
-  Int_t    GetFirstEventNObsFromFile(){return fFirstEventNObsFromFile;} // first event to be used when retrieving NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
+  Bool_t GetBkgOnlyPseudoEvents(){return fBkgOnlyPseudoEvents;}// use the bkg-only NObs from the input file
+  Double_t GetWantedMassPseudoEvents(){return fWantedMassPseudoEvents;} // mass to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyPseudoEvents = kFALSE]
+  Double_t GetWantedGvePseudoEvents(){return fWantedGvePseudoEvents;}   // gve  to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyPseudoEvents = kFALSE]
+  Int_t    GetFirstEventNObsFromFile(){return fFirstEventNObsFromFile;} // first event to be used when retrieving NObs from input file [ONLY IF BkgOnlyPseudoEvents = kFALSE]
   
   // Other settings
   Int_t GetNumberOfGenerations(){return fNumberOfGenerations;} // number of toys
@@ -102,18 +101,17 @@ private:
 
   // gene mode
   Bool_t fGeneMode; // if true -> generate toys-of-toys distributions
-  Bool_t fBkgOnlyGeneMode; // if true -> generate background-only, else signal+bkg
   TString fGeneOutputFileName; // name of gene-MC output file
 
   // read mode
   Bool_t fReadMode;
   
   // standard setup
-  Bool_t fToyOfToyMode;               // if true -> generate background pseudo data while making the expected limit
-  TString fInputFileNameNObsFromFile; // if ToyOfToyMode == kFALSE: filename where the input NObs must be retrieved
-  Bool_t fBkgOnlyNObsFromFile;        // if ToyOfToyMode == kFALSE: use the bkg-only NObs from the input file
-  Double_t fWantedMassNObsFromFile;   // if ToyOfToyMode == kFALSE: mass to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
-  Double_t fWantedGveNObsFromFile;    // if ToyOfToyMode == kFALSE: gve  to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
+  Bool_t fToyOfToyMode;               // if true -> generate pseudo events while making the expected limit
+  Bool_t fBkgOnlyPseudoEvents;        // if true -> generate/retrieve background-only pseudoevents
+  Double_t fWantedMassPseudoEvents;   // if fBkgOnlyPseudoEvents = false: mass to be used for S+B pseudoevents
+  Double_t fWantedGvePseudoEvents;    // if fBkgOnlyPseudoEvents = false: gve  to be used for S+B pseudoevents
+  TString fInputFileNameNObsFromFile; // if ToyOfToyMode == kFALSE: filename where the input pseudoevents must be retrieved
   Int_t fFirstEventNObsFromFile;      // if ToyOfToyMode == kFALSE: first event to be read from the input file
   
   // other settings

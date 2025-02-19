@@ -61,17 +61,17 @@ int main(int argc, char **argv)
   
   if (configPtr->GetGeneMode()) { 
     printf("GeneMode: setup...\n");
-    std::cout << "GeneMode background-only: " << configPtr->GetBkgOnlyGeneMode() << std::endl;
-
+    std::cout << "GeneMode background-only: " << configPtr->GetBkgOnlyPseudoEvents() << std::endl;
     statT->Init();
-    if (configPtr->GetBkgOnlyGeneMode()){
-      std::cout << "Generating background only pseudodata to output file with name--" << configPtr->GetGeneOutputFileName().Data() << std::endl;
-      statT->SimulateBkgPseudoDataToFile(configPtr->GetGeneOutputFileName()); // do the toyoftoy background only simulation
-    }
-    else {
-      std::cout << "Generating signal + background pseudodata to output file with name---" << configPtr->GetGeneOutputFileName().Data() << std::endl;
-      statT->SimulateSignalPlusBkgPseudoDataToFile(configPtr->GetGeneOutputFileName()); // do the toyoftoy signal+background simulation
-    }
+    statT->SimulatePseudoDataToFile(configPtr->GetGeneOutputFileName()); // do the pseudoevent simulation
+//    if (configPtr->GetBkgOnlyGeneMode()){
+//      std::cout << "Generating background only pseudodata to output file with name--" << configPtr->GetGeneOutputFileName().Data() << std::endl;
+//      statT->SimulateBkgPseudoDataToFile(configPtr->GetGeneOutputFileName()); // do the toyoftoy background only simulation
+//    }
+//    else {
+//      std::cout << "Generating signal + background pseudodata to output file with name---" << configPtr->GetGeneOutputFileName().Data() << std::endl;
+//      statT->SimulateSignalPlusBkgPseudoDataToFile(configPtr->GetGeneOutputFileName()); // do the toyoftoy signal+background simulation
+//    }
     printf("GeneMode...done\n");
     return 0;
   }    

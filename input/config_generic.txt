@@ -1,12 +1,11 @@
 GeneMode 0
-BkgOnlyGeneMode 0
 GeneOutputFileName output/geneToyMC.root
 ReadMode 0
 ToyOfToyMode 1
 InputFileNameNObsFromFile output/geneNObsSigPlusBkg.root
-BkgOnlyNObsFromFile 0
-WantedMassNObsFromFile 0.
-WantedGveNObsFromFile 0.
+BkgOnlyPseudoEvents 0
+WantedMassPseudoEvents 0.
+WantedGvePseudoEvents 0.
 FirstEventNObsFromFile 0
 NumberOfGenerations 200
 NumberOfGenerationsExpectedLimit 1

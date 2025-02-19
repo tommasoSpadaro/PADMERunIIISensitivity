@@ -22,9 +22,6 @@ statConfig::statConfig(){
   fGeneMode = kFALSE; // if true, generate output files with toys of toys
   fFieldStrings.push_back(std::pair{"GeneMode",sFFB});
 
-  fBkgOnlyGeneMode = kFALSE; // if true, generate output files with background-only, otherwise signal+background
-  fFieldStrings.push_back(std::pair{"BkgOnlyGeneMode",sFFB});
-
   fGeneOutputFileName = "output/GeneToyMC.root"; // output filename for gene toy-of-toy MC 
   fFieldStrings.push_back(std::pair{"GeneOutputFileName",sFFS});
 
@@ -41,14 +38,14 @@ statConfig::statConfig(){
   fInputFileNameNObsFromFile = "output/geneNObsSigPlusBkg.root"; // if ToyOfToyMode == kFALSE: filename where the input NObs must be retrieved
   fFieldStrings.push_back(std::pair{"InputFileNameNObsFromFile",sFFS});
 
-  fBkgOnlyNObsFromFile = kFALSE;      // if ToyOfToyMode == kFALSE: use the bkg-only NObs from the input file
-  fFieldStrings.push_back(std::pair{"BkgOnlyNObsFromFile",sFFB});
+  fBkgOnlyPseudoEvents = kFALSE;      // if ToyOfToyMode == kFALSE: use the bkg-only NObs from the input file
+  fFieldStrings.push_back(std::pair{"BkgOnlyPseudoEvents",sFFB});
 
-  fWantedMassNObsFromFile = 0;        // if ToyOfToyMode == kFALSE: mass to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
-  fFieldStrings.push_back(std::pair{"WantedMassNObsFromFile",sFFD});
+  fWantedMassPseudoEvents = 0;        // if ToyOfToyMode == kFALSE: mass to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyPseudoEvents = kFALSE]
+  fFieldStrings.push_back(std::pair{"WantedMassPseudoEvents",sFFD});
 
-  fWantedGveNObsFromFile = 0;         // if ToyOfToyMode == kFALSE: gve  to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyNObsFromFile = kFALSE]
-  fFieldStrings.push_back(std::pair{"WantedGveNObsFromFile",sFFD});
+  fWantedGvePseudoEvents = 0;         // if ToyOfToyMode == kFALSE: gve  to be used to retrieve S+B NObs from input file [ONLY IF BkgOnlyPseudoEvents = kFALSE]
+  fFieldStrings.push_back(std::pair{"WantedGvePseudoEvents",sFFD});
   
   fFirstEventNObsFromFile = 0;
   fFieldStrings.push_back(std::pair{"FirstEventNObsFromFile",sFFI});
@@ -195,7 +192,7 @@ void statConfig::readConfigFromFile(TString datacardName){
     exit(3);
   }
   if (fGeneMode) {
-    std::cout << "statConfig>> GeneMode ON BkgOnlyGeneMode " << fBkgOnlyGeneMode << " output filename " << fGeneOutputFileName.Data() << std::endl;
+    std::cout << "statConfig>> GeneMode ON output filename " << fGeneOutputFileName.Data() << std::endl;
   }
   else if (fReadMode) {
     std::cout << "statConfig>> ReadMode ON InputFile " << fInputFileName.Data() << std::endl;
@@ -205,10 +202,10 @@ void statConfig::readConfigFromFile(TString datacardName){
     if (!fToyOfToyMode) {
       std::cout << "statConfig>> Will Read NObs from input file " << fInputFileNameNObsFromFile.Data() << std::endl;
       std::cout << "statConfig>> and I will read starting from event " << fFirstEventNObsFromFile << std::endl;
-      if (fBkgOnlyNObsFromFile) {
+      if (fBkgOnlyPseudoEvents) {
 	std::cout << "statConfig>> In particular, will read the background-only NObs" << std::endl;
       } else {
-	std::cout << "statConfig>> Read signal+background NObs with wanted mass and couplings = " << fWantedMassNObsFromFile << " , " << fWantedGveNObsFromFile << std::endl;
+	std::cout << "statConfig>> Read signal+background NObs with wanted mass and couplings = " << fWantedMassPseudoEvents << " , " << fWantedGvePseudoEvents << std::endl;
       }
     }
   }
@@ -270,8 +267,8 @@ int statConfig::useInputString(TString sStr){
 	double inputstrvalD = valueString.Atof();
 	std::cout << " has double value " << inputstrvalD << std::endl;
 
-	if (fieldString.EqualTo("WantedMassNObsFromFile")) fWantedMassNObsFromFile = inputstrvalD;
-	else if (fieldString.EqualTo("WantedGveNObsFromFile")) fWantedGveNObsFromFile = inputstrvalD;
+	if (fieldString.EqualTo("WantedMassPseudoEvents")) fWantedMassPseudoEvents = inputstrvalD;
+	else if (fieldString.EqualTo("WantedGvePseudoEvents")) fWantedGvePseudoEvents = inputstrvalD;
 	else if (fieldString.EqualTo("MassStep")) fMassStep = inputstrvalD;
 	else if (fieldString.EqualTo("MassMin")) fMassMin = inputstrvalD;
 	else if (fieldString.EqualTo("MassMax")) fMassMax = inputstrvalD;
@@ -301,10 +298,9 @@ int statConfig::useInputString(TString sStr){
 	std::cout << " has boolean value " << inputstrvalB << std::endl;
 
 	if (fieldString.EqualTo("GeneMode")) fGeneMode = inputstrvalB;
-	else if (fieldString.EqualTo("BkgOnlyGeneMode")) fBkgOnlyGeneMode = inputstrvalB;
 	else if (fieldString.EqualTo("ReadMode")) fReadMode = inputstrvalB;
 	else if (fieldString.EqualTo("ToyOfToyMode")) fToyOfToyMode = inputstrvalB;
-	else if (fieldString.EqualTo("BkgOnlyNObsFromFile")) fBkgOnlyNObsFromFile = inputstrvalB;
+	else if (fieldString.EqualTo("BkgOnlyPseudoEvents")) fBkgOnlyPseudoEvents = inputstrvalB;
 	else if (fieldString.EqualTo("UseNuisance")) fUseNuisance = inputstrvalB;
 	else if (fieldString.EqualTo("CorrectBkgBias")) fCorrectBkgBias = inputstrvalB;
 	else if (fieldString.EqualTo("AssumeBkgOverPotCurve")) fAssumeBkgOverPotCurve = inputstrvalB;

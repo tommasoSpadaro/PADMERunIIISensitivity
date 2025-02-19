@@ -215,10 +215,10 @@ class Likelihood {
        chisq += delta*delta;// + 2.*TMath::Log(fExpectedErrors.BESErr) + log2pi;
 
        // if using effi/bkg curve, include the errors on the parameters in the likelihood 
-       if (assumeEffiOverBkgCurve){ // parameterisation of the effi/(bkg/pot) vs sqrt(s) with two scan periods
-	 int kmin = 2;
-	 int kmax = 3;
-	 if (assumeEffiOverBkgCurve==1) {
+       if (assumeEffiOverBkgCurve){ // parameterisation of the effi/(bkg/pot) vs sqrt(s)
+	 int kmin = 2; // use a single parametrization for all the scan periods
+	 int kmax = 3; 
+	 if (assumeEffiOverBkgCurve==1) { // use one parametrization for each scan sub-period
 	   kmin = 0;
 	   kmax = 2;
 	 }
@@ -250,7 +250,7 @@ class Likelihood {
 	 if (useBkgBias) expval = (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
 	 else            expval = potScaleTrue;                                                            // POT_scale_true
 
-	 expval *= (fObservables.BkgPerPOTVsSqrtsParObs[0] + fObservables.BkgPerPOTVsSqrtsParObs[1]*(fObservables.SqrtsObs.at(i)-SQRTSMID));
+	 expval *= (bkgFitP0 + bkgFitP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));
 	 // expected number of signal events (0 if background-only fit)
 	 double sc = 0;
 	 if (isSBfit) {
@@ -274,7 +274,7 @@ class Likelihood {
 	 delta = (fObservables.POTObs.at(i) - par[potTrueIdx + i])/fExpectedErrors.POTLocalErr.at(i); // true values of the POT per point
 	 chisq += delta*delta;// + 2.*TMath::Log(errpotloc) + log2pi;
 
-	 double expval = (fObservables.BkgPerPOTVsSqrtsParObs[0] + fObservables.BkgPerPOTVsSqrtsParObs[1]*(fObservables.SqrtsObs.at(i)-SQRTSMID));
+	 double expval = (bkgFitP0 + bkgFitP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));
 	 if (useBkgBias) expval *= (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
 	 else            expval *= potScaleTrue;                                                            // POT_scale_true
 	 
@@ -381,8 +381,9 @@ public:
   void EvaluateExpectedLimit();//Bool_t toyOfToy, Bool_t bOnlyFile, Double_t wantedMass, Double_t wantedGve, TString filename);// if toyOfToy == false -> nobs from filename. if bOnlyFile == false -> use SBfile 
   void EvaluateExpectedLimitFreqOnly(); // Only do the frequentist method and fill the frequentist tree
 
-  void SimulateBkgPseudoDataToFile(TString filename); // can generate and write to a file pseudodata background-only distributions
-  void SimulateSignalPlusBkgPseudoDataToFile(TString filename); // can generate and write to a file pseudodata signal + bkg distributions scanning over the mass,gve grid
+  void SimulatePseudoDataToFile(TString filename); // can generate and write to a file pseudodata both background-only and signal+background distributions
+//  void SimulateBkgPseudoDataToFile(TString filename); // can generate and write to a file pseudodata background-only distributions
+//  void SimulateSignalPlusBkgPseudoDataToFile(TString filename); // can generate and write to a file pseudodata signal + bkg distributions scanning over the mass,gve grid
 
   // parameters for the nuisance-par distributions can be modified externally via the following, overriding the initalised values:
   void SetPOTErrors(double rGlobal, vector<double> rLocal) {
@@ -401,8 +402,10 @@ public:
   void SetNObs(vector<Double_t> val){fObservables.NObs.clear(); fObservables.NObs = val; fObservables.isNotFilled = false;} 
   // The NObs distribution can be readout from an external file:
   void SetObservablesAsimov(nuisancePars); // set obs without any fluctuation
-  void SetObservablesFromBFile(TString filename, Int_t count); // read instance #count from the file of observables graphs
-  void SetObservablesFromSBFile(TString filename, Double_t mass, Double_t gve, Int_t count); // read instance #count from the file of observable graphs, retrieve the mass,gve point closest to the wanted
+  void SetObservablesFromFile(TString filename, Bool_t sbmode, Double_t mass, Double_t gve, Int_t count); // read instance #count from the file of observable graphs, retrieve the mass,gve poi
+
+//  void SetObservablesFromBFile(TString filename, Int_t count); // read instance #count from the file of observables graphs
+//  void SetObservablesFromSBFile(TString filename, Double_t mass, Double_t gve, Int_t count); // read instance #count from the file of observable graphs, retrieve the mass,gve point closest to the wanted
   
 // definition of the mass-epsilon grid with public methods
   void OverrideMassGrid(double mmin, double mmax, int nmsteps){fNMassBins = nmsteps; fMassMin = mmin; fMassMax = mmax;}
@@ -446,12 +449,27 @@ private:
   TF1* fitfunB;
   TF1* fitfunEpsOverB[3];
 
+
   vector<TGraphAsymmErrors*> fAsimov_a[2]; // [k=0->90%CL, k=1->95%CL]: one-sigma and two-sigma bands exploiting Asimov data
   vector<TGraph*> fQobs_a; // Qobs vs gven for asimov data set at a given mass
   vector<TGraph*> fQmuProfile; // Qobs vs gven for pseudo data (LSB(mu,theta)/LSB(mu_hat,theta_hat) set at a given mass
   vector<TGraph*> fPprimeProfile; // gven vs pprime at a given mass
 
   // obs histograms on pseudo-data
+  vector<TGraph*> fNObsPseudo;
+  vector<TGraph*> fNObsOverPOTPseudo;
+  vector<TGraph*> fNObsOverPOTBkgPseudo;
+  // obs histograms on B toys
+  vector<TGraph*> fNObsBToy;
+  vector<TGraph*> fNObsOverPOTBToy;
+  vector<TGraph*> fNObsOverPOTBkgBToy;
+  // obs histograms on SB toys
+  vector<TGraph*> fNObsSBToy;
+  vector<TGraph*> fNObsOverPOTSBToy;
+  vector<TGraph*> fNObsOverPOTBkgSBToy;
+
+
+  
   TH1D* fLBHisto; // LB   for each pseudo-data event
   vector<TH2D*> fLSBHisto; // LSB vs gven for each pseudo-data event at a given mass
   vector<TH2D*> fQobsHisto; // Qobs vs gven for each pseudo-data event at a given mass

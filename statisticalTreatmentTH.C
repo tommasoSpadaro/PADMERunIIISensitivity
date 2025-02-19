@@ -265,24 +265,6 @@ void statisticalTreatmentTH::Init(){
     " par1 = " << fObservables.EffiOverBkgObsP1[i] << " +- " << fExpectedErrors.EffiOverBkgErrP1[i] <<
     " corr = " << fExpectedErrors.EffiOverBkgErrP0P1Corr[i] << endl;
   }
-  
-  
-  // IF USING EFFIOVERBKG -> USE ONLY (POTxB)_i as fit variable, not POT_i and B_i separately. POT_i will be FIXED, B_i will be varying 
-
-//  if (fConfigPtr->GetAssumeEffiOverBkgCurve()){
-//    std::cout << "WE USE EFFIOVERBKG -> USE POTxB as a fit variable instead of POT, B" << std::endl;
-//    for (int i=0; i< fObservables.POTObs.size(); i++){
-//      double poti = fObservables.POTObs.at(i);
-//      double pote = fExpectedErrors.POTLocalErr.at(i);
-//      double bkgi = fObservables.BkgObs.at(i);
-//      double bkge = fExpectedErrors.BkgErr.at(i);
-//      fObservables.POTObs.at(i) = 1;
-//      fExpectedErrors.POTLocalErr.at(i) = 0;
-//      fObservables.BkgObs.at(i) = poti*bkgi;
-//      fExpectedErrors.BkgErr.at(i) = fObservables.BkgObs.at(i)*TMath::Sqrt((pote/poti)*(pote/poti) + (bkge/bkgi)*(bkge/bkgi));
-//    }
-//  }
-
 
   // initialise the other observables
 
@@ -587,6 +569,7 @@ void statisticalTreatmentTH::initHistograms(){
   cout << "Booking histograms in memory...";
 
   fLBHisto = new TH1D("LBHisto","LB for pseudo data events",NLBins,0,LMax); // LB   for each pseudo-data event
+
   for (int k=0; k<2; k++) { // 90%CL, 95%CL
     for (int i=0; i<2; i++) { // 1-sigma and 2-sigma bands
       TGraphAsymmErrors* asi = new TGraphAsymmErrors();
@@ -1199,14 +1182,14 @@ void statisticalTreatmentTH::initPullHistograms(){
 	for (int pseudo=0; pseudo<2; pseudo++) fPullBFitOnBToy[pseudo].push_back(
 				 new TH1D(Form("BFitOnBToy_%s_pseudo%d",fitter->Config().ParSettings(ip).Name().c_str(),pseudo),
 					  Form("Bfit on B toy %s pseudo %d",fitter->Config().ParSettings(ip).Name().c_str(),pseudo),
-					  100,-10.,10.)); // bfit on btoy
+					  100,-5.,5.)); // bfit on btoy
       
 	for (uint im = 0; im < fNMassBins; im++){
 	  double massn = fMassMin + im*fMassStep;
 	  fPullBFitOnSBToy.push_back(
 				     new TH2D(Form("BFitOnSBToy_%s_%d",fitter->Config().ParSettings(ip).Name().c_str(),im),
 					      Form("Bfit on SB toy %s mass %f",fitter->Config().ParSettings(ip).Name().c_str(),massn),
-					      100,-10.,10.,fNgveBins,gveEdges)); // bfit on sb toy
+					      100,-5.,5.,fNgveBins,gveEdges)); // bfit on sb toy
 	}
       } else { // sbfit
 	for (uint im = 0; im < fNMassBins; im++){
@@ -1215,12 +1198,12 @@ void statisticalTreatmentTH::initPullHistograms(){
 	    fPullSBFitOnBToy[pseudo].push_back(
 					       new TH2D(Form("SBFitOnBToy_%s_%d_pseudo%d",fitter->Config().ParSettings(ip).Name().c_str(),im,pseudo),
 							Form("SBfit on B toy %s mass %f pseudo %d",fitter->Config().ParSettings(ip).Name().c_str(),massn,pseudo),
-							100,-10.,10.,fNgveBins,gveEdges)); // sbfit on btoy
+							100,-5.,5.,fNgveBins,gveEdges)); // sbfit on btoy
 	  }
 	  fPullSBFitOnSBToy.push_back(
 				      new TH2D(Form("SBFitOnSBToy_%s_%d",fitter->Config().ParSettings(ip).Name().c_str(),im),
 					       Form("SBfit on SB toy %s mass %f",fitter->Config().ParSettings(ip).Name().c_str(),massn),
-					       100,-10.,10.,fNgveBins,gveEdges)); // sbfit on sbtoy
+					       100,-5.,5.,fNgveBins,gveEdges)); // sbfit on sbtoy
 	} // im
       } // bfit, sbfit
     } // ip = 0,..,npars
@@ -1325,18 +1308,33 @@ void statisticalTreatmentTH::EvaluateExpectedLimit(){
 
     if (fConfigPtr->GetToyOfToyMode()) {
       cout << "StatisticalTreatment - Generating pseudodata in memory" << endl;
-      GenerateGeneralPseudoData(fTheta_B,false,0.,0.,false); // sbmode, mass, gve, toyoftoy
+      GenerateGeneralPseudoData(fTheta_B,
+				!fConfigPtr->GetBkgOnlyPseudoEvents(),
+				fConfigPtr->GetWantedMassPseudoEvents(),
+				fConfigPtr->GetWantedGvePseudoEvents(),false); // nuis, sbmode, mass, gve, toyoftoy
     } else {
-      if (fConfigPtr->GetBkgOnlyNObsFromFile()) {
-	cout << "StatisticalTreatement - will read Bkg-only NObs from file starting for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << endl;
-	SetObservablesFromBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetFirstEventNObsFromFile()+i); // modifies fObservables
-      } else {
-	cout << "StatisticalTreatment - will read Sig+Bkg NObs from file for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << " for mass,gve = " <<
-	  fConfigPtr->GetWantedMassNObsFromFile() << " , " << fConfigPtr->GetWantedGveNObsFromFile() << endl;
-	SetObservablesFromSBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetWantedMassNObsFromFile(),fConfigPtr->GetWantedGveNObsFromFile(),fConfigPtr->GetFirstEventNObsFromFile()+i);//modifies fObservables
-      }
+      SetObservablesFromFile(fConfigPtr->GetInputFileNameNObsFromFile(),
+			     !fConfigPtr->GetBkgOnlyPseudoEvents(),
+			     fConfigPtr->GetWantedMassPseudoEvents(),
+			     fConfigPtr->GetWantedGvePseudoEvents(),fConfigPtr->GetFirstEventNObsFromFile()+i); // filename, sbmode, mass, gve, eventnr
     }
 
+//NOTUSED    if (fConfigPtr->GetToyOfToyMode()) {
+//NOTUSED      cout << "StatisticalTreatment - Generating pseudodata in memory" << endl;
+//NOTUSED      GenerateGeneralPseudoData(fTheta_B,false,0.,0.,false); // sbmode, mass, gve, toyoftoy
+//NOTUSED    } else {
+//NOTUSED      if (fConfigPtr->GetBkgOnlyPseudoEvents()) {
+//NOTUSED	cout << "StatisticalTreatement - will read Bkg-only NObs from file starting for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << endl;
+//NOTUSED	SetObservablesFromBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetFirstEventNObsFromFile()+i); // modifies fObservables
+//NOTUSED      } else {
+//NOTUSED	cout << "StatisticalTreatment - will read Sig+Bkg NObs from file for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << " for mass,gve = " <<
+//NOTUSED	  fConfigPtr->GetWantedMassPseudoEvents() << " , " << fConfigPtr->GetWantedGvePseudoEvents() << endl;
+//NOTUSED	SetObservablesFromSBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetWantedMassPseudoEvents(),fConfigPtr->GetWantedGvePseudoEvents(),fConfigPtr->GetFirstEventNObsFromFile()+i);//modifies fObservables
+//NOTUSED      }
+//NOTUSED    }
+
+    //    fillEvent(true,true); // input: pseudo-event flag, b-only flag
+    
     // evaluate LB, store the nuisances
     // loop over mass, loop over the coupling, evaluate LSB, store the nuisances(im,ig)
     // find the minimum lsb, store the nuisance of that (theta^(im)) and the coupling of that (ig^(im))
@@ -1635,17 +1633,25 @@ void statisticalTreatmentTH::EvaluateExpectedLimitFreqOnly(){
 
     if (fConfigPtr->GetToyOfToyMode()) {
       cout << "StatisticalTreatment - Generating pseudodata in memory" << endl;
-      GenerateGeneralPseudoData(fTheta_B,false,0.,0.,false); // sbmode, mass, gve, toyoftoy
+      GenerateGeneralPseudoData(fTheta_B,
+				!fConfigPtr->GetBkgOnlyPseudoEvents(),
+				fConfigPtr->GetWantedMassPseudoEvents(),
+				fConfigPtr->GetWantedGvePseudoEvents(),false); // toyoftoy
     } else {
-      if (fConfigPtr->GetBkgOnlyNObsFromFile()) {
-	cout << "StatisticalTreatement - will read Bkg-only NObs from file starting for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << endl;
-	SetObservablesFromBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetFirstEventNObsFromFile()+i);
-      } else {
-	cout << "StatisticalTreatment - will read Sig+Bkg NObs from file for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << " for mass,gve = " <<
-	  fConfigPtr->GetWantedMassNObsFromFile() << " , " << fConfigPtr->GetWantedGveNObsFromFile() << endl;
-	SetObservablesFromSBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetWantedMassNObsFromFile(),fConfigPtr->GetWantedGveNObsFromFile(),fConfigPtr->GetFirstEventNObsFromFile()+i);
-      }
+      SetObservablesFromFile(fConfigPtr->GetInputFileNameNObsFromFile(),
+			     !fConfigPtr->GetBkgOnlyPseudoEvents(),
+			     fConfigPtr->GetWantedMassPseudoEvents(),
+			     fConfigPtr->GetWantedGvePseudoEvents(),fConfigPtr->GetFirstEventNObsFromFile()+i);
     }
+//NOTUSED      if (fConfigPtr->GetBkgOnlyPseudoEvents()) {
+//NOTUSED	cout << "StatisticalTreatement - will read Bkg-only NObs from file starting for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << endl;
+//NOTUSED	SetObservablesFromBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetFirstEventNObsFromFile()+i);
+//NOTUSED      } else {
+//NOTUSED	cout << "StatisticalTreatment - will read Sig+Bkg NObs from file for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << " for mass,gve = " <<
+//NOTUSED	  fConfigPtr->GetWantedMassPseudoEvents() << " , " << fConfigPtr->GetWantedGvePseudoEvents() << endl;
+//NOTUSED	SetObservablesFromSBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetWantedMassPseudoEvents(),fConfigPtr->GetWantedGvePseudoEvents(),fConfigPtr->GetFirstEventNObsFromFile()+i);
+//NOTUSED      }
+
     
     if (fVerbosity >= 2) {
       cout << "After generation of pseudo data Nobs = ";
@@ -2463,7 +2469,7 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
   
   fLikeli.SetObservables(fObservables);
 
-  int npars = 21+3*npts; // 7 always fixed, 13 + 3 * npts depending on the setup 
+  int npars = 21+3*npts; // FRAGILE 
   int freePars = 0;
   for (uint ip=0; ip < npars; ip++) {
     if (!fitter->Config().ParSettings(ip).IsFixed()) freePars++;
@@ -2515,7 +2521,7 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
     }
   }
 
-  if (!okfit && fVerbosity >= 2){
+  if (!okfit && fVerbosity >= 0){
     const ROOT::Fit::FitResult & result = fitter->Result();    
     cout << "Fit status " << result.Status() << " isValid " << result.IsValid() << endl;
     result.Print(std::cout);
@@ -2783,11 +2789,10 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
 //NOT used  return fitNuisance;
 //NOT used}
 
-
-void statisticalTreatmentTH::SimulateSignalPlusBkgPseudoDataToFile(TString filename){
+void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
 
   if (!fIsInitialized){
-    std::cout << "Cannot SimulateSignalPlusBkgPseudoDataToFile - no init done " << endl;
+    std::cout << "Cannot SimulatePseudoDataToFile - no init done " << endl;
     exit(1);
   }
 
@@ -2798,7 +2803,61 @@ void statisticalTreatmentTH::SimulateSignalPlusBkgPseudoDataToFile(TString filen
     exit(1);
   }
 
+  // bkg only events  
 
+  TGraph** nobsGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];
+  TGraph** nbkgGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];
+  TGraph** npotGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];
+  TGraph** effiGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];
+  TGraph** otherParsGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];// poscale,signalpeak,lorewidth,bes,bkgbiasp0/p1,effioverbkgp0/p1[scan0,1,2],bkgoverpotp0/1
+  for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++){
+    GenerateGeneralPseudoData(fTheta_B,false,0.,0., false); // sbmode = false, ..., toyoftoy = false  
+    for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++){
+      nobsGraphBkgOnly[j] = new TGraph(); nobsGraphBkgOnly[j]->SetName(Form("gNObs_%d",j));
+      nbkgGraphBkgOnly[j] = new TGraph(); nbkgGraphBkgOnly[j]->SetName(Form("gNBkg_%d",j));
+      npotGraphBkgOnly[j] = new TGraph(); npotGraphBkgOnly[j]->SetName(Form("gNPOT_%d",j));
+      effiGraphBkgOnly[j] = new TGraph(); effiGraphBkgOnly[j]->SetName(Form("gEffi_%d",j));
+      otherParsGraphBkgOnly[j] = new TGraph(14); otherParsGraphBkgOnly[j]->SetName(Form("gOther_%d",j));
+      for (uint i=0; i<fObservables.SqrtsObs.size(); i++){
+	nobsGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.NObs.at(i)); // sqrt(s) observed
+	nbkgGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i)); 
+	npotGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.POTObs.at(i)); 
+	effiGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.SignalEffiLocalObs.at(i));
+      }
+      // fill other pars
+      otherParsGraphBkgOnly[j]->SetPoint(0,0,fObservables.POTScaleObs);
+      otherParsGraphBkgOnly[j]->SetPoint(1,1,fObservables.SignalPeakYieldObs);
+      otherParsGraphBkgOnly[j]->SetPoint(2,2,fObservables.SignalLorentzianWidthObs);
+      otherParsGraphBkgOnly[j]->SetPoint(3,3,fObservables.BESObs);
+      otherParsGraphBkgOnly[j]->SetPoint(4,4,fObservables.BkgBiasObsP0);
+      otherParsGraphBkgOnly[j]->SetPoint(5,5,fObservables.BkgBiasObsP1);
+      for (int i=0; i<3; i++) {
+	otherParsGraphBkgOnly[j]->SetPoint(6+2*i,6+2*i,fObservables.EffiOverBkgObsP0[i]);
+	otherParsGraphBkgOnly[j]->SetPoint(7+2*i,7+2*i,fObservables.EffiOverBkgObsP1[i]);
+      }
+      for (int i=0; i<2; i++) otherParsGraphBkgOnly[j]->SetPoint(12+i,12+i,fObservables.BkgPerPOTVsSqrtsParObs[i]);
+      
+      nobsGraphBkgOnly[j]->Write();	
+      nbkgGraphBkgOnly[j]->Write();	
+      npotGraphBkgOnly[j]->Write();	
+      effiGraphBkgOnly[j]->Write();
+      otherParsGraphBkgOnly[j]->Write();
+    }
+    for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++) {
+      delete nobsGraphBkgOnly[j];
+      delete nbkgGraphBkgOnly[j];
+      delete npotGraphBkgOnly[j];
+      delete effiGraphBkgOnly[j];
+      delete otherParsGraphBkgOnly[j];
+    }
+    delete[] nobsGraphBkgOnly;
+    delete[] nbkgGraphBkgOnly;
+    delete[] npotGraphBkgOnly;
+    delete[] effiGraphBkgOnly;
+    delete[] otherParsGraphBkgOnly;
+  }  
+
+  // signal plus background pseudoevents
   for (uint im = 0; im < (uint) fNMassBins; im++){
     double massn = fMassMin + im*fMassStep;
     for (uint ig = 0; ig < (uint) fNgveBins; ig++){
@@ -2806,32 +2865,52 @@ void statisticalTreatmentTH::SimulateSignalPlusBkgPseudoDataToFile(TString filen
       TGraph** nobsGraph = new TGraph*[fNumberOfGenerationsExpectedLimit];
       TGraph** nbkgGraph = new TGraph*[fNumberOfGenerationsExpectedLimit];
       TGraph** npotGraph = new TGraph*[fNumberOfGenerationsExpectedLimit];
+      TGraph** effiGraph = new TGraph*[fNumberOfGenerationsExpectedLimit];
+      TGraph** otherParsGraph = new TGraph*[fNumberOfGenerationsExpectedLimit];// poscale,signalpeak,lorewidth,bes,bkgbiasp0/p1,effioverbkgp0/p1[scan0,1,2],bkgoverpotp0/1
       for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++){
-	nobsGraph[j] = new TGraph();
-	nobsGraph[j]->SetName(Form("gNObs_Mass_%f_gve_%f_%d",massn,gven,j));
-	nbkgGraph[j] = new TGraph();
-	nbkgGraph[j]->SetName(Form("gNBkg_Mass_%f_gve_%f_%d",massn,gven,j));
-	npotGraph[j] = new TGraph();
-	npotGraph[j]->SetName(Form("gNPOT_Mass_%f_gve_%f_%d",massn,gven,j));
+	nobsGraph[j] = new TGraph(); nobsGraph[j]->SetName(Form("gNObs_Mass_%f_gve_%f_%d",massn,gven,j));
+	nbkgGraph[j] = new TGraph(); nbkgGraph[j]->SetName(Form("gNBkg_Mass_%f_gve_%f_%d",massn,gven,j));
+	npotGraph[j] = new TGraph(); npotGraph[j]->SetName(Form("gNPOT_Mass_%f_gve_%f_%d",massn,gven,j));
+	effiGraph[j] = new TGraph(); effiGraphBkgOnly[j]->SetName(Form("gEffi_Mass_%f_gve_%f_%d",massn,gven,j));
+	otherParsGraph[j] = new TGraph(14); otherParsGraph[j]->SetName(Form("gOther_Mass_%f_gve_%f_%d",massn,gven,j));
 	//	GenerateSignalPlusBackgroundPseudoData(massn,gven,fTheta_B);
-	GenerateGeneralPseudoData(fTheta_B,true,massn,gven,false); // sbmode, mass, gve, toyoftoy
+	GenerateGeneralPseudoData(fTheta_S,true,massn,gven,false); // sbmode, mass, gve, toyoftoy
 	for (uint i=0; i<fObservables.SqrtsObs.size(); i++){
 	  nobsGraph[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.NObs.at(i)); // sqrt(s) observed
 	  nbkgGraph[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i)); 
 	  npotGraph[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.POTObs.at(i)); 
+	  effiGraph[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.SignalEffiLocalObs.at(i));
 	}    
+	// fill other pars
+	otherParsGraph[j]->SetPoint(0,0,fObservables.POTScaleObs);
+	otherParsGraph[j]->SetPoint(1,1,fObservables.SignalPeakYieldObs);
+	otherParsGraph[j]->SetPoint(2,2,fObservables.SignalLorentzianWidthObs);
+	otherParsGraph[j]->SetPoint(3,3,fObservables.BESObs);
+	otherParsGraph[j]->SetPoint(4,4,fObservables.BkgBiasObsP0);
+	otherParsGraph[j]->SetPoint(5,5,fObservables.BkgBiasObsP1);
+	for (int i=0; i<3; i++) {
+	  otherParsGraph[j]->SetPoint(6+2*i,6+2*i,fObservables.EffiOverBkgObsP0[i]);
+	  otherParsGraph[j]->SetPoint(7+2*i,7+2*i,fObservables.EffiOverBkgObsP1[i]);
+	}
+	for (int i=0; i<2; i++) otherParsGraph[j]->SetPoint(12+i,12+i,fObservables.BkgPerPOTVsSqrtsParObs[i]);
 	nobsGraph[j]->Write();	
 	nbkgGraph[j]->Write();	
 	npotGraph[j]->Write();	
+	effiGraph[j]->Write();
+	otherParsGraph[j]->Write();
       }
       for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++) {
 	delete nobsGraph[j];
 	delete nbkgGraph[j];
 	delete npotGraph[j];
+	delete effiGraph[j];
+	delete otherParsGraph[j];
       }
       delete[] nobsGraph;
       delete[] nbkgGraph;
       delete[] npotGraph;
+      delete[] effiGraph;
+      delete[] otherParsGraph;
     }
   }
   filo->Close();
@@ -2839,54 +2918,54 @@ void statisticalTreatmentTH::SimulateSignalPlusBkgPseudoDataToFile(TString filen
 }
 
 
-void statisticalTreatmentTH::SimulateBkgPseudoDataToFile(TString filename){
-  if (!fIsInitialized){
-    std::cout << "Cannot SimulateBkgPseudoDataToFile - no init done " << endl;
-    exit(1);
-  }
-
-
-  TFile* filo = new TFile(filename.Data(), "NEW");
-  if (!filo->IsOpen()) {
-    std::cout << "Cannot open output file " << filename.Data() << endl;
-    exit(1);
-  }
-  TGraph** nobsGraph = new TGraph*[fNumberOfGenerationsExpectedLimit];
-  TGraph** nbkgGraph = new TGraph*[fNumberOfGenerationsExpectedLimit];
-  TGraph** npotGraph = new TGraph*[fNumberOfGenerationsExpectedLimit];
-
-  cout << " Generating " << fNumberOfGenerationsExpectedLimit << " bkg-only pseudoevents" << endl;
-  for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++){
-    nobsGraph[j] = new TGraph();
-    nobsGraph[j]->SetName(Form("gNObs_%d",j));
-    nbkgGraph[j] = new TGraph();
-    nbkgGraph[j]->SetName(Form("gNBkg_%d",j));
-    npotGraph[j] = new TGraph();
-    npotGraph[j]->SetName(Form("gNPOT_%d",j));
-    //    GenerateBackgroundPseudoData(fTheta_B);    // fObservables is modified
-    GenerateGeneralPseudoData(fTheta_B,false,0.,0.,false); // sbmode, mass, gve, toyoftoy
-    for (uint i=0; i<fObservables.SqrtsObs.size(); i++){
-      nobsGraph[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.NObs.at(i)); // sqrt(s) observed
-      nbkgGraph[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i)); // sqrt(s) observed
-      npotGraph[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.POTObs.at(i)); // sqrt(s) observed
-    }    
-    nobsGraph[j]->Write();
-    nbkgGraph[j]->Write();
-    npotGraph[j]->Write();
-    if (j%50 == 0) cout << " pseudoevent " << j << " / " << fNumberOfGenerationsExpectedLimit << " done" << endl;
-  }
-
-  filo->Close();
-  delete filo;
-  for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++) {
-    delete nobsGraph[j];
-    delete nbkgGraph[j];
-    delete npotGraph[j];
-  }
-  delete[] nobsGraph;
-  delete[] nbkgGraph;
-  delete[] npotGraph;
-}
+//NOTUSEDvoid statisticalTreatmentTH::SimulateBkgPseudoDataToFile(TString filename){
+//NOTUSED  if (!fIsInitialized){
+//NOTUSED    std::cout << "Cannot SimulateBkgPseudoDataToFile - no init done " << endl;
+//NOTUSED    exit(1);
+//NOTUSED  }
+//NOTUSED
+//NOTUSED
+//NOTUSED  TFile* filo = new TFile(filename.Data(), "NEW");
+//NOTUSED  if (!filo->IsOpen()) {
+//NOTUSED    std::cout << "Cannot open output file " << filename.Data() << endl;
+//NOTUSED    exit(1);
+//NOTUSED  }
+//NOTUSED  TGraph** nobsGraph = new TGraph*[fNumberOfGenerationsExpectedLimit];
+//NOTUSED  TGraph** nbkgGraph = new TGraph*[fNumberOfGenerationsExpectedLimit];
+//NOTUSED  TGraph** npotGraph = new TGraph*[fNumberOfGenerationsExpectedLimit];
+//NOTUSED
+//NOTUSED  cout << " Generating " << fNumberOfGenerationsExpectedLimit << " bkg-only pseudoevents" << endl;
+//NOTUSED  for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++){
+//NOTUSED    nobsGraph[j] = new TGraph();
+//NOTUSED    nobsGraph[j]->SetName(Form("gNObs_%d",j));
+//NOTUSED    nbkgGraph[j] = new TGraph();
+//NOTUSED    nbkgGraph[j]->SetName(Form("gNBkg_%d",j));
+//NOTUSED    npotGraph[j] = new TGraph();
+//NOTUSED    npotGraph[j]->SetName(Form("gNPOT_%d",j));
+//NOTUSED    //    GenerateBackgroundPseudoData(fTheta_B);    // fObservables is modified
+//NOTUSED    GenerateGeneralPseudoData(fTheta_B,false,0.,0.,false); // sbmode, mass, gve, toyoftoy
+//NOTUSED    for (uint i=0; i<fObservables.SqrtsObs.size(); i++){
+//NOTUSED      nobsGraph[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.NObs.at(i)); // sqrt(s) observed
+//NOTUSED      nbkgGraph[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i)); // sqrt(s) observed
+//NOTUSED      npotGraph[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.POTObs.at(i)); // sqrt(s) observed
+//NOTUSED    }    
+//NOTUSED    nobsGraph[j]->Write();
+//NOTUSED    nbkgGraph[j]->Write();
+//NOTUSED    npotGraph[j]->Write();
+//NOTUSED    if (j%50 == 0) cout << " pseudoevent " << j << " / " << fNumberOfGenerationsExpectedLimit << " done" << endl;
+//NOTUSED  }
+//NOTUSED
+//NOTUSED  filo->Close();
+//NOTUSED  delete filo;
+//NOTUSED  for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++) {
+//NOTUSED    delete nobsGraph[j];
+//NOTUSED    delete nbkgGraph[j];
+//NOTUSED    delete npotGraph[j];
+//NOTUSED  }
+//NOTUSED  delete[] nobsGraph;
+//NOTUSED  delete[] nbkgGraph;
+//NOTUSED  delete[] npotGraph;
+//NOTUSED}
 
 void statisticalTreatmentTH::SetObservablesAsimov(nuisancePars nuis){
   fObservables.POTObs = nuis.POTTrue; // estimated POT per point
@@ -2919,57 +2998,66 @@ void statisticalTreatmentTH::SetObservablesAsimov(nuisancePars nuis){
     fObservables.NObs.at(i) = poismean;
   }
 }
-  
-void statisticalTreatmentTH::SetObservablesFromSBFile(TString filename, Double_t mass, Double_t gve, Int_t count){
+
+
+void statisticalTreatmentTH::SetObservablesFromFile(TString filename, Bool_t sbmode, Double_t mass, Double_t gve, Int_t count){
 
   // find point in mass grid closest to wanted mass
-  double mindistmass = 999999;
-  int imc = -1;
-  for (uint im = 0; im < (uint) fNMassBins; im++){
-    double massn = fMassMin + im*fMassStep;
-    if (TMath::Abs(massn-mass) < mindistmass){
-      mindistmass = TMath::Abs(massn-mass);
-      imc = im;
+  TString graphname;
+
+  if (sbmode) {
+    double mindistmass = 999999;
+    int imc = -1;
+    for (uint im = 0; im < (uint) fNMassBins; im++){
+      double massn = fMassMin + im*fMassStep;
+      if (TMath::Abs(massn-mass) < mindistmass){
+	mindistmass = TMath::Abs(massn-mass);
+	imc = im;
+      }
     }
-  }
 
   // find point in gve grid closest to wanted gve
-  double mindistgve = 999999;
-  int igc = -1;
-  for (uint ig = 0; ig < (uint) fNgveBins; ig++){
-    double gven = fgveMin + ig*fgveStep; // TMath::Power(fgveMin*fgveMin*fgveMin*fgveMin + ig*fgveStep,0.25);
-    if (TMath::Abs(gven-gve) < mindistgve){
-      mindistgve = TMath::Abs(gven-gve);
-      igc = ig;
+    double mindistgve = 999999;
+    int igc = -1;
+    for (uint ig = 0; ig < (uint) fNgveBins; ig++){
+      double gven = fgveMin + ig*fgveStep; // TMath::Power(fgveMin*fgveMin*fgveMin*fgveMin + ig*fgveStep,0.25);
+      if (TMath::Abs(gven-gve) < mindistgve){
+	mindistgve = TMath::Abs(gven-gve);
+	igc = ig;
+      }
     }
-  }
+    double massn = fMassMin + imc*fMassStep;
+    std::stringstream streamMass;
+    streamMass << std::fixed << std::setprecision(3) << massn;
+    std::string sMass = streamMass.str();
 
+    double gven = fgveMin + igc*fgveStep; // TMath::Power(fgveMin*fgveMin*fgveMin*fgveMin + igc*fgveStep,0.25);
+    std::stringstream streamGve;
+    streamGve << std::fixed << std::setprecision(6) << gven;
+    std::string sGve = streamGve.str();
+
+    graphname = Form("Mass_%s000_gve_%s_%d",sMass.c_str(),sGve.c_str(),count); //gNObs_Mass_17.540000_gve_0.000498_0
+  } else {
+    graphname = Form("%d",count); 
+  }
   
   TFile* filo = new TFile(filename.Data(), "READ");
   if (!filo->IsOpen()) {
-    std::cout << "StatisticalTreatment: SetObservablesFromSBFile -> Cannot open input file " << filename.Data() << endl;
+    std::cout << "StatisticalTreatment: SetObservablesFromFile -> Cannot open input file " << filename.Data() << endl;
     exit(1);
   }
 
   // set strings with fixed precision
-  double massn = fMassMin + imc*fMassStep;
-  std::stringstream streamMass;
-  streamMass << std::fixed << std::setprecision(3) << massn;
-  std::string sMass = streamMass.str();
 
-  double gven = fgveMin + igc*fgveStep; // TMath::Power(fgveMin*fgveMin*fgveMin*fgveMin + igc*fgveStep,0.25);
-  std::stringstream streamGve;
-  streamGve << std::fixed << std::setprecision(6) << gven;
-  std::string sGve = streamGve.str();
 
-  TString graphname = Form("Mass_%s000_gve_%s_%d",sMass.c_str(),sGve.c_str(),count); //gNObs_Mass_17.540000_gve_0.000498_0
-
-  std::cout << "StatisticalTreatment: SetObservablesFromSBFile -> Retrieving nobs graph " << graphname.Data() << " from " << filename.Data() << endl;
+  std::cout << "StatisticalTreatment: SetObservablesFromFile -> Retrieving nobs graph " << graphname.Data() << " from " << filename.Data() << endl;
   TGraph* nobsGraph = (TGraph*) filo->Get(Form("gNObs_%s",graphname.Data())); 
   TGraph* nbkgGraph = (TGraph*) filo->Get(Form("gNBkg_%s",graphname.Data())); 
   TGraph* npotGraph = (TGraph*) filo->Get(Form("gNPOT_%s",graphname.Data())); 
-  if (nobsGraph == nullptr || nbkgGraph == nullptr || npotGraph == nullptr){
-    std::cout << "StatisticalTreatment: SetObservablesFromSBFile -> Cannot retrieve nobs,nbkg,npot graph " << graphname.Data() << " from " << filename.Data() << " " << nobsGraph << " " << nbkgGraph << " " << npotGraph << endl;
+  TGraph* effiGraph = (TGraph*) filo->Get(Form("gEffi_%s",graphname.Data())); 
+  TGraph* otherGraph = (TGraph*) filo->Get(Form("gOther_%s",graphname.Data())); 
+  if (nobsGraph == nullptr || nbkgGraph == nullptr || npotGraph == nullptr || effiGraph == nullptr || otherGraph == nullptr){
+    std::cout << "StatisticalTreatment: SetObservablesFromFile -> Cannot retrieve nobs,nbkg,npot graph " << graphname.Data() << " from " << filename.Data() << " " << nobsGraph << " " << nbkgGraph << " " << npotGraph << " " << effiGraph << " " << otherGraph << endl;
     exit(1);
   }
 
@@ -2978,8 +3066,21 @@ void statisticalTreatmentTH::SetObservablesFromSBFile(TString filename, Double_t
   
   for (int i=0; i< nobsGraph->GetN(); i++) {
     fObservables.NObs.at(i) = nobsGraph->GetY()[i]; // nobs
-//    fObservables.BkgObs.at(i) = nbkgGraph->GetY()[i]; // bkg
-    if (fConfigPtr->GetStraightFitMode() == 2)  fObservables.POTObs.at(i) = npotGraph->GetY()[i]; // pot
+    fObservables.BkgObs.at(i) = nbkgGraph->GetY()[i]; // bkg
+    fObservables.POTObs.at(i) = npotGraph->GetY()[i]; // pot
+    fObservables.SignalEffiLocalObs.at(i) = effiGraph->GetY()[i]; // effi
+
+    fObservables.POTScaleObs	           = otherGraph->GetY()[0];
+    fObservables.SignalPeakYieldObs        = otherGraph->GetY()[1];
+    fObservables.SignalLorentzianWidthObs  = otherGraph->GetY()[2];
+    fObservables.BESObs		           = otherGraph->GetY()[3];
+    fObservables.BkgBiasObsP0	           = otherGraph->GetY()[4];
+    fObservables.BkgBiasObsP1              = otherGraph->GetY()[5];
+    for (int i=0; i<3; i++) {
+      fObservables.EffiOverBkgObsP0[i] = otherGraph->GetY()[6+2*i];
+      fObservables.EffiOverBkgObsP1[i] = otherGraph->GetY()[7+2*i];
+    }
+    for (int i=0; i<2; i++) fObservables.BkgPerPOTVsSqrtsParObs[i] = otherGraph->GetY()[12+i];
   }
   fObservables.isNotFilled = false;
 
@@ -2987,35 +3088,104 @@ void statisticalTreatmentTH::SetObservablesFromSBFile(TString filename, Double_t
   delete filo;
 }
 
-void statisticalTreatmentTH::SetObservablesFromBFile(TString filename, Int_t count){
-  cout << "Statistical Treatment - reading Observables from bkg-only file" << filename.Data() << " event " << count << endl;
-  TFile* filo = new TFile(filename.Data(), "READ");
-  if (!filo->IsOpen()) {
-    std::cout << "Cannot open input file " << filename.Data() << endl;
-    exit(1);
-  }
 
-  TGraph* nobsGraph = (TGraph*) filo->Get(Form("gNObs_%d",count));
-  TGraph* nbkgGraph = (TGraph*) filo->Get(Form("gNBkg_%d",count));
-  TGraph* npotGraph = (TGraph*) filo->Get(Form("gNPOT_%d",count));
-  if (nobsGraph == nullptr || nbkgGraph == nullptr || npotGraph == nullptr){
-    std::cout << "StatisticalTreatment: SetObservablesFromBFile -> Cannot retrieve nobs,nbkg,npot graph from " << filename.Data() << " " << nobsGraph << " " << nbkgGraph << " " << npotGraph<<endl;
-    exit(1);
-  }
-  
-  // fill fObservables
-  fObservables = fObservablesInit;
-  
-  for (int i=0; i< nobsGraph->GetN(); i++) {
-    fObservables.NObs.at(i) = nobsGraph->GetY()[i]; // nobs
-//    fObservables.BkgObs.at(i) = nbkgGraph->GetY()[i]; // nbkg
-    if (fConfigPtr->GetStraightFitMode() == 2) fObservables.POTObs.at(i) = npotGraph->GetY()[i]; // npot
-  }
-  fObservables.isNotFilled = false;
 
-  filo->Close();
-  delete filo;
-}
+//NOTUSEDvoid statisticalTreatmentTH::SetObservablesFromSBFile(TString filename, Double_t mass, Double_t gve, Int_t count){
+//NOTUSED
+//NOTUSED  // find point in mass grid closest to wanted mass
+//NOTUSED  double mindistmass = 999999;
+//NOTUSED  int imc = -1;
+//NOTUSED  for (uint im = 0; im < (uint) fNMassBins; im++){
+//NOTUSED    double massn = fMassMin + im*fMassStep;
+//NOTUSED    if (TMath::Abs(massn-mass) < mindistmass){
+//NOTUSED      mindistmass = TMath::Abs(massn-mass);
+//NOTUSED      imc = im;
+//NOTUSED    }
+//NOTUSED  }
+//NOTUSED
+//NOTUSED  // find point in gve grid closest to wanted gve
+//NOTUSED  double mindistgve = 999999;
+//NOTUSED  int igc = -1;
+//NOTUSED  for (uint ig = 0; ig < (uint) fNgveBins; ig++){
+//NOTUSED    double gven = fgveMin + ig*fgveStep; // TMath::Power(fgveMin*fgveMin*fgveMin*fgveMin + ig*fgveStep,0.25);
+//NOTUSED    if (TMath::Abs(gven-gve) < mindistgve){
+//NOTUSED      mindistgve = TMath::Abs(gven-gve);
+//NOTUSED      igc = ig;
+//NOTUSED    }
+//NOTUSED  }
+//NOTUSED
+//NOTUSED  
+//NOTUSED  TFile* filo = new TFile(filename.Data(), "READ");
+//NOTUSED  if (!filo->IsOpen()) {
+//NOTUSED    std::cout << "StatisticalTreatment: SetObservablesFromSBFile -> Cannot open input file " << filename.Data() << endl;
+//NOTUSED    exit(1);
+//NOTUSED  }
+//NOTUSED
+//NOTUSED  // set strings with fixed precision
+//NOTUSED  double massn = fMassMin + imc*fMassStep;
+//NOTUSED  std::stringstream streamMass;
+//NOTUSED  streamMass << std::fixed << std::setprecision(3) << massn;
+//NOTUSED  std::string sMass = streamMass.str();
+//NOTUSED
+//NOTUSED  double gven = fgveMin + igc*fgveStep; // TMath::Power(fgveMin*fgveMin*fgveMin*fgveMin + igc*fgveStep,0.25);
+//NOTUSED  std::stringstream streamGve;
+//NOTUSED  streamGve << std::fixed << std::setprecision(6) << gven;
+//NOTUSED  std::string sGve = streamGve.str();
+//NOTUSED
+//NOTUSED  TString graphname = Form("Mass_%s000_gve_%s_%d",sMass.c_str(),sGve.c_str(),count); //gNObs_Mass_17.540000_gve_0.000498_0
+//NOTUSED
+//NOTUSED  std::cout << "StatisticalTreatment: SetObservablesFromSBFile -> Retrieving nobs graph " << graphname.Data() << " from " << filename.Data() << endl;
+//NOTUSED  TGraph* nobsGraph = (TGraph*) filo->Get(Form("gNObs_%s",graphname.Data())); 
+//NOTUSED  TGraph* nbkgGraph = (TGraph*) filo->Get(Form("gNBkg_%s",graphname.Data())); 
+//NOTUSED  TGraph* npotGraph = (TGraph*) filo->Get(Form("gNPOT_%s",graphname.Data())); 
+//NOTUSED  if (nobsGraph == nullptr || nbkgGraph == nullptr || npotGraph == nullptr){
+//NOTUSED    std::cout << "StatisticalTreatment: SetObservablesFromSBFile -> Cannot retrieve nobs,nbkg,npot graph " << graphname.Data() << " from " << filename.Data() << " " << nobsGraph << " " << nbkgGraph << " " << npotGraph << endl;
+//NOTUSED    exit(1);
+//NOTUSED  }
+//NOTUSED
+//NOTUSED  // fill fObservables
+//NOTUSED  fObservables = fObservablesInit;
+//NOTUSED  
+//NOTUSED  for (int i=0; i< nobsGraph->GetN(); i++) {
+//NOTUSED    fObservables.NObs.at(i) = nobsGraph->GetY()[i]; // nobs
+//NOTUSED//    fObservables.BkgObs.at(i) = nbkgGraph->GetY()[i]; // bkg
+//NOTUSED    if (fConfigPtr->GetStraightFitMode() == 2)  fObservables.POTObs.at(i) = npotGraph->GetY()[i]; // pot
+//NOTUSED  }
+//NOTUSED  fObservables.isNotFilled = false;
+//NOTUSED
+//NOTUSED  filo->Close();
+//NOTUSED  delete filo;
+//NOTUSED}
+
+//NOTUSEDvoid statisticalTreatmentTH::SetObservablesFromBFile(TString filename, Int_t count){
+//NOTUSED  cout << "Statistical Treatment - reading Observables from bkg-only file" << filename.Data() << " event " << count << endl;
+//NOTUSED  TFile* filo = new TFile(filename.Data(), "READ");
+//NOTUSED  if (!filo->IsOpen()) {
+//NOTUSED    std::cout << "Cannot open input file " << filename.Data() << endl;
+//NOTUSED    exit(1);
+//NOTUSED  }
+//NOTUSED
+//NOTUSED  TGraph* nobsGraph = (TGraph*) filo->Get(Form("gNObs_%d",count));
+//NOTUSED  TGraph* nbkgGraph = (TGraph*) filo->Get(Form("gNBkg_%d",count));
+//NOTUSED  TGraph* npotGraph = (TGraph*) filo->Get(Form("gNPOT_%d",count));
+//NOTUSED  if (nobsGraph == nullptr || nbkgGraph == nullptr || npotGraph == nullptr){
+//NOTUSED    std::cout << "StatisticalTreatment: SetObservablesFromBFile -> Cannot retrieve nobs,nbkg,npot graph from " << filename.Data() << " " << nobsGraph << " " << nbkgGraph << " " << npotGraph<<endl;
+//NOTUSED    exit(1);
+//NOTUSED  }
+//NOTUSED  
+//NOTUSED  // fill fObservables
+//NOTUSED  fObservables = fObservablesInit;
+//NOTUSED  
+//NOTUSED  for (int i=0; i< nobsGraph->GetN(); i++) {
+//NOTUSED    fObservables.NObs.at(i) = nobsGraph->GetY()[i]; // nobs
+//NOTUSED//    fObservables.BkgObs.at(i) = nbkgGraph->GetY()[i]; // nbkg
+//NOTUSED    if (fConfigPtr->GetStraightFitMode() == 2) fObservables.POTObs.at(i) = npotGraph->GetY()[i]; // npot
+//NOTUSED  }
+//NOTUSED  fObservables.isNotFilled = false;
+//NOTUSED
+//NOTUSED  filo->Close();
+//NOTUSED  delete filo;
+//NOTUSED}
 
 void statisticalTreatmentTH::SaveAllHistos(){
 
@@ -3105,3 +3275,5 @@ double statisticalTreatmentTH::PhiFunInv(double x){
   // sqrt(2).* ErfInv(2Phi - 1)
   return TMath::Sqrt(2.)*TMath::ErfInverse(2.*x-1);
 }
+
+//void statisticalTreatmentTH::fillEvent()
