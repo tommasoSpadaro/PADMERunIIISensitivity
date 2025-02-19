@@ -3,7 +3,7 @@ GeneOutputFileName output/geneToyMC.root
 ReadMode 0
 ToyOfToyMode 1
 InputFileNameNObsFromFile output/geneNObsSigPlusBkg.root
-BkgOnlyPseudoEvents 0
+BkgOnlyPseudoEvents 1
 WantedMassPseudoEvents 0.
 WantedGvePseudoEvents 0.
 FirstEventNObsFromFile 0
