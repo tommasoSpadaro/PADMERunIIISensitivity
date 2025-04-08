@@ -59,7 +59,7 @@ struct observables{
   Double_t BkgBiasObsP1;              // estimated value of par1 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
   Double_t EffiOverBkgObsP0[3];       // estimated value of par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2, total]
   Double_t EffiOverBkgObsP1[3];       // estimated value of par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2, total]
-  Double_t BkgPerPOTVsSqrtsParObs[2];    // pol1 fit of B/POT vs sqrt(s): parameter values
+  Double_t BkgPerPOTVsSqrtsParObs[3][2];    // pol1 fit of B/POT vs sqrt(s): parameter values
 };
 
 struct expectedErrors{
@@ -77,8 +77,8 @@ struct expectedErrors{
   Double_t EffiOverBkgErrP0[3];       // estimated error on par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2, total]
   Double_t EffiOverBkgErrP1[3];       // estimated error on par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2, total]
   Double_t EffiOverBkgErrP0P1Corr[3]; // estimated correlation on the errors of par0 and par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, total]
-  Double_t BkgPerPOTVsSqrtsParErr[2]; // pol1 fit of B/POT vs sqrt(s): parameter errors
-  Double_t BkgPerPOTVsSqrtsP0P1Corr;  // pol1 fit of B/POT vs sqrt(s): parameter P0P1 correlation
+  Double_t BkgPerPOTVsSqrtsParErr[3][2]; // pol1 fit of B/POT vs sqrt(s): parameter errors
+  Double_t BkgPerPOTVsSqrtsP0P1Corr[3];  // pol1 fit of B/POT vs sqrt(s): parameter P0P1 correlation
   //  vector<Double_t> SqrtsErr;      // error on the sqrts per point
 };
 
@@ -95,7 +95,7 @@ struct nuisancePars{
   Double_t BkgBiasTrueP1;              // true value of par1 of the pol1 used to fit in sideband the bias data/mc [nobs/(bkg/pot)/pot] vs sqrt(s)
   Double_t EffiOverBkgTrueP0[3];       // true value of par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2, total]
   Double_t EffiOverBkgTrueP1[3];       // true value of par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2, total]
-  Double_t BkgPerPOTVsSqrtsParTrue[2];  // pol1 fit of B/POT vs sqrt(s): parameter values
+  Double_t BkgPerPOTVsSqrtsParTrue[3][2];  // pol1 fit of B/POT vs sqrt(s): parameter values
   //  vector<Double_t> SqrtsTrue;       // true sqrts per point
 };
 
@@ -103,6 +103,7 @@ class Likelihood {
  public:
   // observables 
   observables fObservables; // temporary value
+
   expectedErrors fExpectedErrors;
   const double log2pi = 1.8378771;
   const double me = 0.511; // MeV
@@ -148,10 +149,14 @@ class Likelihood {
      // par[14+3*npts]= EffiOverBkgTrueP1_1 <-- slope, second period of the scan
      // par[15+3*npts]= EffiOverBkgTrueP0_2 <-- constant term, total scan
      // par[16+3*npts]= EffiOverBkgTrueP1_2 <-- slope, total scan
-     // par[17+3*npts]= StraightFitMode     <-- always fixed. If 1: fit N2/(POT x B) and keep POT,B as observables; if 2: fit N2(POT x B) and keep POT,B as nuisances 
-     // par[18+3*npts]= BkgFitMode          <---if set to 1, will use a pol1 fit for B/POT vs sqrt(s)
-     // par[19+3*npts]= BkgFitP0            <---parameter 0 of a pol1 fit for B/POT vs sqrt(s)
-     // par[20+3*npts]= BkgFitP1            <---parameter 1 of a pol1 fit for B/POT vs sqrt(s)
+     // par[17+3*npts]= StraightFitMode     <-- always fixed. If 1: fit N2/(POT x B) and keep N2,POT as observables; if 2: fit N2/(POT x B) and keep N2,POT,B as nuisances 
+     // par[18+3*npts]= BkgFitMode          <---if set to 1, will use a pol1 fit for B/POT vs sqrt(s) using scan1/2, if set to 2 only using scanAll
+     // par[19+3*npts]= BkgFitP0_0            <---parameter 0 of a pol1 fit for B/POT vs sqrt(s) SCAN 0
+     // par[20+3*npts]= BkgFitP1_0            <---parameter 1 of a pol1 fit for B/POT vs sqrt(s) SCAN 0
+     // par[21+3*npts]= BkgFitP0_1            <---parameter 0 of a pol1 fit for B/POT vs sqrt(s) SCAN 1
+     // par[22+3*npts]= BkgFitP1_1            <---parameter 1 of a pol1 fit for B/POT vs sqrt(s) SCAN 1
+     // par[23+3*npts]= BkgFitP0_2            <---parameter 0 of a pol1 fit for B/POT vs sqrt(s) SCAN ALL
+     // par[24+3*npts]= BkgFitP1_2            <---parameter 1 of a pol1 fit for B/POT vs sqrt(s) SCAN ALL
      bool isSBfit = (par[0]==0);
      double mass = par[1];
      double gve  = par[2];
@@ -169,9 +174,9 @@ class Likelihood {
      double effiOverBkgTrueP0[3] = {par[11+3*npts],par[13+3*npts],par[15+3*npts]};
      double effiOverBkgTrueP1[3] = {par[12+3*npts],par[14+3*npts],par[16+3*npts]};
      int straightFitMode = par[17+3*npts];
-     bool bkgFitMode = par[18+3*npts];
-     double bkgFitP0 = par[19+3*npts];
-     double bkgFitP1 = par[20+3*npts];
+     int bkgFitMode = par[18+3*npts];
+     double bkgFitP0[3] = {par[19+3*npts],par[21+3*npts],par[23+3*npts]};
+     double bkgFitP1[3] = {par[20+3*npts],par[22+3*npts],par[24+3*npts]};
 
      //calculate -2log(likelihood)
 
@@ -193,13 +198,21 @@ class Likelihood {
 
      // BKG/POT vs sqrt(s)
      if (bkgFitMode){ 
-       double oneMinusRho2 = (1.-fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr*fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr);
-       delta =
-	 pow((fObservables.BkgPerPOTVsSqrtsParObs[0] - bkgFitP0)/fExpectedErrors.BkgPerPOTVsSqrtsParErr[0],2)/oneMinusRho2 +  
-	 pow((fObservables.BkgPerPOTVsSqrtsParObs[1] - bkgFitP1)/fExpectedErrors.BkgPerPOTVsSqrtsParErr[1],2)/oneMinusRho2 
-	 -2*(fObservables.BkgPerPOTVsSqrtsParObs[0] - bkgFitP0)*(fObservables.BkgPerPOTVsSqrtsParObs[1] - bkgFitP1)*fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr/
-	 (fExpectedErrors.BkgPerPOTVsSqrtsParErr[0]*fExpectedErrors.BkgPerPOTVsSqrtsParErr[1]*oneMinusRho2);
-       chisq += delta;// + 2.*TMath::Log(fExpectedErrors.BkgBiasErrP0*fExpectedErrors.BkgBiasErrP1*TMath::Sqrt(oneMinusRho2)) + 2*log2pi;
+       int kmin = 2; // use a single parametrization for all the scan periods
+       int kmax = 3; 
+       if (bkgFitMode==1) { // use one parametrization for each scan sub-period
+	 kmin = 0;
+	 kmax = 2;
+       }
+       for (int k=kmin; k<kmax; k++){ 
+	 double oneMinusRho2 = (1.-fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr[k]*fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr[k]);
+	 delta =
+	   pow((fObservables.BkgPerPOTVsSqrtsParObs[k][0] - bkgFitP0[k])/fExpectedErrors.BkgPerPOTVsSqrtsParErr[k][0],2)/oneMinusRho2 +  
+	   pow((fObservables.BkgPerPOTVsSqrtsParObs[k][1] - bkgFitP1[k])/fExpectedErrors.BkgPerPOTVsSqrtsParErr[k][1],2)/oneMinusRho2 
+	   -2*(fObservables.BkgPerPOTVsSqrtsParObs[k][0] - bkgFitP0[k])*(fObservables.BkgPerPOTVsSqrtsParObs[k][1] - bkgFitP1[k])*fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr[k]/
+	   (fExpectedErrors.BkgPerPOTVsSqrtsParErr[k][0]*fExpectedErrors.BkgPerPOTVsSqrtsParErr[k][1]*oneMinusRho2);
+	 chisq += delta;// + 2.*TMath::Log(fExpectedErrors.BkgBiasErrP0*fExpectedErrors.BkgBiasErrP1*TMath::Sqrt(oneMinusRho2)) + 2*log2pi;
+       }
      }
 
      if (isSBfit){ // signal + background fit
@@ -250,7 +263,9 @@ class Likelihood {
 	 if (useBkgBias) expval = (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
 	 else            expval = potScaleTrue;                                                            // POT_scale_true
 
-	 expval *= (bkgFitP0 + bkgFitP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));
+	 int iperiod = 2;
+	 if (bkgFitMode == 1) iperiod = fObservables.ScanPeriod.at(i); //0 or 1
+	 expval *= (bkgFitP0[iperiod] + bkgFitP1[iperiod]*(fObservables.SqrtsObs.at(i)-SQRTSMID));
 	 // expected number of signal events (0 if background-only fit)
 	 double sc = 0;
 	 if (isSBfit) {
@@ -266,20 +281,23 @@ class Likelihood {
 
        //       if (!isSBfit) cout << " and at the end " << chisq << endl;
 
-     } else if (straightFitMode == 2){ // Fit N2/POT = bc (1+sc) use POT_i as nuisances
+     } else if (straightFitMode == 2){ // Fit N2/(POT bc) to (1+sc) use N2,POT,B as observables
 
        for (uint i=0; i < npts; i++) {        
-	 
-	 // local error on the pot
-	 delta = (fObservables.POTObs.at(i) - par[potTrueIdx + i])/fExpectedErrors.POTLocalErr.at(i); // true values of the POT per point
-	 chisq += delta*delta;// + 2.*TMath::Log(errpotloc) + log2pi;
+	 //	 delta = fObservables.NObs.at(i)/(fObservables.POTObs.at(i)*1E10*par[bkgTrueIdx + i]); // N2/(POTx1E10xB) 
+	 delta = fObservables.NObs.at(i)/(fObservables.POTObs.at(i)*1E10*fObservables.BkgObs.at(i)); // N2/(POTx1E10xB) 
 
-	 double expval = (bkgFitP0 + bkgFitP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));
-	 if (useBkgBias) expval *= (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
-	 else            expval *= potScaleTrue;                                                            // POT_scale_true
-	 
+	 double relerrsq = 
+	   pow(fExpectedErrors.POTLocalErr.at(i)/fObservables.POTObs.at(i),2) +
+	   (1./fObservables.NObs.at(i)) +
+	   pow(fExpectedErrors.BkgErr.at(i)/fObservables.BkgObs.at(i),2);
 
-	 // expected number of signal/bkg events (0 if background-only fit)
+	 // bias on the POT
+	 double expval = 0;
+	 if (useBkgBias) expval = (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
+	 else            expval = potScaleTrue;                                                            // POT_scale_true
+
+	 // expected number of signal events (0 if background-only fit)
 	 double sc = 0;
 	 if (isSBfit) {
 	   int iperiod = 2;
@@ -289,10 +307,7 @@ class Likelihood {
 	 }
 
 	 expval *= (1.+sc);
-
-	 // statistical term
-	 delta = (fObservables.NObs.at(i)/(par[potTrueIdx + i]*1E10) - expval)/(TMath::Sqrt(fObservables.NObs.at(i))/(par[potTrueIdx + i]*1E10));
-	 chisq += delta*delta;// + 2.*TMath::Log(errcount) + log2pi;
+	 chisq += (delta-expval)*(delta-expval)/(delta*delta*relerrsq);       
        }
      } else { // standard fit mode: N2  = F(s) POT x (B + epsilon S ) or F(s) POT B (1 + G(s) S)
 
@@ -300,7 +315,9 @@ class Likelihood {
 	 double bc = par[potTrueIdx + i]*1E10;
 
 	 if (bkgFitMode){
-	   bc *= (fObservables.BkgPerPOTVsSqrtsParObs[0] + fObservables.BkgPerPOTVsSqrtsParObs[1]*(fObservables.SqrtsObs.at(i)-SQRTSMID));
+	   int iperiod = 2;
+	   if (bkgFitMode == 1) iperiod = fObservables.ScanPeriod.at(i); //0 or 1
+	   bc *= (fObservables.BkgPerPOTVsSqrtsParObs[iperiod][0] + fObservables.BkgPerPOTVsSqrtsParObs[iperiod][1]*(fObservables.SqrtsObs.at(i)-SQRTSMID));
 	 }
 	 else {
 	   bc *= par[bkgTrueIdx + i];
@@ -381,9 +398,7 @@ public:
   void EvaluateExpectedLimit();//Bool_t toyOfToy, Bool_t bOnlyFile, Double_t wantedMass, Double_t wantedGve, TString filename);// if toyOfToy == false -> nobs from filename. if bOnlyFile == false -> use SBfile 
   void EvaluateExpectedLimitFreqOnly(); // Only do the frequentist method and fill the frequentist tree
 
-  void SimulatePseudoDataToFile(TString filename); // can generate and write to a file pseudodata both background-only and signal+background distributions
-//  void SimulateBkgPseudoDataToFile(TString filename); // can generate and write to a file pseudodata background-only distributions
-//  void SimulateSignalPlusBkgPseudoDataToFile(TString filename); // can generate and write to a file pseudodata signal + bkg distributions scanning over the mass,gve grid
+  void SimulatePseudoDataToFile(TString filename); // generate and write to a file pseudodata both background-only and signal+background distributions (used when GeneMode == 1)
 
   // parameters for the nuisance-par distributions can be modified externally via the following, overriding the initalised values:
   void SetPOTErrors(double rGlobal, vector<double> rLocal) {
@@ -446,7 +461,8 @@ private:
   TGraphErrors* fEffiGraphUsed;
   TGraphErrors* fBkgGraphUsed;
   TGraphErrors* fNormBkgGraphUsed[3];
-  TF1* fitfunB;
+  TGraphErrors* fBkgGraphUsedScan[3];
+  TF1* fitfunB[3];
   TF1* fitfunEpsOverB[3];
 
 
@@ -489,6 +505,9 @@ private:
   vector<TH2D*> fPullBFitOnSBToy; // b-only fit on sb toy. X axis: variable, Y axis: coupling,mass value
   vector<TH2D*> fPullSBFitOnBToy[2]; // sb fit on b-only toy: 0,1 for toy-of-toy, bkg-only pseudoevents. X axis: variable, Y axis: coupling,mass value
   vector<TH2D*> fPullSBFitOnSBToy; // sb fit on sb toy. X axis: variable, Y axis: coupling,mass value
+  // fit result graphs
+  TGraph* fGraphBFitOnBToy; // b-only fit on b-only toy: only fill for bkg-only pseudoevents
+  vector<TGraph*> fGraphSBFitOnBToy; // sb fit on b-only toy: only fill for bkg-only pseudoevents. index: coupling,mass value
 
   // observables  
   observables fObservables;
@@ -501,7 +520,9 @@ private:
   double fInvCholeTransBkgBias[2][2];
 
   // inverse transpose of the matrix to generate correlated parameters for the bkg Vs sqrts curve (single curve for all the points) 
-  double fInvCholeTransBkgVsSqrts[2][2];
+  double fInvCholeTransBkgVsSqrtsScan1st[2][2];
+  double fInvCholeTransBkgVsSqrtsScan2nd[2][2];
+  double fInvCholeTransBkgVsSqrtsScanAll[2][2];
 
   // inverse transpose of the matrix to generate correlated parameters for the effi/(bkg/pot) curve (one curve for each scan period, one curve overall)
   double fInvCholeTransEffiOverBkgScan1st[2][2];

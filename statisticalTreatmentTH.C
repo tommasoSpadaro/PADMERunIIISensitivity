@@ -117,8 +117,8 @@ statisticalTreatmentTH::~statisticalTreatmentTH(){
     if(fNormBkgGraphUsed[i]  != nullptr) delete fNormBkgGraphUsed[i] ;
   }
   delete fLBHisto;
-  if (fitfunB != nullptr) delete fitfunB;
   for (int i=0; i<3; i++){
+    if (fitfunB[i] != nullptr) delete fitfunB[i];
     if(fitfunEpsOverB[i]  != nullptr) delete fitfunEpsOverB[i] ;
   }
   
@@ -141,6 +141,8 @@ statisticalTreatmentTH::~statisticalTreatmentTH(){
   for (int i=0; i<2; i++) fPullSBFitOnBToy[i].clear();
   fPullBFitOnSBToy.clear();
   fPullSBFitOnSBToy.clear();
+  delete fGraphBFitOnBToy;
+  fGraphSBFitOnBToy.clear();
   cout << "..." << endl;
 
 }
@@ -150,8 +152,9 @@ void statisticalTreatmentTH::Init(){
   TGraphErrors* potGraph = (TGraphErrors*) filo->Get("gPoT");
   TGraphErrors* effiGraph = (TGraphErrors*) filo->Get("gEff");
   TGraphErrors* bkgGraph = (TGraphErrors*) filo->Get("gBkg");
+  TGraphErrors* nobsGraph = (TGraphErrors*) filo->Get("gNObs");
   TGraph* partGraph = (TGraph*) filo->Get("ScanPartVsPeriod");
-
+    
   fObservables.NObs.clear();
   fObservables.SqrtsObs.clear();
   fObservables.POTObs.clear();
@@ -166,10 +169,10 @@ void statisticalTreatmentTH::Init(){
 
   double signalEfficiencyFac = 1.;
   double bkgyieldFac = 1;  
-  if (fConfigPtr->GetManipulateInput()){ 
-    signalEfficiencyFac = 0.5;
-    bkgyieldFac = 0.5;
-  }
+//  if (fConfigPtr->GetManipulateInput()){ 
+//    signalEfficiencyFac = 0.5;
+//    bkgyieldFac = 0.5;
+//  }
 
   
   for (int i=0; i<potGraph->GetN(); i++){
@@ -189,12 +192,21 @@ void statisticalTreatmentTH::Init(){
     fObservables.BkgObs.push_back(bkgGraph->GetY()[i]*bkgyieldFac); // bkg yield
     fExpectedErrors.BkgErr.push_back(bkgGraph->GetEY()[i]*bkgyieldFac/fErrorImprove); // bkg yield error    
 
-    fObservables.NObs.push_back(0); // create empty nobs so that the vector is always allocated with the correct length
+    if (fConfigPtr->GetObsLimitMode()){
+      fObservables.NObs.push_back(nobsGraph->GetY()[i]);
+    } else {
+      fObservables.NObs.push_back(0); // create empty nobs so that the vector is always allocated with the correct length
+    }
   }
   filo->Close();
   delete filo;
   
   std::cout << "After selection keep " << fObservables.SqrtsObs.size() << " points" << std::endl;
+  if (fConfigPtr->GetObsLimitMode()){
+    std::cout << "Nobs from input file ";
+    for(int i=0; i<fObservables.NObs.size(); i++){ std::cout << " " << fObservables.NObs.at(i);}
+    std::cout << endl;
+  }
   
   // store manipulated input in TGraphErrors in memory
 
@@ -203,6 +215,7 @@ void statisticalTreatmentTH::Init(){
   fBkgGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fBkgGraphUsed  ->SetName("fBkgGraphUsed");
   for (uint i=0; i<3; i++){ // scan1, 2, all
     fNormBkgGraphUsed[i]  = new TGraphErrors(); fNormBkgGraphUsed[i]  ->SetName(Form("fNormBkgGraphUsed_period_%d",i));
+    fBkgGraphUsedScan[i]  = new TGraphErrors(); fBkgGraphUsedScan[i]  ->SetName(Form("fBkgGraphUsedScan_period_%d",i));
   }
   for (uint i=0; i<fObservables.SqrtsObs.size(); i++){
     fPotGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.POTObs.at(i));
@@ -222,29 +235,35 @@ void statisticalTreatmentTH::Init(){
 						       );
     fNormBkgGraphUsed[period]  ->SetPoint(noldpts,fObservables.SqrtsObs.at(i),effioverbkgobs);
     fNormBkgGraphUsed[period]  ->SetPointError(noldpts,0.,effioverbkgerr);
+    fBkgGraphUsedScan[period]  ->SetPoint(noldpts,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i));
+    fBkgGraphUsedScan[period]  ->SetPointError(noldpts,0.,fExpectedErrors.BkgErr.at(i));
     int nallpts = fNormBkgGraphUsed[2]->GetN();
     fNormBkgGraphUsed[2]  ->SetPoint(nallpts,fObservables.SqrtsObs.at(i),effioverbkgobs);
     fNormBkgGraphUsed[2]  ->SetPointError(nallpts,0.,effioverbkgerr);
+    fBkgGraphUsedScan[2]  ->SetPoint(nallpts,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i));
+    fBkgGraphUsedScan[2]  ->SetPointError(nallpts,0.,fExpectedErrors.BkgErr.at(i));
   }
 
   // fit of B/POT vs sqrt(s)
 
-  fitfunB = new TF1("fitfunB","([0]+[1]*(x-16.92))",15.,19.);
-  fitfunB->SetParameter(0,3.E-6);
-  fitfunB->SetParameter(1,3.E-7);
-  TFitResultPtr fitres = fBkgGraphUsed->Fit(fitfunB,"ESQ");
-  for (int i=0; i<2; i++) {
-    fObservables.BkgPerPOTVsSqrtsParObs[i] = fitfunB->GetParameter(i);
-    fExpectedErrors.BkgPerPOTVsSqrtsParErr[i] = fitfunB->GetParError(i);
-  }
-  TMatrixDSym cors(2);
-  cors = fitres->GetCorrelationMatrix();
-  fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr = cors[0][1];
-  std::cout << "Init: determination of B/POT vs sqrt(s) parameters (pol1 fit):" << 
-    " par0 = " << fObservables.BkgPerPOTVsSqrtsParObs[0] << " +- " << fExpectedErrors.BkgPerPOTVsSqrtsParErr[0] <<
-    " par1 = " << fObservables.BkgPerPOTVsSqrtsParObs[1] << " +- " << fExpectedErrors.BkgPerPOTVsSqrtsParErr[1] <<
-    " corr = " << fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr << endl;
-  
+  for (int i=0; i<3; i++){ // scan1, scan2, scan all
+    fitfunB[i] = new TF1(Form("fitfunB%d",i),"([0]+[1]*(x-16.92))",15.,19.);
+    fitfunB[i]->SetParameter(0,3.E-6);
+    fitfunB[i]->SetParameter(1,3.E-7);
+    TFitResultPtr fitres = fBkgGraphUsedScan[i]->Fit(fitfunB[i],"ESQ");
+    for (int j=0; j<2; j++) {
+      fObservables.BkgPerPOTVsSqrtsParObs[i][j] = fitfunB[i]->GetParameter(j);
+      fExpectedErrors.BkgPerPOTVsSqrtsParErr[i][j] = fitfunB[i]->GetParError(j);
+    }
+    
+    TMatrixDSym cors(2);
+    cors = fitres->GetCorrelationMatrix();
+    fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr[i] = cors[0][1];
+    std::cout << "Init: determination of B/POT vs sqrt(s) parameters (pol1 fit): scan " << i << 
+    " par0 = " << fObservables.BkgPerPOTVsSqrtsParObs[i][0] << " +- " << fExpectedErrors.BkgPerPOTVsSqrtsParErr[i][0] <<
+    " par1 = " << fObservables.BkgPerPOTVsSqrtsParObs[i][1] << " +- " << fExpectedErrors.BkgPerPOTVsSqrtsParErr[i][1] <<
+    " corr = " << fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr[i] << " chi^2 prob = " << fitres->Prob() << endl;
+  }  
   // fit of epsilon_sig/(B/Pot) vs sqrt(s)
 
   for (int i=0; i<3; i++){ // scan1, scan2, scan all
@@ -295,13 +314,17 @@ void statisticalTreatmentTH::Init(){
     for (int j=0; j<2; j++) {
       if (i==j) {
 	fInvCholeTransBkgBias[i][j] = 1;
-	fInvCholeTransBkgVsSqrts[i][j] = 1;
+	fInvCholeTransBkgVsSqrtsScan1st[i][j] = 1;
+	fInvCholeTransBkgVsSqrtsScan2nd[i][j] = 1;
+	fInvCholeTransBkgVsSqrtsScanAll[i][j] = 1;
 	fInvCholeTransEffiOverBkgScan1st[i][j] = 1;
 	fInvCholeTransEffiOverBkgScan2nd[i][j] = 1;
 	fInvCholeTransEffiOverBkgScanAll[i][j] = 1;
       } else {
 	fInvCholeTransBkgBias[i][j] = 0;
-	fInvCholeTransBkgVsSqrts[i][j] = 0;
+	fInvCholeTransBkgVsSqrtsScan1st[i][j] = 0;
+	fInvCholeTransBkgVsSqrtsScan2nd[i][j] = 0;
+	fInvCholeTransBkgVsSqrtsScanAll[i][j] = 0;
 	fInvCholeTransEffiOverBkgScan1st[i][j] = 0;
 	fInvCholeTransEffiOverBkgScan2nd[i][j] = 0;
 	fInvCholeTransEffiOverBkgScanAll[i][j] = 0;
@@ -314,34 +337,12 @@ void statisticalTreatmentTH::Init(){
   // curves for the bias correction vs sqrt(s)
   if (fConfigPtr->GetCorrectBkgBias()){
     std::cout << "Init... preparing cholesky decomposition for Bias Pol1" << endl;
-    double elements[4] = {
-      fExpectedErrors.BkgBiasErrP0*fExpectedErrors.BkgBiasErrP0,
-      fExpectedErrors.BkgBiasErrP0*fExpectedErrors.BkgBiasErrP1*fExpectedErrors.BkgBiasErrP0P1Corr,
-      fExpectedErrors.BkgBiasErrP0*fExpectedErrors.BkgBiasErrP1*fExpectedErrors.BkgBiasErrP0P1Corr,
-      fExpectedErrors.BkgBiasErrP1*fExpectedErrors.BkgBiasErrP1};
-    TMatrixDSym cov(2,elements);
-    TMatrixDSym invCov = cov.Invert(); // apparently this inverts cov as well
-    chole->SetMatrix(invCov);   // use Cholesky decomposition
-    chole->Decompose();         // use Cholesky decomposition
-    TMatrixD choleTrans = chole->GetU();
-    TMatrixD invCholeTrans = choleTrans.Invert();
-    for (int i=0; i<2; i++) {
-      for (int j=0; j<2; j++) {
-	fInvCholeTransBkgBias[i][j] = invCholeTrans[i][j];
-      }
-    }
-  }
-
-  // curves for the bkg/pot vs sqrt(s)
-  
-  if (fConfigPtr->GetAssumeBkgOverPotCurve()){ 
-    std::cout << "Init... preparing cholesky decomposition for Bkg over pot Pol1" << endl;
     double corrFactor = 1E5;
     double elements[4] = {
-      corrFactor*corrFactor*fExpectedErrors.BkgPerPOTVsSqrtsParErr[0]*fExpectedErrors.BkgPerPOTVsSqrtsParErr[0],
-      corrFactor*corrFactor*fExpectedErrors.BkgPerPOTVsSqrtsParErr[0]*fExpectedErrors.BkgPerPOTVsSqrtsParErr[1]*fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr,
-      corrFactor*corrFactor*fExpectedErrors.BkgPerPOTVsSqrtsParErr[0]*fExpectedErrors.BkgPerPOTVsSqrtsParErr[1]*fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr,
-      corrFactor*corrFactor*fExpectedErrors.BkgPerPOTVsSqrtsParErr[1]*fExpectedErrors.BkgPerPOTVsSqrtsParErr[1]};
+      corrFactor*corrFactor*fExpectedErrors.BkgBiasErrP0*fExpectedErrors.BkgBiasErrP0,
+      corrFactor*corrFactor*fExpectedErrors.BkgBiasErrP0*fExpectedErrors.BkgBiasErrP1*fExpectedErrors.BkgBiasErrP0P1Corr,
+      corrFactor*corrFactor*fExpectedErrors.BkgBiasErrP0*fExpectedErrors.BkgBiasErrP1*fExpectedErrors.BkgBiasErrP0P1Corr,
+      corrFactor*corrFactor*fExpectedErrors.BkgBiasErrP1*fExpectedErrors.BkgBiasErrP1};
     TMatrixDSym cov(2,elements);
     TMatrixDSym invCov = cov.Invert(); // apparently this inverts cov as well
     chole->SetMatrix(invCov);   // use Cholesky decomposition
@@ -351,13 +352,42 @@ void statisticalTreatmentTH::Init(){
     for (int i=0; i<2; i++) {
       std::cout << "Choleski Matrix, row = " << i;
       for (int j=0; j<2; j++) {
-	fInvCholeTransBkgVsSqrts[i][j] = invCholeTrans[i][j]/corrFactor;
-	std::cout << " " << fInvCholeTransBkgVsSqrts[i][j];
+	fInvCholeTransBkgBias[i][j] = invCholeTrans[i][j]/corrFactor;
+	std::cout << " " << fInvCholeTransBkgBias[i][j];
       }
       std::cout << endl;
     }
   }
 
+  // curves for the bkg/pot vs sqrt(s)
+  
+  if (fConfigPtr->GetAssumeBkgOverPotCurve()){ 
+    for (int q = 0; q<3; q++) {
+      std::cout << "Init... preparing cholesky decomposition for Bkg over pot Pol1 for scan " << q << endl;
+      double corrFactor = 1E5;
+      double elements[4] = {
+	corrFactor*corrFactor*fExpectedErrors.BkgPerPOTVsSqrtsParErr[q][0]*fExpectedErrors.BkgPerPOTVsSqrtsParErr[q][0],
+	corrFactor*corrFactor*fExpectedErrors.BkgPerPOTVsSqrtsParErr[q][0]*fExpectedErrors.BkgPerPOTVsSqrtsParErr[q][1]*fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr[q],
+	corrFactor*corrFactor*fExpectedErrors.BkgPerPOTVsSqrtsParErr[q][0]*fExpectedErrors.BkgPerPOTVsSqrtsParErr[q][1]*fExpectedErrors.BkgPerPOTVsSqrtsP0P1Corr[q],
+	corrFactor*corrFactor*fExpectedErrors.BkgPerPOTVsSqrtsParErr[q][1]*fExpectedErrors.BkgPerPOTVsSqrtsParErr[q][1]};
+      TMatrixDSym cov(2,elements);
+      TMatrixDSym invCov = cov.Invert(); // apparently this inverts cov as well
+      chole->SetMatrix(invCov);   // use Cholesky decomposition
+      chole->Decompose();         // use Cholesky decomposition
+      TMatrixD choleTrans = chole->GetU();
+      TMatrixD invCholeTrans = choleTrans.Invert();
+      for (int i=0; i<2; i++) {
+	std::cout << "Choleski Matrix, row = " << i;
+	for (int j=0; j<2; j++) {
+	  if (q==0)        fInvCholeTransBkgVsSqrtsScan1st[i][j] = invCholeTrans[i][j]/corrFactor;
+	  else if (q==1)   fInvCholeTransBkgVsSqrtsScan2nd[i][j] = invCholeTrans[i][j]/corrFactor;
+	  else             fInvCholeTransBkgVsSqrtsScanAll[i][j] = invCholeTrans[i][j]/corrFactor;
+	  std::cout << " " << invCholeTrans[i][j]/corrFactor;
+	}
+	std::cout << endl;
+      }
+    }
+  }
   // curves for effi/(bkg/pot) vs sqrt(s)
   
   if (fConfigPtr->GetAssumeEffiOverBkgCurve()){ 
@@ -550,9 +580,12 @@ nuisancePars statisticalTreatmentTH::InitNuisanceToObservables(observables obs){
     nuis.EffiOverBkgTrueP0[i] = obs.EffiOverBkgObsP0[i];
     nuis.EffiOverBkgTrueP1[i] = obs.EffiOverBkgObsP1[i];
   }  
-  for (int i=0; i<2; i++){
-    nuis.BkgPerPOTVsSqrtsParTrue[i] = obs.BkgPerPOTVsSqrtsParObs[i];
+  for (int q=0; q<3; q++){
+    for (int i=0; i<2; i++){
+      nuis.BkgPerPOTVsSqrtsParTrue[q][i] = obs.BkgPerPOTVsSqrtsParObs[q][i];
+    }
   }
+    
   return nuis; // return it flagged as non-filled
 }
 
@@ -658,7 +691,9 @@ void statisticalTreatmentTH::ReadOutput(TString filename){
   fCLsTree->SetBranchAddress("Qobs",&fCLsInfo.Qobs);
   fCLsTree->SetBranchAddress("Lb",&fCLsInfo.Lb);
   fCLsTree->SetBranchAddress("Ps",&fCLsInfo.Ps);
+  fCLsTree->SetBranchAddress("NsValid",&fCLsInfo.NsValid);
   fCLsTree->SetBranchAddress("Pb",&fCLsInfo.Pb);
+  fCLsTree->SetBranchAddress("NbValid",&fCLsInfo.NbValid);
   fCLsTree->SetBranchAddress("CLs",&fCLsInfo.CLs);
 
   TTree* fFreqTree = (TTree*) filo->Get("fFreqTree");
@@ -702,7 +737,7 @@ void statisticalTreatmentTH::ReadOutput(TString filename){
   TGraphAsymmErrors* gveVSCLsLoc[2];
 
   double massOld = -1;
-
+  const double clsthreshold = 0.7;
   if (fVerbosity > 1) std::cout << "Input CLs tree has " << fCLsTree->GetEntries() << std::endl; 
   TEfficiency::EStatOption option = static_cast<TEfficiency::EStatOption>(2); //2=Wilson, 5=jeffrey?
 
@@ -723,28 +758,40 @@ void statisticalTreatmentTH::ReadOutput(TString filename){
     if (fVerbosity > 2) {
       std::cout << " Reading row " << i << " of root file: mass = " << fCLsInfo.massn << " gve = " << fCLsInfo.gven << " CLs " << fCLsInfo.CLs << std::endl; 
     }
+
+    // evaluate cls and errors
+    if ((fCLsInfo.Ps*fCLsInfo.NsValid > fCLsInfo.NsValid) || (fCLsInfo.Pb*fCLsInfo.NbValid > fCLsInfo.NbValid)){
+      cout << "Efficiency problem bin " << " " << 
+	fCLsInfo.Ps << " " << fCLsInfo.NsValid << " " <<
+	fCLsInfo.Pb << " " << fCLsInfo.NbValid << " " << fCLsInfo.im << " " << fCLsInfo.ig << endl;
+    }
+
+    TEfficiency effo;
+    effo.SetConfidenceLevel(0.68);
+    effo.SetStatisticOption(option);
+    effo.SetTotalEvents(1,fCLsInfo.NsValid);//fNumberOfGenerations);
+    effo.SetTotalEvents(2,fCLsInfo.NbValid);//fNumberOfGenerations);
+    effo.SetPassedEvents(1,int(fCLsInfo.Ps*fCLsInfo.NsValid));
+    effo.SetPassedEvents(2,int(fCLsInfo.Pb*fCLsInfo.NbValid));
+    double ps = effo.GetEfficiency(1);
+    double pserrup = effo.GetEfficiencyErrorUp(1);
+    double pserrdw = effo.GetEfficiencyErrorLow(1);
+    double pb = effo.GetEfficiency(2);
+    double pberrup = effo.GetEfficiencyErrorUp(2);
+    double pberrdw = effo.GetEfficiencyErrorLow(2);
+    double cln[2] = {ps/(1-pb),ps};
+    double clnerrup[2] = {TMath::Sqrt(pow(pserrup/(1-pb),2) + pow(ps/(1-pb)/(1-pb)*pberrup,2)), pserrup};
+    double clnerrdw[2] = {TMath::Sqrt(pow(pserrdw/(1-pb),2) + pow(ps/(1-pb)/(1-pb)*pberrdw,2)), pserrdw};
+
+    
     if (massOld == -1) { // first mass
-      // init new tgraph
+      // init new tgraphs
       massOld = fCLsInfo.massn;
       for (int j = 0; j<2; j++){
 	gveVSCLsLoc[j] = new TGraphAsymmErrors();
 	gveVSCLsLoc[j]->SetName(Form("gveVSCLsLoc%f_graph%s",massOld,limname[j].Data()));
-      }
-
-      // evaluate expected error, dominated by Ps
-      
-      TEfficiency effo;
-      effo.SetConfidenceLevel(0.68);
-      effo.SetStatisticOption(option);
-      effo.SetTotalEvents(0,fNumberOfGenerations);
-      effo.SetPassedEvents(0,fCLsInfo.Ps*fNumberOfGenerations);
-
-//      gveVSCLsLoc->SetPoint(0,effo.GetEfficiency(0)/(1.-fCLsInfo.Pb),fCLsInfo.gven);//invece di fCLsInfo.CLs,fCLsInfo.gven);
-//      gveVSCLsLoc->SetPointError(0,effo.GetEfficiencyErrorLow(0)/(1.-fCLsInfo.Pb),effo.GetEfficiencyErrorUp(0)/(1.-fCLsInfo.Pb),0.,0.);
-      for (int j = 0; j<2; j++){
-	double deno = j==0? (1.-fCLsInfo.Pb) : 1;
-	gveVSCLsLoc[j]->SetPoint(0,fCLsInfo.gven,effo.GetEfficiency(0)/deno);//invece di fCLsInfo.CLs,fCLsInfo.gven);
-	gveVSCLsLoc[j]->SetPointError(0,0.,0.,effo.GetEfficiencyErrorLow(0)/deno,effo.GetEfficiencyErrorUp(0)/deno);
+	gveVSCLsLoc[j]->SetPoint(0,fCLsInfo.gven,cln[j]);//invece di fCLsInfo.CLs,fCLsInfo.gven);
+	gveVSCLsLoc[j]->SetPointError(0,0.,0.,clnerrdw[j],clnerrup[j]);
       }
     }
     else {
@@ -752,20 +799,20 @@ void statisticalTreatmentTH::ReadOutput(TString filename){
 	if (fVerbosity > 2) {
 	  std::cout << "Printing Graph for mass = " << massOld << std::endl; 
 	  for (int j = 0; j< gveVSCLsLoc[0]->GetN(); j++){
-	    std::cout << "Point: " << j << " gven = " << gveVSCLsLoc[0]->GetX()[j] << " CLs = " << gveVSCLsLoc[0]->GetY()[j]<< " Ps = " << gveVSCLsLoc[1]->GetY()[j] << std::endl; 
+	    std::cout << "Point: " << j << " gven = " << gveVSCLsLoc[0]->GetX()[j] << " CLs = " << gveVSCLsLoc[0]->GetY()[j]<< " Ps = " << gveVSCLsLoc[1]->GetY()[j] << std::endl;
 	  }
 	}
 
 	// fill limits, if we can interpolate the CLs
 	
-	for (int j = 0; j<2; j++) gveVSCLsLoc[j]->Sort(); // sort by gven
+	for (int j = 0; j<2; j++) gveVSCLsLoc[j]->Sort(); // sort graphs by gven
 
-	if (gveVSCLsLoc[0]->GetY()[gveVSCLsLoc[0]->GetN()-1] < 0.5) {
+	if (gveVSCLsLoc[0]->GetY()[gveVSCLsLoc[0]->GetN()-1] < clsthreshold) {
 	  clsfun->SetParameter(0,0.5);
 	  clsfun->SetParameter(1,2E-4);
 	  clsfun->SetParameter(2,2E-4);
 
-	  for (int j = 0; j < 2; j++) {
+	  for (int j = 0; j < 2; j++) { // CLs, CLsb
 	    TFitResultPtr fitptr = gveVSCLsLoc[j]->Fit("clsfun","MS","",0.5E-4,1E-3);
 	    if (fitptr.Get()->IsValid()) { // fit OK
 	      for (int q = 0; q<3; q++) clsfunInv->SetParameter(q,clsfun->GetParameter(q));	    
@@ -797,41 +844,12 @@ void statisticalTreatmentTH::ReadOutput(TString filename){
 	  gveVSCLsLoc[j] = new TGraphAsymmErrors();
 	  gveVSCLsLoc[j]->SetName(Form("gveVSCLsLoc%f_graph%s",massOld,limname[j].Data()));
 	}
-      // evaluate expected error, dominated by Ps
-      
-	TEfficiency effo;
-	effo.SetConfidenceLevel(0.68);
-	effo.SetStatisticOption(option);
-	effo.SetTotalEvents(0,fNumberOfGenerations);
-	effo.SetPassedEvents(0,fCLsInfo.Ps*fNumberOfGenerations);
-
-//	gveVSCLsLoc->SetPoint(0,effo.GetEfficiency(0)/(1.-fCLsInfo.Pb),fCLsInfo.gven);//invece di fCLsInfo.CLs,fCLsInfo.gven);
-//	gveVSCLsLoc->SetPointError(0,effo.GetEfficiencyErrorLow(0)/(1.-fCLsInfo.Pb),effo.GetEfficiencyErrorUp(0)/(1.-fCLsInfo.Pb),0.,0.);
-	
-	for (int j = 0; j < 2; j++) {
-	  double deno = j==0? (1.-fCLsInfo.Pb) : 1;
-	  gveVSCLsLoc[j]->SetPoint(0,fCLsInfo.gven,effo.GetEfficiency(0)/deno);//invece di fCLsInfo.CLs,fCLsInfo.gven);
-	  gveVSCLsLoc[j]->SetPointError(0,0.,0.,effo.GetEfficiencyErrorLow(0)/deno,effo.GetEfficiencyErrorUp(0)/deno);
-	}
       }
-      else {
-
-      // evaluate expected error, dominated by Ps
-      
-	TEfficiency effo;
-	effo.SetConfidenceLevel(0.68);
-	effo.SetStatisticOption(option);
-	effo.SetTotalEvents(0,fNumberOfGenerations);
-	effo.SetPassedEvents(0,fCLsInfo.Ps*fNumberOfGenerations);
-	int ipt = gveVSCLsLoc[0]->GetN();
-//	gveVSCLsLoc->SetPoint(ipt,effo.GetEfficiency(0)/(1.-fCLsInfo.Pb),fCLsInfo.gven);//invece di fCLsInfo.CLs,fCLsInfo.gven);
-//	gveVSCLsLoc->SetPointError(ipt,effo.GetEfficiencyErrorLow(0)/(1.-fCLsInfo.Pb),effo.GetEfficiencyErrorUp(0)/(1.-fCLsInfo.Pb),0.,0.);
-
-	for (int j = 0; j < 2; j++) {
-	  double deno = j==0? (1.-fCLsInfo.Pb) : 1;
-	  gveVSCLsLoc[j]->SetPoint(ipt,fCLsInfo.gven,effo.GetEfficiency(0)/deno);//invece di fCLsInfo.CLs,fCLsInfo.gven);
-	  gveVSCLsLoc[j]->SetPointError(ipt,0.,0.,effo.GetEfficiencyErrorLow(0)/deno,effo.GetEfficiencyErrorUp(0)/deno);
-	}
+      // fill point
+      int ipt = gveVSCLsLoc[0]->GetN();
+      for (int j = 0; j < 2; j++) {
+	gveVSCLsLoc[j]->SetPoint(ipt,fCLsInfo.gven,cln[j]);//invece di fCLsInfo.CLs,fCLsInfo.gven);
+	gveVSCLsLoc[j]->SetPointError(ipt,0.,0.,clnerrdw[j],clnerrup[j]);
       }
     }
   }
@@ -839,7 +857,7 @@ void statisticalTreatmentTH::ReadOutput(TString filename){
   if (fCLsTree->GetEntries()){
     for (int j = 0; j < 2; j++) gveVSCLsLoc[j]->Sort();
 
-    if (gveVSCLsLoc[0]->GetY()[gveVSCLsLoc[0]->GetN()-1] < 0.5) {
+    if (gveVSCLsLoc[0]->GetY()[gveVSCLsLoc[0]->GetN()-1] < clsthreshold) {
       clsfun->SetParameter(0,0.5);
       clsfun->SetParameter(1,2E-4);
       clsfun->SetParameter(2,2E-4);
@@ -951,11 +969,15 @@ void statisticalTreatmentTH::initFitters(bool bonly, nuisancePars theta){
   // 16+3npts             EffiOverBP1_2 scan all
   // 17+3npts             StraightFitMode <--- always fixed
   // 18+3npts             BkgFitMode      <--- always fixed if set to 1, will use a pol1 fit for B/POT vs sqrt(s)
-  // 19+3npts             BkgFitP0        <--- parameter 0 of a pol1 fit for B/POT vs sqrt(s)
-  // 20+3npts             BkgFitP1        <--- parameter 1 of a pol1 fit for B/POT vs sqrt(s)
+  // 19+3npts             BkgFitP0 scan period 0       <--- parameter 0 of a pol1 fit for B/POT vs sqrt(s)
+  // 20+3npts             BkgFitP1 scan period 0       <--- parameter 1 of a pol1 fit for B/POT vs sqrt(s)
+  // 21+3npts             BkgFitP0 scan period 1       <--- parameter 0 of a pol1 fit for B/POT vs sqrt(s)
+  // 22+3npts             BkgFitP1 scan period 1       <--- parameter 1 of a pol1 fit for B/POT vs sqrt(s)
+  // 23+3npts             BkgFitP0 scan period all     <--- parameter 0 of a pol1 fit for B/POT vs sqrt(s)
+  // 24+3npts             BkgFitP1 scan period all     <--- parameter 1 of a pol1 fit for B/POT vs sqrt(s)
 
   // total number of parameters passed to the likelihood
-  int npars = 21+3*npts; // 7 always fixed, 13 + 3 * npts depending on the setup 
+  int npars = 25+3*npts; // 7 always fixed, 13 + 3 * npts depending on the setup 
 
   // Number of free parameters:
   // if (UseNuisance)     
@@ -1001,8 +1023,12 @@ void statisticalTreatmentTH::initFitters(bool bonly, nuisancePars theta){
   parnames[16+3*npts]= "EffiOverBkgTrueP1_2"   ; parinput[16+3*npts]= theta.EffiOverBkgTrueP1[2]          ; parstep[16+3*npts]= fExpectedErrors.EffiOverBkgErrP1[2]*stepFac;    
   parnames[17+3*npts]= "IsStraightFit"         ; parinput[17+3*npts]= fConfigPtr->GetStraightFitMode()       ; parstep[17+3*npts]= 0; 
   parnames[18+3*npts]= "IsBkgFitMode"          ; parinput[18+3*npts]= fConfigPtr->GetAssumeBkgOverPotCurve() ; parstep[18+3*npts]= 0; 
-  parnames[19+3*npts]= "BkgOverPotTrueP0"      ; parinput[19+3*npts]= theta.BkgPerPOTVsSqrtsParTrue[0]    ; parstep[19+3*npts]= fExpectedErrors.BkgPerPOTVsSqrtsParErr[0]*stepFac;
-  parnames[20+3*npts]= "BkgOverPotTrueP1"      ; parinput[20+3*npts]= theta.BkgPerPOTVsSqrtsParTrue[1]    ; parstep[20+3*npts]= fExpectedErrors.BkgPerPOTVsSqrtsParErr[1]*stepFac;
+  parnames[19+3*npts]= "BkgOverPotTrueP0_0"    ; parinput[19+3*npts]= theta.BkgPerPOTVsSqrtsParTrue[0][0]    ; parstep[19+3*npts]= fExpectedErrors.BkgPerPOTVsSqrtsParErr[0][0]*stepFac;
+  parnames[20+3*npts]= "BkgOverPotTrueP1_0"    ; parinput[20+3*npts]= theta.BkgPerPOTVsSqrtsParTrue[0][1]    ; parstep[20+3*npts]= fExpectedErrors.BkgPerPOTVsSqrtsParErr[0][1]*stepFac;
+  parnames[21+3*npts]= "BkgOverPotTrueP0_1"    ; parinput[21+3*npts]= theta.BkgPerPOTVsSqrtsParTrue[1][0]    ; parstep[21+3*npts]= fExpectedErrors.BkgPerPOTVsSqrtsParErr[1][0]*stepFac;
+  parnames[22+3*npts]= "BkgOverPotTrueP1_1"    ; parinput[22+3*npts]= theta.BkgPerPOTVsSqrtsParTrue[1][1]    ; parstep[22+3*npts]= fExpectedErrors.BkgPerPOTVsSqrtsParErr[1][1]*stepFac;
+  parnames[23+3*npts]= "BkgOverPotTrueP0_2"    ; parinput[23+3*npts]= theta.BkgPerPOTVsSqrtsParTrue[2][0]    ; parstep[23+3*npts]= fExpectedErrors.BkgPerPOTVsSqrtsParErr[2][0]*stepFac;
+  parnames[24+3*npts]= "BkgOverPotTrueP1_2"    ; parinput[24+3*npts]= theta.BkgPerPOTVsSqrtsParTrue[2][1]    ; parstep[24+3*npts]= fExpectedErrors.BkgPerPOTVsSqrtsParErr[2][1]*stepFac;
   
   // assign which fitter must be initialised
   std::cout << "StatisticalTreatement > InitFitter > First fit par settings done for bonly = " << bonly << endl;
@@ -1048,17 +1074,37 @@ void statisticalTreatmentTH::initFitters(bool bonly, nuisancePars theta){
   // Parameterisation of the B/Pot vs sqrt(s)
   if (fConfigPtr->GetAssumeBkgOverPotCurve()){  
     for (uint i=0; i<(uint)npts; i++)              fitter->Config().ParSettings(7+2*npts+i).Fix(); // fix B point-by-point
+    if (fConfigPtr->GetAssumeBkgOverPotCurve() == 1) {
+      for (uint i=0; i<2; i++) {
+	fitter->Config().ParSettings(23+3*npts+i).SetValue(1-i); // Set P0=1, P1=0 of the B/pot vs sqrt(s) curve for ALL SCAN
+	fitter->Config().ParSettings(23+3*npts+i).Fix();         // fix P0,P1 of the B/pot vs sqrts curve        for ALL SCAN
+      }
+    } else { // fix parameters per scan
+      for (uint j=0; j<2; j++) {
+	for (uint i=0; i<2; i++) {
+	  fitter->Config().ParSettings(19+3*npts+i+2*j).SetValue(1-i); // Set P0=1, P1=0 of the B/pot vs sqrt(s) curve for ALL SCAN
+	  fitter->Config().ParSettings(19+3*npts+i+2*j).Fix();         // fix P0,P1 of the B/pot vs sqrts curve        for ALL SCAN
+	}
+      }
+    }
   }
   else { // do not use the B/Pot vs sqrts curve
-    for (uint i=0; i<2; i++) {
-      fitter->Config().ParSettings(19+3*npts+i).SetValue(1-i); // Set P0=1, P1=0 of the B/pot vs sqrt(s) curve
-      fitter->Config().ParSettings(19+3*npts+i).Fix();         // fix P0,P1 of the B/pot vs sqrts curve
+    for (uint j=0; j<3; j++) {
+      for (uint i=0; i<2; i++) {
+	fitter->Config().ParSettings(19+3*npts+i+2*j).SetValue(1-i); // Set P0=1, P1=0 of the B/pot vs sqrt(s) curve
+	fitter->Config().ParSettings(19+3*npts+i+2*j).Fix();         // fix P0,P1 of the B/pot vs sqrts curve
+      }
     }
   }
 
-  // straight fit mode: fit N2/(POT B)
+  // straight fit mode 1: fit N2/(POT)
   if (fConfigPtr->GetStraightFitMode() == 1){
     for (uint i=0; i<(uint)npts; i++)              fitter->Config().ParSettings(3+i).Fix(); // fix POT point-by-point
+  }
+  // straight fit mode 2: fit N2/(POT B)
+  if (fConfigPtr->GetStraightFitMode() == 2){
+    for (uint i=0; i<(uint)npts; i++)              fitter->Config().ParSettings(3+i).Fix(); // fix POT point-by-point
+    for (uint i=0; i<(uint)npts; i++)              fitter->Config().ParSettings(7+2*npts+i).Fix(); // fix B point-by-point
   }
   
   if (bonly){
@@ -1132,6 +1178,8 @@ void statisticalTreatmentTH::initFitters(bool bonly, nuisancePars theta){
 }
 
 void statisticalTreatmentTH::fillPullHistograms(bool sbfitmode, double massn, double gven, bool sbtoy, bool pseudob){ // 0->toy-of-toy, 1->pseudoevent
+  //  cout << "Fill the fit pulls " << sbfitmode << " " << massn << " " << gven << " " << sbtoy << " " << pseudob << endl;
+
   int pseudo = pseudob? 1: 0;
 
   ROOT::Fit::Fitter* fitter;
@@ -1162,6 +1210,71 @@ void statisticalTreatmentTH::fillPullHistograms(bool sbfitmode, double massn, do
       fPullSBFitOnSBToy.at(idx)->Fill(pullp,gven);        // sb-fit on sb-toy
     }
   }
+
+  // retrieve variables for fit evaluation
+  // calculate either N2/(POT B) x biasCorr(sqrt(s))  or N2/POT B x biasCorr(sqrt(s)) x (1 + S(m,g) gve^2 )
+
+  int npts = fObservables.NObs.size();
+  double signalPeakYieldTrue = fitter->Result().GetParams()[3+2*npts];
+  double signalLorentzianWidthTrue  = fitter->Result().GetParams()[4+2*npts];
+  double BESTrue   = fitter->Result().GetParams()[5+2*npts];
+  double potScaleTrue = fitter->Result().GetParams()[6+2*npts];
+  bool useBkgBias = fitter->Result().GetParams()[7+3*npts]; // use or not a pol1 for the bkg (in fact pot) bias
+  double bkgBiasTrueP0 = fitter->Result().GetParams()[8+3*npts];
+  double bkgBiasTrueP1 = fitter->Result().GetParams()[9+3*npts];
+  int assumeEffiOverBkgCurve = fitter->Result().GetParams()[10+3*npts];
+  double effiOverBkgTrueP0[3];
+  double effiOverBkgTrueP1[3];
+  for (int i=0; i<3; i++){
+    effiOverBkgTrueP0[i] = fitter->Result().GetParams()[11+3*npts+2*i];
+    effiOverBkgTrueP1[i] = fitter->Result().GetParams()[12+3*npts+2*i];
+  }
+  int straightFitMode = fitter->Result().GetParams()[17+3*npts];
+  bool bkgFitMode = fitter->Result().GetParams()[18+3*npts];
+  double bkgFitP0 = fitter->Result().GetParams()[19+3*npts];
+  double bkgFitP1 = fitter->Result().GetParams()[20+3*npts];
+  //  int potTrueIdx = 3; // presently not used because we are plotting the fit result in terms of fit values for N2/pot or N2/pot/B
+  int effiTrueIdx = 3 + npts;
+  int bkgTrueIdx = 7 + 2*npts;
+  // at the moment treat only the straighfitmode = 1 and bkgfitmode = 1 and assumeeffioverbkgcurve = 2
+
+  int ig = (gven-fgveMin)/fgveStep + 0.5;
+  for (int i=0; i< npts; i++){
+    double biasCorr = 0;
+    if (useBkgBias) biasCorr = bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID);
+    else            biasCorr = potScaleTrue;
+
+    double bkgPerPot = 0;
+    if (bkgFitMode) bkgPerPot = bkgFitP0 + bkgFitP1*(fObservables.SqrtsObs.at(i)-SQRTSMID);
+    else            bkgPerPot = fitter->Result().GetParams()[bkgTrueIdx+i];
+
+    double effiOverBkg = 0;
+    if (assumeEffiOverBkgCurve) {
+      int iperiod = 2;
+      if (assumeEffiOverBkgCurve == 1) iperiod = fObservables.ScanPeriod.at(i); //0 or 1
+      effiOverBkg = effiOverBkgTrueP0[iperiod] + effiOverBkgTrueP1[iperiod]*(fObservables.SqrtsObs.at(i)-SQRTSMID);
+    }
+    else effiOverBkg = fitter->Result().GetParams()[effiTrueIdx+i]/bkgPerPot;
+
+    double sc = 0;
+    if (sbfitmode) sc = gven*gven*Likelihood::SignalShape(signalPeakYieldTrue,BESTrue,signalLorentzianWidthTrue,massn,fObservables.SqrtsObs.at(i));
+
+    double valfit = 0;
+    if (straightFitMode == 1) valfit = biasCorr*bkgPerPot; 
+    else                      valfit = biasCorr;
+    if (sbfitmode)            valfit *= (1.+sc*effiOverBkg);
+    
+    if (!sbfitmode && !sbtoy && pseudo == 1) {
+      int nptold = fGraphBFitOnBToy->GetN();
+      fGraphBFitOnBToy->SetPoint(nptold,fObservables.SqrtsObs.at(i),valfit); // b-fit on b-only toy
+    } else if (sbfitmode && !sbtoy && pseudo == 1) { 	
+      int idx = im + ig*fNMassBins;
+      if (im < 0 || ig < 0 || im >= fNMassBins || ig >= fNgveBins || idx >= fGraphSBFitOnBToy.size()) std::cerr << "fill wrong idx graph sbfitmode && !sbtoy " << im << " " << ig << endl;
+      int nptold = fGraphSBFitOnBToy.at(idx)->GetN();
+      fGraphSBFitOnBToy.at(idx)->SetPoint(nptold,fObservables.SqrtsObs.at(i),valfit); // sb-fit on b-only toy
+    }
+  }
+  //  cout << "Done with fit pulls " << sbfitmode << " " << massn << " " << gven << " " << sbtoy << " " << pseudob << endl;
 }
 
 void statisticalTreatmentTH::initPullHistograms(){
@@ -1208,6 +1321,25 @@ void statisticalTreatmentTH::initPullHistograms(){
       } // bfit, sbfit
     } // ip = 0,..,npars
   } // isb=0,1  
+
+// graph with fit results
+
+// b-only fit     
+  fGraphBFitOnBToy =  new TGraph();
+  fGraphBFitOnBToy->SetName("BFitOnBToyGraph_pseudoEvts");
+ 
+// sb-fit
+  for (uint ig = 0; ig < fNgveBins; ig++){
+    double gven = fgveMin + ig*fgveStep;
+    for (uint im = 0; im < fNMassBins; im++){
+      double massn = fMassMin + im*fMassStep;
+      TGraph* grafo = new TGraph();
+      grafo->SetName(Form("SBFitOnBToyGraph_im%d_ig%d_mass%f_gven%f_pseudoEvts",im,ig,massn,gven));
+      fGraphSBFitOnBToy.push_back(grafo);
+    }
+  }      
+  cout << "BookPull: booked SBFitOnBToyGraph vector of tgraphs " <<  fGraphSBFitOnBToy.size() << endl;
+
 }
 
 
@@ -1305,36 +1437,27 @@ void statisticalTreatmentTH::EvaluateExpectedLimit(){
     }
 
     // set observables either from direct simulation or from input file
-
-    if (fConfigPtr->GetToyOfToyMode()) {
-      cout << "StatisticalTreatment - Generating pseudodata in memory" << endl;
-      GenerateGeneralPseudoData(fTheta_B,
-				!fConfigPtr->GetBkgOnlyPseudoEvents(),
-				fConfigPtr->GetWantedMassPseudoEvents(),
-				fConfigPtr->GetWantedGvePseudoEvents(),false); // nuis, sbmode, mass, gve, toyoftoy
+    if (fConfigPtr->GetObsLimitMode()) { 
+      cout << "StatisticalTreatment - Retrieving original data in memory" << endl;
+      fObservables = fObservablesInit; // do nothing: the NObs are already set
+      std::cout << "Nobs as of now ";
+      for(int i=0; i<fObservables.NObs.size(); i++){ std::cout << " " << fObservables.NObs.at(i);}
+      std::cout << endl;
     } else {
-      SetObservablesFromFile(fConfigPtr->GetInputFileNameNObsFromFile(),
-			     !fConfigPtr->GetBkgOnlyPseudoEvents(),
-			     fConfigPtr->GetWantedMassPseudoEvents(),
-			     fConfigPtr->GetWantedGvePseudoEvents(),fConfigPtr->GetFirstEventNObsFromFile()+i); // filename, sbmode, mass, gve, eventnr
+      if (fConfigPtr->GetToyOfToyMode()) {
+	cout << "StatisticalTreatment - Generating pseudodata in memory" << endl;
+	GenerateGeneralPseudoData(fTheta_B,
+				  !fConfigPtr->GetBkgOnlyPseudoEvents(),
+				  fConfigPtr->GetWantedMassPseudoEvents(),
+				  fConfigPtr->GetWantedGvePseudoEvents(),false); // nuis, sbmode, mass, gve, toyoftoy
+      } else {
+	SetObservablesFromFile(fConfigPtr->GetInputFileNameNObsFromFile(),
+			       !fConfigPtr->GetBkgOnlyPseudoEvents(),
+			       fConfigPtr->GetWantedMassPseudoEvents(),
+			       fConfigPtr->GetWantedGvePseudoEvents(),fConfigPtr->GetFirstEventNObsFromFile()+i); // filename, sbmode, mass, gve, eventnr
+      }
     }
-
-//NOTUSED    if (fConfigPtr->GetToyOfToyMode()) {
-//NOTUSED      cout << "StatisticalTreatment - Generating pseudodata in memory" << endl;
-//NOTUSED      GenerateGeneralPseudoData(fTheta_B,false,0.,0.,false); // sbmode, mass, gve, toyoftoy
-//NOTUSED    } else {
-//NOTUSED      if (fConfigPtr->GetBkgOnlyPseudoEvents()) {
-//NOTUSED	cout << "StatisticalTreatement - will read Bkg-only NObs from file starting for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << endl;
-//NOTUSED	SetObservablesFromBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetFirstEventNObsFromFile()+i); // modifies fObservables
-//NOTUSED      } else {
-//NOTUSED	cout << "StatisticalTreatment - will read Sig+Bkg NObs from file for event " << fConfigPtr->GetFirstEventNObsFromFile()+i << " for mass,gve = " <<
-//NOTUSED	  fConfigPtr->GetWantedMassPseudoEvents() << " , " << fConfigPtr->GetWantedGvePseudoEvents() << endl;
-//NOTUSED	SetObservablesFromSBFile(fConfigPtr->GetInputFileNameNObsFromFile(),fConfigPtr->GetWantedMassPseudoEvents(),fConfigPtr->GetWantedGvePseudoEvents(),fConfigPtr->GetFirstEventNObsFromFile()+i);//modifies fObservables
-//NOTUSED      }
-//NOTUSED    }
-
-    //    fillEvent(true,true); // input: pseudo-event flag, b-only flag
-    
+      
     // evaluate LB, store the nuisances
     // loop over mass, loop over the coupling, evaluate LSB, store the nuisances(im,ig)
     // find the minimum lsb, store the nuisance of that (theta^(im)) and the coupling of that (ig^(im))
@@ -1438,21 +1561,26 @@ void statisticalTreatmentTH::EvaluateExpectedLimit(){
 	double massn = fMassMin + im*fMassStep;
 	for (uint ig = 0; ig < (uint) fNgveBins; ig++){
 	  double gven = fgveMin + ig*fgveStep; // TMath::Power(fgveMin*fgveMin*fgveMin*fgveMin + ig*fgveStep,0.25);
+	  //	  cout << " begin to cycle " << im << " " << ig << " " << massn << " " << gven << endl;
 
 	  double LSB_Btoy;
 	  bool okfitsb_btoy;
 	  nuisancePars thetasi = MaximizeL(theta_S_i[im][ig],true,massn,gven,&LSB_Btoy,&okfitsb_btoy);
+	  //	  cout << " cont1 to cycle " << im << " " << ig << " " << massn << " " << gven << " " << okfitb_btoy << " "<< okfitsb_btoy<<endl;
 	  if (okfitsb_btoy) fillPullHistograms(true,massn,gven,false,false); //bool sbfitmode, double massn, double gven, bool sbtoy, bool pseudo
 	  
+	  //	  cout << " cont2 to cycle " << im << " " << ig << " " << massn << " " << gven << " " << okfitb_btoy << " "<< okfitsb_btoy<<endl;
+
 	  if (okfitb_btoy && okfitsb_btoy) {
 	    nbValid[im][ig]++;
 	    double Qb = LSB_Btoy - LB_Btoy;//-2*TMath::Log(LSB_Btoy/LB_Btoy);
 	    if (Qb < Qobs[im][ig]) nbGood[im][ig]++;
 
+	    //	    cout << " cont3 to cycle " << im << " " << ig << " " << massn << " " << gven << " " << okfitb_btoy << " "<< okfitsb_btoy<<endl;
 	    // fill histograms
-
 	    fLSB_BtoyHisto.at(im)->Fill(gven,LSB_Btoy);
 	    fQbRelHisto.at(im)->Fill(gven,Qb-Qobs[im][ig]);
+	    //	    cout << " done filling histograms " << im << " " << ig << " " << massn << " " << gven << endl;
 	  }
 	}
       }
@@ -1515,7 +1643,7 @@ void statisticalTreatmentTH::EvaluateExpectedLimit(){
 	if (nsValid) Ps[im][ig] = (double)(nsGood)/nsValid; // was fNumberOfGenerations;
 	else Ps[im][ig] = 0;
 
-	double CLs = Ps[im][ig]/(1-Pb[im][ig]); // might be protected against 0/0
+	double CLs = Pb[im][ig]<1 ? Ps[im][ig]/(1-Pb[im][ig]): -1; // might be protected against 0/0
 
 	// fill histograms and tree
 	
@@ -1942,19 +2070,31 @@ void statisticalTreatmentTH::GenerateGeneralPseudoData(nuisancePars nuis, bool s
 
   // sample the B/POT vs sqrt(s) parameters
 
-  double bkgoverpotpars[2] = {nuis.BkgPerPOTVsSqrtsParTrue[0],nuis.BkgPerPOTVsSqrtsParTrue[1]};
-
+  double bkgoverpotpars[3][2];
+  for (int k=0; k<3; k++){ // scan periods
+    for (int i=0; i<2; i++){ // scan periods
+      bkgoverpotpars[k][i]= nuis.BkgPerPOTVsSqrtsParTrue[k][i];
+    }
+  }
+  
   if (fUseNuisance && fConfigPtr->GetAssumeBkgOverPotCurve() && !toyoftoy){ 
-    double diagpar[2] = { fRndmNumber->Gaus(0.,1),  fRndmNumber->Gaus(0.,1)};
-    for (int i=0; i<2; i++){
-      for (int j=0; j<2; j++){
-	bkgoverpotpars[i] += fInvCholeTransBkgVsSqrts[i][j]*diagpar[j];
+    // here sample the parameters from a bigauss
+    for (int k=0; k<3; k++){ // scan periods
+      double diagpar[2] = { fRndmNumber->Gaus(0.,1),  fRndmNumber->Gaus(0.,1) };
+      for (int i=0; i<2; i++){
+	for (int j=0; j<2; j++){
+	  if (k==0)      bkgoverpotpars[k][i] += fInvCholeTransBkgVsSqrtsScan1st[i][j]*diagpar[j];
+	  else if (k==1) bkgoverpotpars[k][i] += fInvCholeTransBkgVsSqrtsScan2nd[i][j]*diagpar[j];
+	  else           bkgoverpotpars[k][i] += fInvCholeTransBkgVsSqrtsScanAll[i][j]*diagpar[j];
+	}
       }
     } 
   }  
   // store values in fObservables
   if ( !toyoftoy ) {
-    for (int i=0; i<2; i++) fObservables.BkgPerPOTVsSqrtsParObs[i] = bkgoverpotpars[i]; 
+    for (int k=0; k<3; k++){
+      for (int i=0; i<2; i++) fObservables.BkgPerPOTVsSqrtsParObs[k][i] = bkgoverpotpars[k][i];
+    }
   }
   if (fVerbosity ==2) cout << " done generating bkg/pot parameters sbmode: " << sbmode << " toyoftoy = " << toyoftoy << endl;
   
@@ -2014,27 +2154,47 @@ void statisticalTreatmentTH::GenerateGeneralPseudoData(nuisancePars nuis, bool s
     // set true POT from nuisance
     double pottrue = nuis.POTTrue.at(i);
     double potobs  = nuis.POTTrue.at(i);
-    // fluctuate POTObs
-    if (fUseNuisance && (!toyoftoy || fConfigPtr->GetStraightFitMode() == 1)) potobs += fRndmNumber->Gaus(0.,fExpectedErrors.POTLocalErr.at(i));
-    if (!toyoftoy || fConfigPtr->GetStraightFitMode() == 1) fObservables.POTObs.at(i) = potobs;
+    // fluctuate POTObs only if UseNuisance && either straightfitmode = 1, 2 or you are making pseudo-events for expected limit
+    if (fUseNuisance && (!toyoftoy || fConfigPtr->GetStraightFitMode())) potobs += fRndmNumber->Gaus(0.,fExpectedErrors.POTLocalErr.at(i));
+    // store POTObs in the observables if either straightfitmode = 1, 2 or you are making pseudo-events for expected limit
+    if (!toyoftoy || fConfigPtr->GetStraightFitMode()) fObservables.POTObs.at(i) = potobs;
 
     if (fVerbosity ==2) cout << " done fluctuating POTOBS " << i << endl;
 
-    // set true BKG/POT
-    double bkgtrue = 0; 
-    if (fConfigPtr->GetAssumeBkgOverPotCurve()) bkgtrue = nuis.BkgPerPOTVsSqrtsParTrue[0] + nuis.BkgPerPOTVsSqrtsParTrue[1]*(fObservables.SqrtsObs.at(i)-SQRTSMID);
-    else                                        bkgtrue = nuis.BkgTrue.at(i);
+    // set true BKG/POT from nuisance
+    double bkgtrue = 0;
+    if (fConfigPtr->GetAssumeBkgOverPotCurve()) {
+      int iperiod = 2;
+      if (fConfigPtr->GetAssumeBkgOverPotCurve() == 1) iperiod = fObservables.ScanPeriod.at(i);
+      bkgtrue = nuis.BkgPerPOTVsSqrtsParTrue[iperiod][0] + nuis.BkgPerPOTVsSqrtsParTrue[iperiod][1]*(fObservables.SqrtsObs.at(i)-SQRTSMID);
+    }
+    else {
+      bkgtrue = nuis.BkgTrue.at(i);
+    }
     if (fVerbosity ==2) cout << " done setting BKGtrue/pot " << i << endl;
+    double bkgobs = bkgtrue;
 
-    // fluctuate and set BkgObs/POT
-    if (!toyoftoy) {
-      if (fConfigPtr->GetAssumeBkgOverPotCurve()) { 
-	fObservables.BkgObs.at(i) = bkgoverpotpars[0] + bkgoverpotpars[1]*(fObservables.SqrtsObs.at(i)-SQRTSMID); // use fluctuated parameters
-      } else { // fluctuate bkg around their true value
-	if (fUseNuisance) fObservables.BkgObs.at(i)  = bkgtrue + fRndmNumber->Gaus(0.,fExpectedErrors.BkgErr.at(i));
-	else fObservables.BkgObs.at(i)  = bkgtrue;
+    // fluctuate BkgObs/POT: when straightfitmode = 2 it is done both for pseudoevents and toy-of-toy , otherwise only for pseudo-events
+    if (fUseNuisance && (!toyoftoy || fConfigPtr->GetStraightFitMode() == 2)) {
+      if (fConfigPtr->GetAssumeBkgOverPotCurve()) {
+	int iperiod = 2;
+	if (fConfigPtr->GetAssumeBkgOverPotCurve() == 1) iperiod = fObservables.ScanPeriod.at(i);
+	bkgobs = bkgoverpotpars[iperiod][0] + bkgoverpotpars[iperiod][1]*(fObservables.SqrtsObs.at(i)-SQRTSMID); // use fluctuated parameters
+      }
+      else {
+	bkgobs = bkgtrue + fRndmNumber->Gaus(0.,fExpectedErrors.BkgErr.at(i));
       }
     }
+    if (!toyoftoy || fConfigPtr->GetStraightFitMode() == 2) fObservables.BkgObs.at(i)  = bkgobs;
+
+//    if (!toyoftoy) {
+//      if (fConfigPtr->GetAssumeBkgOverPotCurve()) { 
+//	fObservables.BkgObs.at(i) = bkgoverpotpars[0] + bkgoverpotpars[1]*(fObservables.SqrtsObs.at(i)-SQRTSMID); // use fluctuated parameters
+//      } else { // fluctuate bkg around their true value
+//	if (fUseNuisance) fObservables.BkgObs.at(i)  = bkgtrue + fRndmNumber->Gaus(0.,fExpectedErrors.BkgErr.at(i));
+//	else fObservables.BkgObs.at(i)  = bkgtrue;
+//      }
+//    }
     if (fVerbosity ==2) cout << " done generating bkgobs point " << i << " sbmode: " << sbmode << " toyoftoy = " << toyoftoy << endl;
 
     // true value of the bkg events
@@ -2073,7 +2233,7 @@ void statisticalTreatmentTH::GenerateGeneralPseudoData(nuisancePars nuis, bool s
     
     double poismeantot = poismean + poismean_s;
     if (fConfigPtr->GetCorrectBkgBias()){
-      poismeantot *= (nuis.BkgPerPOTVsSqrtsParTrue[0]+nuis.BkgPerPOTVsSqrtsParTrue[1]*(fObservables.SqrtsObs.at(i)-SQRTSMID));
+      poismeantot *= (nuis.BkgBiasTrueP0+nuis.BkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));
     } else {
       poismeantot *= nuis.POTScaleTrue;
     }
@@ -2403,7 +2563,7 @@ void statisticalTreatmentTH::GenerateGeneralPseudoData(nuisancePars nuis, bool s
 
 nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, double mass, double gve, double* lsb, bool* fitstatus){ // minimize L. Returns fit nuisance pars, Lmin, fitstatus
   if (fVerbosity >= 3) std::cout << "MaximizeL..." << sbmode << " " << mass << " " << gve << endl;
-
+ 
   int npts = fObservables.SqrtsObs.size();
   nuisancePars fitNuisance;
 
@@ -2423,16 +2583,21 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
     fitter->Config().ParSettings(6+2*npts).SetValue(nuis.POTScaleTrue);  // set the potscale
   }
 
-  if (fConfigPtr->GetAssumeBkgOverPotCurve()) {
-    for (uint i=0; i<2; i++)   fitter->Config().ParSettings(19+3*npts+i).SetValue(nuis.BkgPerPOTVsSqrtsParTrue[i]); // set B parameters
+  if (fConfigPtr->GetAssumeBkgOverPotCurve() == 1) {
+    for (uint j=0; j<2; j++)   
+      for (uint i=0; i<2; i++)   fitter->Config().ParSettings(19+3*npts+i+2*j).SetValue(nuis.BkgPerPOTVsSqrtsParTrue[j][i]); // set B parameters
+  } else if (fConfigPtr->GetAssumeBkgOverPotCurve() == 2) {
+    for (uint i=0; i<2; i++)   fitter->Config().ParSettings(19+3*npts+i+4).SetValue(nuis.BkgPerPOTVsSqrtsParTrue[2][i]); // set B parameters
   } else {
-    for (int i=0; i<npts; i++){
-      fitter->Config().ParSettings(7+2*npts+i).SetValue(nuis.BkgTrue.at(i)); // set B point-by-point
+    if (fConfigPtr->GetStraightFitMode() != 2){
+      for (int i=0; i<npts; i++){
+	fitter->Config().ParSettings(7+2*npts+i).SetValue(nuis.BkgTrue.at(i)); // set B point-by-point
+      }
     }
   }
 
   // set pot and bkg if needed
-  if (fUseNuisance && fConfigPtr->GetStraightFitMode() != 1){
+  if (fUseNuisance && (fConfigPtr->GetStraightFitMode() != 1 && fConfigPtr->GetStraightFitMode() != 2)){
     for (uint i=0; i<(uint)npts; i++)              fitter->Config().ParSettings(3+i).SetValue(nuis.POTTrue.at(i)); // set POT point-by-point
   }
 
@@ -2466,10 +2631,9 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
     }
   }
 
-  
   fLikeli.SetObservables(fObservables);
 
-  int npars = 21+3*npts; // FRAGILE 
+  int npars = 25+3*npts; // FRAGILE 
   int freePars = 0;
   for (uint ip=0; ip < npars; ip++) {
     if (!fitter->Config().ParSettings(ip).IsFixed()) freePars++;
@@ -2492,6 +2656,7 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
   bool okfit = fitter->FitFCN();
   double outputlikeli=0;
   if (!okfit) { // try recovery
+
     if (fVerbosity >= 2){
       std::cout << "Likelihood Fit failed sbmode " << sbmode << " mass,coupling = " << mass << " , " << gve << std::endl;
       const ROOT::Fit::FitResult & result = fitter->Result();    
@@ -2509,6 +2674,7 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
 
     okfit = fitter->FitFCN(); //re-fit
     if (okfit) {
+
       if (fVerbosity >= 0) std::cout << "Likelihood fit failed but recovered " << sbmode << std::endl;
       const ROOT::Fit::FitResult & result = fitter->Result();    
       if (fVerbosity >= 0) {
@@ -2519,6 +2685,7 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
     } else {
       if (fVerbosity >=0) std::cout << "Likelihood Fit failed and failed " << sbmode << std::endl;
     }
+
   }
 
   if (!okfit && fVerbosity >= 0){
@@ -2558,8 +2725,12 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
     }
 
     // store bkg true values
-    if (fConfigPtr->GetAssumeBkgOverPotCurve()) {
-      for (uint i=0; i<2; i++) fitNuisance.BkgPerPOTVsSqrtsParTrue[i] = parRes[19+3*npts+i];
+    if (fConfigPtr->GetAssumeBkgOverPotCurve() == 1) {
+      for (uint j=0; j<2; j++) {
+	for (uint i=0; i<2; i++) fitNuisance.BkgPerPOTVsSqrtsParTrue[j][i] = parRes[19+3*npts+i+2*j];
+      }	
+    } else if (fConfigPtr->GetAssumeBkgOverPotCurve() == 2) {
+	for (uint i=0; i<2; i++) fitNuisance.BkgPerPOTVsSqrtsParTrue[2][i] = parRes[19+3*npts+i+4];      
     } else {
       for (int i=0; i<npts; i++) fitNuisance.BkgTrue.push_back(parRes[7+2*npts+i]);      
     }
@@ -2587,6 +2758,7 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
   *lsb = outputlikeli;
   *fitstatus = okfit;
   if (fVerbosity >= 3) std::cout << " outputlikeli = " << *lsb << " ...done" << std::endl;
+
   return fitNuisance;
 }
 
@@ -2789,6 +2961,7 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
 //NOT used  return fitNuisance;
 //NOT used}
 
+
 void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
 
   if (!fIsInitialized){
@@ -2835,8 +3008,9 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
       otherParsGraphBkgOnly[j]->SetPoint(6+2*i,6+2*i,fObservables.EffiOverBkgObsP0[i]);
       otherParsGraphBkgOnly[j]->SetPoint(7+2*i,7+2*i,fObservables.EffiOverBkgObsP1[i]);
     }
-    for (int i=0; i<2; i++) otherParsGraphBkgOnly[j]->SetPoint(12+i,12+i,fObservables.BkgPerPOTVsSqrtsParObs[i]);
-      
+    for (int q=0; q<3; q++) {
+      for (int i=0; i<2; i++) otherParsGraphBkgOnly[j]->SetPoint(12+i+2*q,12+i+2*q,fObservables.BkgPerPOTVsSqrtsParObs[q][i]);
+    }
     nobsGraphBkgOnly[j]->Write();	
     nbkgGraphBkgOnly[j]->Write();	
     npotGraphBkgOnly[j]->Write();	
@@ -2892,7 +3066,9 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
 	  otherParsGraph[j]->SetPoint(6+2*i,6+2*i,fObservables.EffiOverBkgObsP0[i]);
 	  otherParsGraph[j]->SetPoint(7+2*i,7+2*i,fObservables.EffiOverBkgObsP1[i]);
 	}
-	for (int i=0; i<2; i++) otherParsGraph[j]->SetPoint(12+i,12+i,fObservables.BkgPerPOTVsSqrtsParObs[i]);
+	for (int q=0; q<3; q++) {
+	  for (int i=0; i<2; i++) otherParsGraph[j]->SetPoint(12+i+2*q,12+i+2*q,fObservables.BkgPerPOTVsSqrtsParObs[q][i]);
+	}
 	nobsGraph[j]->Write();	
 	nbkgGraph[j]->Write();	
 	npotGraph[j]->Write();	
@@ -2982,15 +3158,21 @@ void statisticalTreatmentTH::SetObservablesAsimov(nuisancePars nuis){
     fObservables.EffiOverBkgObsP0[i] = nuis.EffiOverBkgTrueP0[i];
     fObservables.EffiOverBkgObsP1[i] = nuis.EffiOverBkgTrueP1[i];
   }  
-  for (int i=0; i<2; i++){
-    fObservables.BkgPerPOTVsSqrtsParObs[i] = nuis.BkgPerPOTVsSqrtsParTrue[i];
+  for (int q=0; q<3; q++){
+    for (int i=0; i<2; i++){
+      fObservables.BkgPerPOTVsSqrtsParObs[q][i] = nuis.BkgPerPOTVsSqrtsParTrue[q][i];
+    }
   }
   int npts = fObservables.SqrtsObs.size();
 
   for (int i=0; i<npts; i++){
     double bkgtrue = 0;
-    if (fConfigPtr->GetAssumeBkgOverPotCurve()) bkgtrue = nuis.BkgPerPOTVsSqrtsParTrue[0] + nuis.BkgPerPOTVsSqrtsParTrue[1]*(fObservables.SqrtsObs.at(i)-SQRTSMID);
-    else bkgtrue = nuis.BkgTrue.at(i);
+    if (fConfigPtr->GetAssumeBkgOverPotCurve()) {
+      int iperiod = 2;
+      if (fConfigPtr->GetAssumeBkgOverPotCurve() == 1) iperiod = fObservables.ScanPeriod.at(i);      
+      bkgtrue = nuis.BkgPerPOTVsSqrtsParTrue[iperiod][0] + nuis.BkgPerPOTVsSqrtsParTrue[iperiod][1]*(fObservables.SqrtsObs.at(i)-SQRTSMID);
+    } else bkgtrue = nuis.BkgTrue.at(i);
+
     double pottrue = nuis.POTTrue.at(i);
     double poismean = bkgtrue*pottrue*1E10;
     if (fConfigPtr->GetCorrectBkgBias()) poismean *= (nuis.BkgBiasTrueP0 + nuis.BkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));
@@ -3080,7 +3262,9 @@ void statisticalTreatmentTH::SetObservablesFromFile(TString filename, Bool_t sbm
       fObservables.EffiOverBkgObsP0[i] = otherGraph->GetY()[6+2*i];
       fObservables.EffiOverBkgObsP1[i] = otherGraph->GetY()[7+2*i];
     }
-    for (int i=0; i<2; i++) fObservables.BkgPerPOTVsSqrtsParObs[i] = otherGraph->GetY()[12+i];
+    for (int q=0; q<3; q++) {
+      for (int i=0; i<2; i++) fObservables.BkgPerPOTVsSqrtsParObs[q][i] = otherGraph->GetY()[12+i+2*q];
+    }
   }
   fObservables.isNotFilled = false;
 
@@ -3247,6 +3431,11 @@ void statisticalTreatmentTH::SaveAllHistos(){
     for (uint ip=0; ip < fPullSBFitOnSBToy.size()/fNMassBins; ip++)  fPullSBFitOnSBToy.at(im+ip*fNMassBins)->Write();
   }
 
+  // fit results graphs on Btoy: B-fits and SB-fits
+
+  fGraphBFitOnBToy->Write();   
+  for (uint i=0; i < fGraphSBFitOnBToy.size(); i++) fGraphSBFitOnBToy.at(i)->Write();
+  
   
   fCLsTree->Write();
   fFreqTree->Write();
