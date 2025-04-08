@@ -20,14 +20,18 @@ public:
 
   // Gene mode
   
-  Bool_t GetGeneMode(){return fGeneMode;}
+  Int_t GetGeneMode(){return fGeneMode;}
   TString GetGeneOutputFileName(){return fGeneOutputFileName;}
 
   // Read mode
   
   Bool_t GetReadMode(){return fReadMode;}
 
-  // Standard mode [if no readmode and no genemode]
+  // Obs-Limit mode
+
+  Bool_t GetObsLimitMode(){return fObsLimitMode;}
+  
+  // Standard mode [if no readmode and no genemode and no obslimitmode]
 
   Bool_t GetToyOfToyMode(){return fToyOfToyMode;} // if true -> generate background pseudo data while making the expected limit
 
@@ -44,7 +48,7 @@ public:
 
   Bool_t GetUseNuisance(){return fUseNuisance;} // by default true = use nuisances
   Bool_t GetCorrectBkgBias(){return fCorrectBkgBias;} // by default false = do not correct bkg bias
-  Bool_t GetAssumeBkgOverPotCurve(){return fAssumeBkgOverPotCurve;} // by default false
+  Int_t GetAssumeBkgOverPotCurve(){return fAssumeBkgOverPotCurve;} // by default false
   Int_t  GetAssumeEffiOverBkgCurve(){return fAssumeEffiOverBkgCurve;} // by default false = do not assume sqrt(s) dependence of effi/(bkg/pot)
   Int_t GetStraightFitMode(){return fStraightFitMode;} // by default false. If true -> greatly reduce number of nuisances fitting N2/POT/B with functions of sqrt(s)
   Bool_t GetEvaluateExpLimit(){return fEvaluateExpLimit;}
@@ -100,11 +104,12 @@ private:
   int useInputString(TString);
 
   // gene mode
-  Bool_t fGeneMode; // if true -> generate toys-of-toys distributions
+  Int_t fGeneMode; // if 1 -> generate toys-of-toys distributions
   TString fGeneOutputFileName; // name of gene-MC output file
-
   // read mode
   Bool_t fReadMode;
+  // obs-limit mode
+  Bool_t fObsLimitMode;
   
   // standard setup
   Bool_t fToyOfToyMode;               // if true -> generate pseudo events while making the expected limit
@@ -120,7 +125,7 @@ private:
 
   Bool_t fUseNuisance; // by default use nuisance
   Bool_t fCorrectBkgBias; // by default do not correct it
-  Bool_t fAssumeBkgOverPotCurve; // by default do not use it
+  Int_t fAssumeBkgOverPotCurve; // by default do not use it
   Int_t fAssumeEffiOverBkgCurve; // by default do not assume it
   Int_t fStraightFitMode; // by default do not use it (0). If set to 1: simple likelihood without B,POT nuisance. If set to 2: likelihood of ratiofit + B,POT nuisances
   Bool_t fEvaluateExpLimit;

@@ -19,8 +19,8 @@ statConfig::statConfig(){
 
   // GeneMode settings
   
-  fGeneMode = kFALSE; // if true, generate output files with toys of toys
-  fFieldStrings.push_back(std::pair{"GeneMode",sFFB});
+  fGeneMode = 0; // if 1: generate output files with toys of toys; if 2: prepare input file for observed limit evaluation
+  fFieldStrings.push_back(std::pair{"GeneMode",sFFI});
 
   fGeneOutputFileName = "output/GeneToyMC.root"; // output filename for gene toy-of-toy MC 
   fFieldStrings.push_back(std::pair{"GeneOutputFileName",sFFS});
@@ -29,6 +29,11 @@ statConfig::statConfig(){
   
   fReadMode = kFALSE; // if true, obtain CLs from the output of a previous run in standard mode
   fFieldStrings.push_back(std::pair{"ReadMode",sFFB});
+
+  // ObsLimitMode settings
+
+  fObsLimitMode = kFALSE; // if true, use obs counts to obtained observed limit
+  fFieldStrings.push_back(std::pair{"ObsLimitMode",sFFB});
   
   // ToyOfToy Mode
 
@@ -63,8 +68,8 @@ statConfig::statConfig(){
   fCorrectBkgBias = false; // by default do not correct for bkg bias vs sqrt(s)
   fFieldStrings.push_back(std::pair{"CorrectBkgBias",sFFB});
 
-  fAssumeBkgOverPotCurve = false; // dy default false
-  fFieldStrings.push_back(std::pair{"AssumeBkgOverPotCurve",sFFB});
+  fAssumeBkgOverPotCurve = 0; // dy default false
+  fFieldStrings.push_back(std::pair{"AssumeBkgOverPotCurve",sFFI});
 
   fAssumeEffiOverBkgCurve = 0; // by default do not assume a curve for effi/(bkg/pot) vs sqrt(s)
   fFieldStrings.push_back(std::pair{"AssumeEffiOverBkgCurve",sFFI});
@@ -187,15 +192,22 @@ void statConfig::readConfigFromFile(TString datacardName){
   }
   inputStream.close();
 
-  if (fGeneMode && fReadMode) {
-    std::cerr << "Both GeneMode and ReadMode set: should choose only one of the two" << std::endl;
+  if ((fGeneMode && fReadMode) || (fGeneMode && fObsLimitMode) || (fReadMode && fObsLimitMode) ) {
+    std::cerr << "GeneMode, ReadMode, ObsLimitMode are exclusive: must choose only one of the three at a time: " << fGeneMode << " " << fReadMode << " " << fObsLimitMode << std::endl;
     exit(3);
   }
   if (fGeneMode) {
-    std::cout << "statConfig>> GeneMode ON output filename " << fGeneOutputFileName.Data() << std::endl;
+    std::cout << "statConfig>> GeneMode ON to generate output, GeneMode = " << fGeneMode << " FileName = " << fGeneOutputFileName.Data() << std::endl;
   }
   else if (fReadMode) {
     std::cout << "statConfig>> ReadMode ON InputFile " << fInputFileName.Data() << std::endl;
+  }
+  else if (fObsLimitMode) {
+    std::cout << "statConfig>> ObsLimitMode ON InputFile " << fInputFileName.Data() << std::endl;
+    if (fNumberOfGenerationsExpectedLimit != 1) {
+      std::cerr << "ObsLimitMode ON can run only with 1 pseudoevent, not " << fNumberOfGenerationsExpectedLimit << std::endl;
+      exit(4);
+    }
   }
   else {
     std::cout << "statConfig>> Make ToyOfToys? " << fToyOfToyMode << std::endl;
@@ -215,9 +227,14 @@ void statConfig::readConfigFromFile(TString datacardName){
     fAssumeEffiOverBkgCurve = 2;
   }
 
-  if (fStraightFitMode && !fAssumeBkgOverPotCurve){
-    std::cout << "statCondig>> SetStraightFitMode to TRUE --> override AssumeBkgOverPotCurveCurve to TRUE" << endl;
-    fAssumeBkgOverPotCurve = true;
+  if (fStraightFitMode == 1 && fAssumeBkgOverPotCurve == 0){
+    std::cout << "statCondig>> SetStraightFitMode = 1 wants AssumeBkgOverPotCurveCurve != 0, CANT OVERRIDE " << endl;
+    exit(5);
+  }
+
+  if (fStraightFitMode == 2 && fAssumeBkgOverPotCurve){
+    std::cout << "statCondig>> SetStraightFitMode = 2  --> override AssumeBkgOverPotCurve to FALSE" << endl;
+    fAssumeBkgOverPotCurve = 0;
   }
 
   return;
@@ -250,6 +267,7 @@ int statConfig::useInputString(TString sStr){
 	std::cout << " has integer value " << inputstrvalI << std::endl;
 
 	if (fieldString.EqualTo("NumberOfGenerations")) fNumberOfGenerations = inputstrvalI;
+	else if (fieldString.EqualTo("GeneMode")) fGeneMode = inputstrvalI;
 	else if (fieldString.EqualTo("NumberOfGenerationsExpectedLimit")) fNumberOfGenerationsExpectedLimit = inputstrvalI;
 	else if (fieldString.EqualTo("FirstEventNObsFromFile")) fFirstEventNObsFromFile = inputstrvalI;
 	else if (fieldString.EqualTo("Seed")) fSeed = inputstrvalI;
@@ -257,6 +275,7 @@ int statConfig::useInputString(TString sStr){
 	else if (fieldString.EqualTo("NgveBins")) fNgveBins = inputstrvalI;
 	else if (fieldString.EqualTo("FrequentistNPoints")) fFrequentistNPoints = inputstrvalI;
 	else if (fieldString.EqualTo("AssumeEffiOverBkgCurve")) fAssumeEffiOverBkgCurve = inputstrvalI;
+	else if (fieldString.EqualTo("AssumeBkgOverPotCurve")) fAssumeBkgOverPotCurve = inputstrvalI;
 	else if (fieldString.EqualTo("StraightFitMode")) fStraightFitMode = inputstrvalI;
 	else {
 	  std::cerr << "Wrong input field string for integer value: " << fieldString.Data() << std::endl;
@@ -297,13 +316,12 @@ int statConfig::useInputString(TString sStr){
 	bool inputstrvalB = valueString.Atoi();
 	std::cout << " has boolean value " << inputstrvalB << std::endl;
 
-	if (fieldString.EqualTo("GeneMode")) fGeneMode = inputstrvalB;
-	else if (fieldString.EqualTo("ReadMode")) fReadMode = inputstrvalB;
+	if (fieldString.EqualTo("ReadMode")) fReadMode = inputstrvalB;
+	else if (fieldString.EqualTo("ObsLimitMode")) fObsLimitMode = inputstrvalB;
 	else if (fieldString.EqualTo("ToyOfToyMode")) fToyOfToyMode = inputstrvalB;
 	else if (fieldString.EqualTo("BkgOnlyPseudoEvents")) fBkgOnlyPseudoEvents = inputstrvalB;
 	else if (fieldString.EqualTo("UseNuisance")) fUseNuisance = inputstrvalB;
 	else if (fieldString.EqualTo("CorrectBkgBias")) fCorrectBkgBias = inputstrvalB;
-	else if (fieldString.EqualTo("AssumeBkgOverPotCurve")) fAssumeBkgOverPotCurve = inputstrvalB;
 	else if (fieldString.EqualTo("EvaluateExpLimit")) fEvaluateExpLimit = inputstrvalB;
 	else if (fieldString.EqualTo("ManipulateInput")) fManipulateInput = inputstrvalB;
 	else {
