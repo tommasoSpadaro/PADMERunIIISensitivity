@@ -1,6 +1,7 @@
 GeneMode 0
 GeneOutputFileName output/geneToyMC.root
 ReadMode 0
+ObsLimitMode 0
 ToyOfToyMode 1
 InputFileNameNObsFromFile output/geneNObsSigPlusBkg.root
 BkgOnlyPseudoEvents 1
@@ -11,7 +12,7 @@ NumberOfGenerations 200
 NumberOfGenerationsExpectedLimit 1
 UseNuisance 1
 CorrectBkgBias 0
-AssumeBkgOverPotCurve 0
+AssumeBkgOverPotCurve 1
 AssumeEffiOverBkgCurve 0
 StraightFitMode 1
 EvaluateExpLimit 1
@@ -35,8 +36,8 @@ BES 0.0025
 BESErr 0.0005
 POTScale 1.
 POTScaleErr 0.01
-BkgBiasObsP0 1.000
-BkgBiasObsP1 0.000
-BkgBiasErrP0 0.010
-BkgBiasErrP1 0.000
-BkgBiasErrP0P1Corr 0.0
+BkgBiasObsP0 1.01163
+BkgBiasObsP1 -0.0103
+BkgBiasErrP0 0.0013
+BkgBiasErrP1 0.004
+BkgBiasErrP0P1Corr -0.10
