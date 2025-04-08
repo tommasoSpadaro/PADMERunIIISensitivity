@@ -3,14 +3,30 @@
 #include "TProfile.h"
 #include "TCanvas.h"
 #include "TLine.h"
+#include "TLatex.h"
 #include "TFile.h"
+#include "TF1.h"
+#include "TH2D.h"
 #include "TGraph.h"
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
+#include "TLegend.h"
 #include <iostream>
+#include "TEfficiency.h"
 
-void rereadfulllim(int seedStem){ // for example 8000
+void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, TString infilename, bool saveout, TString outfilename){ // for example 8000
+  TString clsstring = "";
+  if (clsoption == 1) clsstring = "CLsb";
 
+  // clsoption = 0, 1 -> use CLs, CLsb
+  // overlay -> if true, overlay the curve in infilename to the band
+  // if (overlay)
+  //     overlaymode = 1 -> overlay a median upper limit curve
+  //     overlaymode = 2 -> overlay a 90CL curve "Limit90"
+  // infilename -> file to be overlaid, e.g.: /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed820001.root_limits.root
+  // saveout -> if true, save output in outfilename
+  // outfilename -> root filename with the limit curves
+  
   TString inputFilesStem = "./output/statisticalTest_massSteps_71_massRange_16.22_17.62_UseNuis1_seed";
   int NPseudo = 30;
   double massMin = 16.22;
@@ -117,7 +133,37 @@ void rereadfulllim(int seedStem){ // for example 8000
   }
   if (seedStem==240000) {
     inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
-    NPseudo = 95; 
+    NPseudo = 250; 
+    massMax = 17.74;
+  }
+  if (seedStem==250000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 20; 
+    massMax = 17.74;
+  }
+  if (seedStem==260000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 1000; 
+    massMax = 17.74;
+  }
+  if (seedStem==510000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 45; 
+    massMax = 17.74;
+  }
+  if (seedStem==520000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_26_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 90; 
+    massMax = 17.74;
+  }
+  if (seedStem==900000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed";
+    NPseudo = 316; 
+    massMax = 17.74;
+  }
+  if (seedStem==910000) {
+    inputFilesStem = "./output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed";
+    NPseudo = 97; 
     massMax = 17.74;
   }
    
@@ -156,6 +202,12 @@ void rereadfulllim(int seedStem){ // for example 8000
   // 220000+j effcurvON, RunIII with 2.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls, NEW CODE FOR EVENT GENERATION
   // 230000+j effcurvON, RunIII with 1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=2, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls
   // 240000+j effcurvON, RunIII with 1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls, BUG FIX ON P0,P1 of B/pot curve
+  // 250000+j effcurvON, RunIII with 1.0% dPOT, pot 1E10, S+B pseudoevents {16.92,0.65E-3} with b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls, BUG FIX ON P0,P1 of B/pot curve
+  // 260000+j effcurvON, RunIII with 1.0% dPOT, pot 1E10, bkg-only pseudoevents with b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls, BUG FIX ON P0,P1 of B/pot curve
+  // 510000+j effcurvON, RunIII FINAL, pot corrections, B, b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls, BUG FIX ON P0,P1 of B/pot curve, scale 1.00 with 0.003 error
+  // 520000+j effcurvON, RunIII FINAL, pot corrections, B, b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls, BUG FIX ON P0,P1 of B/pot curve, scale 1.00 with 0.021 error
+  // 900000+j effcurvON, RunIII FINAL, pot corrections, b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls, BUG FIX ON P0,P1 of B/pot curve, scale with a 1.01 offset and -0.01 slope with error from venelin's fit
+  // 910000+j effcurvON, RunIII FINAL, pot corrections, b/pot curve, straightFitMode=1, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls, BUG FIX ON P0,P1 of B/pot curve, scale with a P0: 1.00 offset and 2.1% error, ADD 0.5% on B as systematic error on each point
   
   TGraph** limit90s = new TGraph*[NPseudo]; // UL for the various pseudoevents
   TGraph** limit90sRL = new TGraph*[NPseudo]; // RL UL for the various pseudoevents
@@ -174,13 +226,15 @@ void rereadfulllim(int seedStem){ // for example 8000
     if (seedStem==170000 && j==23) continue;
     if (seedStem==190000 && j==170) continue;
     if (seedStem==230000 && j<30) continue;
+    if (seedStem==900000 && j==0) continue;
+    if (seedStem==910000 && j==0) continue;
     
     TFile* filo = new TFile(Form("%s%d.root_limits.root",inputFilesStem.Data(),seedStem+j),"OLD");
-    TGraph* grafo = (TGraph*) filo->Get("Limit90");
+    TGraph* grafo = (TGraph*) filo->Get(Form("Limit90%s",clsstring.Data()));
     limitStat = (TGraph*) filo->Get("FeldmanCousinsLimit90");
 
     if (grafo->GetN()) {
-      cout << "file j = " << j << endl;
+      //      cout << "file j = " << j << endl;
       limit90s[jgood] = new TGraph(); limit90s[jgood]->SetName(Form("Lim90_%d",seedStem+j));
 
       for (int k=0; k < grafo->GetN(); k++){
@@ -213,18 +267,20 @@ void rereadfulllim(int seedStem){ // for example 8000
 
   // evaluate quantiles: 2.5%, 16%, 50%, 66%, 97.5%
   Double_t* qqq = new Double_t[5];
-  qqq[0] = 1.-0.5*(1+TMath::Erf(2./TMath::Sqrt(2.))); // -2sigma
-  qqq[1] = 1.-0.5*(1+TMath::Erf(1./TMath::Sqrt(2.))); // -1sigma
+  qqq[0] = 1.-0.5*(1+TMath::Erf(2./TMath::Sqrt(2.))); // -2sigma.. 2.27% --> for 250 events = 5.7 events
+  qqq[1] = 1.-0.5*(1+TMath::Erf(1./TMath::Sqrt(2.))); // -1sigma..15.87% 
   qqq[2] = 0.5; // median
-  qqq[3] = 0.5*(1+TMath::Erf(1./TMath::Sqrt(2.))); // +1 sigma
-  qqq[4] = 0.5*(1+TMath::Erf(2./TMath::Sqrt(2.))); // +2 sigma
+  qqq[3] = 0.5*(1+TMath::Erf(1./TMath::Sqrt(2.))); // +1 sigma.. 84.13% = 1 - 0.1587
+  qqq[4] = 0.5*(1+TMath::Erf(2./TMath::Sqrt(2.))); // +2 sigma.. 97.72% = 1 - 0.0227 --> for 250 events = 244.3 events
   Double_t* xxx = new Double_t[5];
+  Double_t* xxxFit = new Double_t[5];
   Double_t* xxxRL = new Double_t[5];
 
   TGraphAsymmErrors* limit90Exp[2]; // 1, 2 sigma quantiles
   TGraphAsymmErrors* limit90ExpRL[2]; // 1, 2 sigma quantiles
   TGraph* limit90ExpMedian = new TGraph(); limit90ExpMedian->SetName("Median90CLUL");
-  TGraph* limit90ExpMedianRL = new TGraph(); limit90ExpMedian->SetName("Median90CLULRL");
+  TGraph* limit90ExpMedianPlus2Sigma = new TGraph(); limit90ExpMedian->SetName("Median90CLULPlus2Sigma");
+  TGraph* limit90ExpMedianRL = new TGraph(); limit90ExpMedianRL->SetName("Median90CLULRL");
   for (int i=0; i<2; i++) {
     limit90Exp[i] = new TGraphAsymmErrors(); limit90Exp[i]->SetName(Form("ExpLimit90CL_%dsigmaCov",2-i));
     limit90ExpRL[i] = new TGraphAsymmErrors(); limit90ExpRL[i]->SetName(Form("ExpLimit90CLRL_%dsigmaCov",2-i));
@@ -235,12 +291,17 @@ void rereadfulllim(int seedStem){ // for example 8000
 
   TCanvas* canvaQuantileAllLim = new TCanvas("canvaQuantileAllLim");
   canvaQuantileAllLim->Divide(6,5);
+  TCanvas* canvaQuantileAllLimFit = new TCanvas("canvaQuantileAllLimFit");
+  canvaQuantileAllLimFit->Divide(6,5);
+
   int npts = 0;
   TH1D** limitsPerPoint = 0; // define an histogram of limits for each mass point
+  TH1D** histofun = 0; // define an histogram of limits for each mass point
 
   if (jgood) {
     npts = limit90s[0]->GetN(); // mass points
     limitsPerPoint = new TH1D*[npts]; // define an histogram of limits for each mass point
+    histofun = new TH1D*[npts]; // define an histogram of limits for each mass point
   }
   
   cout << "Analyse standard mass limits per mass point " << npts << " limits " << limitMin << " , " << limitMax << endl;
@@ -248,33 +309,53 @@ void rereadfulllim(int seedStem){ // for example 8000
   for (int k=0; k<npts; k++) {
     
     //    cout << "Book limit histograms " << k << " / " << npts << endl;
-    limitsPerPoint[k] = new TH1D(Form("limitPerPoint_%d",k),Form("Limits for mass = %f",limit90s[0]->GetX()[k]),1000.,limitMin,limitMax);
+    limitsPerPoint[k] = new TH1D(Form("limitPerPoint_%d",k),Form("Limits for mass = %f",limit90s[0]->GetX()[k]),200.,limitMin,limitMax);
 
     for (int j=0; j< jgood; j++){
       //      cout << "About to fill limit histograms " << k << " / " << npts << " " << j << " / " << jgood << endl;
       limitsPerPoint[k]->Fill(limit90s[j]->GetY()[k]);
-      if (limit90s[j]->GetY()[k] > 0.66E-3) {
-	cout << " Mass " << limit90s[0]->GetX()[k] << " coupling limit " << limit90s[j]->GetY()[k] << " event = " << pseudoev[j] << endl;
-      }
+//      if (limit90s[j]->GetY()[k] > 0.66E-3) {
+//	cout << " Mass " << limit90s[0]->GetX()[k] << " coupling limit " << limit90s[j]->GetY()[k] << " event = " << pseudoev[j] << endl;
+//      }
     }
 
     canvaQuantileAllLim->cd(k+1);
     limitsPerPoint[k]->Draw("");
     
     // evaluate quantiles
-    cout << "About to Compute integrals of the limit histograms " << k << " / " << npts << endl;
+    //    cout << "About to Compute integrals of the limit histograms " << k << " / " << npts << endl;
 
     limitsPerPoint[k]->ComputeIntegral(); // just a precaution
 
-    cout << "Compute integrals of the limit histograms " << k << " / " << npts << endl;
+    //    cout << "Compute integrals of the limit histograms " << k << " / " << npts << endl;
 
     for (int i=0; i<5; i++){
       limitsPerPoint[k]->GetQuantiles(1, xxx+i, qqq+i);
       //      std::cout << " point " << k << " mass = " << limit90s[0]->GetX()[k] << "quantile = " << i << " " << xxxRL[i] << std::endl;
     }
 
-    cout << "quantiles of the limit histograms evaluated " << k << " / " << npts << endl;
+    // try to evaluate quantiles with fitting function
+
+    TF1 * flim = new TF1("flim","2.*gaus(x,[0],[1],[2])*ROOT::Math::normal_cdf([3]*x,1,0)",0,1E-2);
+    flim->SetParameters(10,limitsPerPoint[k]->GetMean(),limitsPerPoint[k]->GetRMS(),4);
+    limitsPerPoint[k]->Fit("flim","MS","",1.E-4,1E-3);     
+    histofun[k] = (TH1D*) limitsPerPoint[k]->Clone(Form("%sClone",limitsPerPoint[k]->GetName()));
+    double xw = (histofun[k]->GetXaxis()->GetXmax()-histofun[k]->GetXaxis()->GetXmin())/histofun[k]->GetXaxis()->GetNbins();
+    for (int i=0; i<histofun[k]->GetXaxis()->GetNbins(); i++) histofun[k]->SetBinContent(i+1,flim->Eval(histofun[k]->GetXaxis()->GetXmin() + (i+0.5)*xw));
+    histofun[k]->ComputeIntegral(); // just a precaution
+    for (int i=0; i<5; i++){
+      histofun[k]->GetQuantiles(1, xxxFit+i, qqq+i);
+    }    
+    cout << "quantiles of the limit histograms " << k << " / " << npts << " "
+	 << xxx[0] << " vs " << xxxFit[0] << " "
+	 << xxx[1] << " vs " << xxxFit[1] << " "
+	 << xxx[2] << " vs " << xxxFit[2] << " "
+	 << xxx[3] << " vs " << xxxFit[3] << " "
+	 << xxx[4] << " vs " << xxxFit[4] << " "
+	 << endl;
+
     limit90ExpMedian->SetPoint(k,limit90s[0]->GetX()[k],xxx[2]);
+    limit90ExpMedianPlus2Sigma->SetPoint(k,limit90s[0]->GetX()[k],xxx[4]);
     for (int i=0; i<2; i++){
       limit90Exp[i]->SetPoint(k,limit90s[0]->GetX()[k],xxx[2]); // median exp limit
       limit90Exp[i]->SetPointError(k,0.,0.,xxx[2]-xxx[i],xxx[4-i]-xxx[2]); // i=0 -> 2sigma coverage, i=1 -> 1sigma coverage
@@ -287,7 +368,7 @@ void rereadfulllim(int seedStem){ // for example 8000
   int nptsRL = limit90sRL[0]->GetN(); // mass points
   TH1D** limitsPerPointRL = new TH1D*[nptsRL]; // define an histogram of limits for each mass point
   
-  cout << "Analyse mass limits per mass point " << npts << " RL: " << limitMinRL << " , " << limitMaxRL << endl;
+  //  cout << "Analyse mass limits per mass point " << npts << " RL: " << limitMinRL << " , " << limitMaxRL << endl;
   
   for (int k=0; k<nptsRL; k++) {
     
@@ -299,18 +380,18 @@ void rereadfulllim(int seedStem){ // for example 8000
     }
 
     // evaluate quantiles
-    cout << "About to Compute integrals of the limit histograms " << k << " / " << npts << endl;
+    //    cout << "About to Compute integrals of the limit histograms " << k << " / " << npts << endl;
 
     limitsPerPointRL[k]->ComputeIntegral(); // just a precaution
 
-    cout << "Compute integrals of the limit histograms " << k << " / " << npts << endl;
+    //    cout << "Compute integrals of the limit histograms " << k << " / " << npts << endl;
 
     for (int i=0; i<5; i++){
       limitsPerPointRL[k]->GetQuantiles(1, xxxRL+i, qqq+i);
       //      std::cout << " point " << k << " mass = " << limit90s[0]->GetX()[k] << "quantile = " << i << " " << xxxRL[i] << std::endl;
     }
 
-    cout << "quantiles of the limit histograms evaluated " << k << " / " << npts << endl;
+    //    cout << "quantiles of the limit histograms evaluated " << k << " / " << npts << endl;
     limit90ExpMedianRL->SetPoint(k,limit90sRL[0]->GetX()[k],xxxRL[2]);
     for (int i=0; i<2; i++){
       limit90ExpRL[i]->SetPoint(k,limit90sRL[0]->GetX()[k],xxxRL[2]); // median exp limit
@@ -318,12 +399,85 @@ void rereadfulllim(int seedStem){ // for example 8000
     }
   }
 
+  // kloe treatment
+
+  const int kloepts = 41;
+  double kloem[kloepts];
+  double kloesigmaul[kloepts]; //nb
+  kloem[0] = 4.2301 ; kloesigmaul[0] =  1.2898e-10;
+  kloem[1] = 5.9222 ; kloesigmaul[1] =  8.6237e-11;
+  kloem[2] = 8.4602 ; kloesigmaul[2] =  1.7355e-10;
+  kloem[3] = 9.3063 ; kloesigmaul[3] =  2.0561e-10;
+  kloem[4] = 12.690 ; kloesigmaul[4] =  2.1455e-10;
+  kloem[5] = 16.074 ; kloesigmaul[5] =  2.0136e-10;
+  kloem[6] = 16.920 ; kloesigmaul[6] =  1.7361e-10;
+  kloem[7] = 18.613 ; kloesigmaul[7] =  1.4969e-10;
+  kloem[8] = 20.305 ; kloesigmaul[8] =  3.3490e-10;
+  kloem[9] = 22.843 ; kloesigmaul[9] =  2.2393e-10;
+  kloem[10] = 23.689 ; kloesigmaul[10] =  2.8272e-10;
+  kloem[11] = 26.227 ; kloesigmaul[11] =  1.8904e-10;
+  kloem[12] = 28.765 ; kloesigmaul[12] =  2.5980e-10;
+  kloem[13] = 30.457 ; kloesigmaul[13] =  2.7687e-10;
+  kloem[14] = 32.149 ; kloesigmaul[14] =  2.1022e-10;
+  kloem[15] = 33.841 ; kloesigmaul[15] =  1.8514e-10;
+  kloem[16] = 36.379 ; kloesigmaul[16] =  2.1476e-10;
+  kloem[17] = 40.609 ; kloesigmaul[17] =  1.8916e-10;
+  kloem[18] = 42.301 ; kloesigmaul[18] =  2.3882e-10;
+  kloem[19] = 43.993 ; kloesigmaul[19] =  2.0592e-10;
+  kloem[20] = 47.377 ; kloesigmaul[20] =  2.2416e-10;
+  kloem[21] = 48.223 ; kloesigmaul[21] =  2.7127e-10;
+  kloem[22] = 49.915 ; kloesigmaul[22] =  2.1489e-10;
+  kloem[23] = 51.607 ; kloesigmaul[23] =  2.1040e-10;
+  kloem[24] = 54.992 ; kloesigmaul[24] =  2.1953e-10;
+  kloem[25] = 59.222 ; kloesigmaul[25] =  2.1957e-10;
+  kloem[26] = 62.606 ; kloesigmaul[26] =  2.1961e-10;
+  kloem[27] = 64.298 ; kloesigmaul[27] =  2.1962e-10;
+  kloem[28] = 65.990 ; kloesigmaul[28] =  2.4941e-10;
+  kloem[29] = 68.528 ; kloesigmaul[29] =  2.1506e-10;
+  kloem[30] = 71.912 ; kloesigmaul[30] =  2.1969e-10;
+  kloem[31] = 76.142 ; kloesigmaul[31] =  2.1973e-10;
+  kloem[32] = 78.680 ; kloesigmaul[32] =  2.1515e-10;
+  kloem[33] = 81.218 ; kloesigmaul[33] =  2.1066e-10;
+  kloem[34] = 83.756 ; kloesigmaul[34] =  2.2932e-10;
+  kloem[35] = 87.140 ; kloesigmaul[35] =  2.2454e-10;
+  kloem[36] = 91.371 ; kloesigmaul[36] =  2.1987e-10;
+  kloem[37] = 94.755 ; kloesigmaul[37] =  2.2942e-10;
+  kloem[38] = 98.985 ; kloesigmaul[38] =  2.1533e-10;
+  kloem[39] = 99.831 ; kloesigmaul[39] =  2.2466e-10;
+  kloem[40] = 102.37 ; kloesigmaul[40] =  2.3943e-10;
+
+  const int nptskloeuleps = 15;
+  double kloemuleps[nptskloeuleps], kloeuleps[nptskloeuleps];
+  kloemuleps[0 ] = 5.1805 ; kloeuleps[0 ] =  0.0000029463;
+  kloemuleps[1 ] = 6.2319 ; kloeuleps[1 ] =  0.0000030612;
+  kloemuleps[2 ] = 7.5897 ; kloeuleps[2 ] =  0.0000032413;
+  kloemuleps[3 ] = 9.3576 ; kloeuleps[3 ] =  0.0000033679;
+  kloemuleps[4 ] = 11.257 ; kloeuleps[4 ] =  0.0000035659;
+  kloemuleps[5 ] = 13.542 ; kloeuleps[5 ] =  0.0000037755;
+  kloemuleps[6 ] = 17.114 ; kloeuleps[6 ] =  0.0000040742;
+  kloemuleps[7 ] = 23.577 ; kloeuleps[7 ] =  0.0000046537;
+  kloemuleps[8 ] = 30.163 ; kloeuleps[8 ] =  0.0000049281;
+  kloemuleps[9 ] = 34.969 ; kloeuleps[9 ] =  0.0000051198;
+  kloemuleps[10] = 43.648 ; kloeuleps[10] =  0.0000053200;
+  kloemuleps[11] = 62.376 ; kloeuleps[11] =  0.0000051279;
+  kloemuleps[12] = 77.845 ; kloeuleps[12] =  0.0000048485;
+  kloemuleps[13] = 103.35 ; kloeuleps[13] =  0.0000053325;
+  kloemuleps[14] = 124.37 ; kloeuleps[14] =  0.0000068188;
+  TGraph* kloeulepsG = new TGraph(nptskloeuleps);
+  for (int i=0; i<nptskloeuleps; i++) kloeulepsG->SetPoint(i,kloemuleps[i],kloeuleps[i]);
+
+  TGraph* kloefacG = new TGraph(kloepts);
+  for (int i=0; i<kloepts; i++){
+    double kloefac = kloeulepsG->Eval(kloem[i])/kloesigmaul[i];
+    kloefacG->SetPoint(i,kloem[i],kloefac);
+  }
+  TCanvas* kloecanva = new TCanvas("");
+  kloecanva->DrawFrame(1.,1,100.,1E5);
+  kloefacG->SetMarkerStyle(20);
+  kloefacG->Draw("P");
+  TF1* radiatorFac = new TF1("radiatorFac","[0]+[1]*x",0,200.);
+  kloefacG->Fit("radiatorFac","","same");
   
-  
-  cout << "Analyse mass limits per mass point " << npts << endl;
-  
-  TCanvas* dd =new TCanvas("dd");
-  dd->cd(1)->DrawFrame(15.,1E-4,20,1E-3);
   // plot na64, kloe  
   TGraphAsymmErrors* kloelim = new TGraphAsymmErrors(); kloelim->SetName("KLOE_2015");
   kloelim->AddPoint(15.,(6E-4+1E-2)/2.);
@@ -331,75 +485,160 @@ void rereadfulllim(int seedStem){ // for example 8000
   kloelim->AddPoint(20.,(6.2E-4+1E-2)/2.);
   kloelim->SetPointError(1,0.,0.,(6.2E-4+1E-2)/2.-6.2E-4,1E-2-(6.2E-4+1E-2)/2.);
 
-
+  const double gveOverEps = 0.303;//sqrt(4pi alpha_em)
+  TGraph* kloeulcorr = new TGraph(kloepts);
+  for (int i=0; i<kloepts; i++) {
+    kloeulcorr->SetPoint(i,kloem[i],0.303*TMath::Sqrt(kloesigmaul[i]*radiatorFac->Eval(kloem[i])));
+  }
+  
   TGraphAsymmErrors* na64lim = new TGraphAsymmErrors(); na64lim->SetName("NA64_2019");
   na64lim->AddPoint(15.,(2.3E-4+3.5E-5)/2.);
   na64lim->SetPointError(0,0.,0.,(2.3E-4+3.5E-5)/2.-3.5E-5,2.3E-4-(2.3E-4+3.5E-5)/2.);
   na64lim->AddPoint(20.,(1.6E-4+4.0E-5)/2.);
   na64lim->SetPointError(1,0.,0.,(1.6E-4+4.0E-5)/2.-4.0E-5,1.6E-4-(1.6E-4+4.0E-5)/2.);
 
+
+  //  PLOT OF UPPER LIMITS
+  
+  TCanvas* dd =new TCanvas("dd");
+  TH2D* framepl = new TH2D("framepl",";M_{X} (MeV);g_{ve};",100,16.,18.5,100,5E-5,1E-3);
+  framepl->Draw("");
+  framepl->GetYaxis()->SetMaxDigits(3);
+  framepl->SetStats(kFALSE);
+  framepl->SetLabelSize(0.04,"X");
+  framepl->SetLabelSize(0.04,"Y");
+  framepl->SetTitleSize(0.05,"X");
+  framepl->SetTitleSize(0.05,"Y");
+  framepl->SetTitleOffset(0.8,"X");
+  framepl->SetTitleOffset(0.8,"Y");
+
+
+  // KLOE
+  
   kloelim->SetFillColor(kGray);
   kloelim->SetFillStyle(3001);
   kloelim->Draw("3same");
+
+//  kloeulcorr->SetLineColor(2);
+//  kloeulcorr->SetMarkerStyle(24);
+//  kloeulcorr->SetMarkerColor(2);
+//  kloeulcorr->Draw("PLsame");
+
+// NA64
+  
   na64lim->SetFillColor(kGray);
   na64lim->SetFillStyle(3001);
   na64lim->Draw("3same");
 
-  // PATCH FOR POT ERROR IMPROVEMENT - WITH 5E10 POT / point and 47 points and 0.3% error on efficiency and 0.3% error on B
-  const double improvementFactor = 1.;//0.77; // sqrt(0.6/2. \oplus 0.3)/sqrt(0.6 \oplus 0.3)
 
   if (jgood) {
-    limit90Exp[0]->SetFillColor(kGreen);
-    limit90Exp[0]->SetFillStyle(3001);
+
+    limit90Exp[0]->SetFillColor(overlay? 30 : kGreen );
+    limit90Exp[0]->SetFillStyle(1001);
     limit90Exp[0]->Draw("3same");
 
-    for (int i=0; i<2; i++){
-      for (int j=0; j<limit90Exp[i]->GetN(); j++){
-	limit90Exp[i]->SetPoint(j,limit90Exp[i]->GetX()[j],limit90Exp[i]->GetY()[j]*improvementFactor);
-	limit90Exp[i]->SetPointError(j,0.,0.,limit90Exp[i]->GetEYlow()[j]*improvementFactor,limit90Exp[i]->GetEYhigh()[j]*improvementFactor);
-      }
-    }
-    for (int j=0; j<limit90ExpMedian->GetN(); j++){
-      limit90ExpMedian->SetPoint(j,limit90ExpMedian->GetX()[j],limit90ExpMedian->GetY()[j]*improvementFactor);
-    }
-  }
-
-  for (int j=0; j<limit90ExpMedianRL->GetN(); j++){
-    limit90ExpMedianRL->SetPoint(j,limit90ExpMedianRL->GetX()[j],limit90ExpMedianRL->GetY()[j]*improvementFactor);
-  }
-  
-  if (jgood) {
-    limit90Exp[1]->SetFillColor(kYellow);
-    limit90Exp[1]->SetFillStyle(3001);
+    limit90Exp[1]->SetFillColor(overlay? 41 : kYellow);
+    limit90Exp[1]->SetFillStyle(1001);
     limit90Exp[1]->Draw("3same");
 
-    limit90ExpMedian->SetLineColor(2);
+    limit90ExpMedian->SetLineColor(overlay? kBlue : kRed);
     limit90ExpMedian->SetLineWidth(2);
-    limit90ExpMedian->SetLineStyle(1);
+    limit90ExpMedian->SetLineStyle(overlay? 2 : 1);
     limit90ExpMedian->Draw("Lsame");
   }
 
-  limitStat->SetLineColor(4);
+  TLegend *lego = new TLegend(0.65,0.22,0.88,0.58);
+  lego->SetHeader("90% CL UL:");
+  lego->AddEntry(limit90ExpMedian,"CLs Median","L");
+  lego->AddEntry(limit90Exp[0],"CLs #pm2#sigma","f");
+  lego->AddEntry(limit90Exp[1],"CLs #pm1#sigma","f");
+
+  
+  if (!overlay){
+    limit90ExpMedianRL->SetLineColor(kBlack);
+    limit90ExpMedianRL->SetLineWidth(1);
+    limit90ExpMedianRL->SetLineStyle(2);
+    limit90ExpMedianRL->Draw("Lsame");
+    lego->AddEntry(limit90ExpMedianRL,"RL median","L");
+  }
+
+  limitStat->SetLineColor(kBlue);
   limitStat->SetLineWidth(1);
   limitStat->SetLineStyle(3);
   limitStat->Draw("Lsame");
-
+  lego->AddEntry(limitStat,"Bkg stat only","L");
 
   
-//  limit90ExpRL[0]->SetFillColor(kBlue);
-//  limit90ExpRL[0]->SetFillStyle(3001);
-//  limit90ExpRL[0]->Draw("3same");
-//
-//  limit90ExpRL[1]->SetFillColor(kBlue);
-//  limit90ExpRL[1]->SetFillStyle(3001);
-//  limit90ExpRL[1]->Draw("3same");
+  double maxDeviation = -99999;
+  TGraph* quantileOneSided = new TGraph(); quantileOneSided->SetName("quantileOneSided");
+  if (overlay) {
+    TFile* filoIn = new TFile(infilename.Data(),"OLD");
+    TGraph* limit90ExpMedianIn;
+    TGraph* limit90ObsRL = new TGraph();
+    TString legendEntry;
+    if (overlaymode == 1) {
+      TGraphAsymmErrors* limit90ExpIn[2];
+      for (int i=0; i<2; i++) limit90ExpIn[i] = (TGraphAsymmErrors*) filoIn->Get(Form("ExpLimit90CL_%dsigmaCov",2-i));
+      
+      limit90ExpMedianIn = (TGraphAsymmErrors*) filoIn->Get(Form("Median90CLUL"));
+      legendEntry = Form("Median B + S #splitline{M_{X} = 16.9 MeV}{g_{ve} = 7 #times 10^{-4}}");
+//    limit90ExpIn[0]->SetLineColor(kBlue);
+//    limit90ExpIn[0]->SetFillStyle(1001);
+//    limit90ExpIn[0]->Draw("3same");
+//    limit90ExpIn[1]->SetFillColor(kPink);
+//    limit90ExpIn[1]->SetFillStyle(1001);
+//    limit90ExpIn[1]->Draw("3same");
 
-  limit90ExpMedianRL->SetLineColor(1);
-  limit90ExpMedianRL->SetLineWidth(1);
-  limit90ExpMedianRL->SetLineStyle(2);
-  limit90ExpMedianRL->Draw("Lsame");
+    }
+    else {
+      limit90ExpMedianIn = (TGraph*) filoIn->Get("Limit90");
+      legendEntry = Form("Observed PCL");
+      limit90ObsRL = (TGraph*) filoIn->Get("RolkeLopezLimit90");
+    }
 
+    // evaluate PCL method observed limit and evaluate the maximum number of sigmas of which it exceeds the median UL
+    
+    for (int q = 0; q<10000; q++) quantileOneSided->SetPoint(q,1.-0.5*(1.+TMath::Erf(float(5*q/10000.)/TMath::Sqrt(2.))),5*q/10000.);
+    
+    int indexOfMaxDeviation = -1;
+    TGraph* limit90ExpMedianPCL = new TGraph();
+    for (int q = 0; q< limit90ExpMedianIn->GetN(); q++){
+      double medianX = limit90ExpMedianIn->GetX()[q];
+      double limmedian = limit90ExpMedian->Eval(medianX);
+      double limmedianPlus2Sigma = limit90ExpMedianPlus2Sigma->Eval(medianX);
+      if (limit90ExpMedianIn->GetY()[q] < limmedian)
+	limit90ExpMedianPCL->SetPoint(q,limit90ExpMedianIn->GetX()[q],limmedian);
+      else
+	limit90ExpMedianPCL->SetPoint(q,limit90ExpMedianIn->GetX()[q],limit90ExpMedianIn->GetY()[q]);
 
+      double deviation = (limit90ExpMedianPCL->GetY()[q] - limmedian)/(limmedianPlus2Sigma-limmedian)*2;
+      cout << "DEviation " << deviation << " " << medianX << " " << limmedianPlus2Sigma << endl;
+      if (deviation > maxDeviation) {
+	maxDeviation = deviation;
+	indexOfMaxDeviation = q;
+      }
+    }
+    cout << "Max deviation = " << maxDeviation << " Mass of max deviation " << limit90ExpMedianPCL->GetX()[indexOfMaxDeviation] << endl;
+    cout << "coupling of max deviation " << limit90ExpMedianPCL->GetY()[indexOfMaxDeviation] << endl;
+    limit90ExpMedianIn->SetLineColor(kRed);
+    limit90ExpMedianIn->SetLineWidth(1);
+    limit90ExpMedianIn->SetLineStyle(2);
+    limit90ExpMedianIn->Draw("Lsame");
+    limit90ExpMedianPCL->SetLineColor(kRed);
+    limit90ExpMedianPCL->SetLineWidth(2);
+    limit90ExpMedianPCL->SetLineStyle(1);
+    limit90ExpMedianPCL->Draw("Lsame");
+    if (overlaymode == 2) {
+      limit90ObsRL->SetLineColor(kBlue);
+      //      limit90ObsRL->Draw("Lsame");
+    }
+    lego->AddEntry(limit90ExpMedianPCL,legendEntry.Data(),"L");    
+    lego->AddEntry(limit90ExpMedianIn,"Observed limit","L");    
+  }
+
+  TLatex kloeleg; kloeleg.SetTextSize(0.04); kloeleg.DrawText(17.8,9E-4,"KLOE, 2015");
+  TLatex na64leg; na64leg.SetTextSize(0.04); na64leg.DrawText(17.8,1E-4,"NA64, 2019");
+  lego->Draw();
 //  if (seedStem == 6000) {
 //    TFile* filo = new TFile(Form("%s%d.root_limits.root",inputFilesStem.Data(),10004),"OLD");
 //    TGraph* grafo = (TGraph*) filo->Get("Limit90");
@@ -421,10 +660,10 @@ void rereadfulllim(int seedStem){ // for example 8000
   // evaluate look-elsewhere effect at 2, 3, 4, 5 sigma
 
   // use mass range
-  const double massminLE = massMin;
-  const double massmaxLE = massMax;
+  const double massminLE = 16.6;//massMin;
+  const double massmaxLE = 17.2;//massMax;
   
-  const int nLookEpts = 4;
+  const int nLookEpts = 16;
   double probLookE[nLookEpts];
   int numLookE[nLookEpts] = {0};
 
@@ -435,9 +674,9 @@ void rereadfulllim(int seedStem){ // for example 8000
 
       // check if in any of the mass points the limit is above median + x sigma
       for (int j=0; j<nLookEpts; j++){
-	double ylim = limit90Exp[0]->GetY()[k]+limit90Exp[0]->GetEYhigh()[k]*(1+j*0.5);
+	double ylim = limit90Exp[0]->GetY()[k]+limit90Exp[0]->GetEYhigh()[k]*(1+j*0.125); //2,2.25,2.5,2.75,3,3.25,3.5,3.75,...
 	if (limit90s[idx]->GetY()[k] > ylim) {
-	  std::cout << "limit outside boundary " << limit90s[idx]->GetX()[k] << " " << j << " " << limit90s[idx]->GetY()[k] << " " << limit90Exp[0]->GetY()[k] << " " << limit90Exp[0]->GetEYhigh()[k] << " " << ylim << std::endl;
+	  //	  std::cout << "limit outside boundary " << limit90s[idx]->GetX()[k] << " " << j << " " << limit90s[idx]->GetY()[k] << " " << limit90Exp[0]->GetY()[k] << " " << limit90Exp[0]->GetEYhigh()[k] << " " << ylim << std::endl;
 	  outside[j] = true;
 	}
       }
@@ -448,16 +687,42 @@ void rereadfulllim(int seedStem){ // for example 8000
     }
   }
 
+  TGraph* trueProb[3]; // -1 sigma, 0, 1 sigma statistical
+  for (int q = 0; q<3; q++)  {
+    trueProb[q] = new TGraph(); trueProb[q]->SetName(Form("TrueProb%d",q-1));
+  }
+  TH1D* nume = new TH1D("nume","",1,0,1);
+  TH1D* deno = new TH1D("deno","",1,0,1);
   for (int j=0; j<nLookEpts; j++){
-    double quantile = 1.-0.5*(1+TMath::Erf((2.+j)/TMath::Sqrt(2.)));
-    std::cout << " prob to be outside " << 2+j << " sigma is " << numLookE[j]/(30.) << " vs " << quantile << " ratio = " << numLookE[j]/(30.)/quantile << std::endl;
+    nume->SetBinContent(1,numLookE[j]);
+    deno->SetBinContent(1,jgood);
+    TEfficiency effo(*nume,*deno);
+    trueProb[0]->SetPoint(j,2+j*0.25,effo.GetEfficiency(1)+effo.GetEfficiencyErrorUp(1));
+    trueProb[1]->SetPoint(j,2+j*0.25,effo.GetEfficiency(1));
+    trueProb[2]->SetPoint(j,2+j*0.25,effo.GetEfficiency(1)-effo.GetEfficiencyErrorLow(1));
   }
 
-  TGraph* threesigmalim = new TGraph();
-  for (int k=0; k < limit90Exp[0]->GetN(); k++){
-    threesigmalim->SetPoint(threesigmalim->GetN(),limit90Exp[0]->GetX()[k],limit90Exp[0]->GetY()[k]+limit90Exp[0]->GetEYhigh()[k]*(1+1*0.5));
+  if (overlay) {
+    TCanvas* quantileCanva = new TCanvas("quantileCanva");
+    quantileOneSided->Draw("AP");
+
+    cout << "Deviation " << maxDeviation << " corresponds to true prob = " << trueProb[1]->Eval(maxDeviation) << " - " << trueProb[0]->Eval(maxDeviation) << " + " << trueProb[2]->Eval(maxDeviation) << endl;
+    cout << "Equivalent gaussian 1-sided sigma effects are "
+	 << quantileOneSided->Eval(trueProb[1]->Eval(maxDeviation)) << " - " 
+	 << quantileOneSided->Eval(trueProb[1]->Eval(maxDeviation))-quantileOneSided->Eval(trueProb[0]->Eval(maxDeviation)) << " + " 
+	 << quantileOneSided->Eval(trueProb[2]->Eval(maxDeviation))-quantileOneSided->Eval(trueProb[1]->Eval(maxDeviation)) << endl; 
   }
-  //  threesigmalim->Draw();
+
+  for (int j=0; j<nLookEpts; j++){
+    double quantile = 1.-0.5*(1+TMath::Erf((2.+j*0.25)/TMath::Sqrt(2.)));
+    std::cout << " prob to be outside " << 2+j*0.25 << " sigma is " << 1.*numLookE[j]/jgood << " vs " << quantile << " ratio = " << 1.*numLookE[j]/jgood/quantile << std::endl;
+  }
+
+  TGraph* twosigmalim = new TGraph();
+  for (int k=0; k < limit90Exp[0]->GetN(); k++){
+    twosigmalim->SetPoint(twosigmalim->GetN(),limit90Exp[0]->GetX()[k],limit90Exp[0]->GetY()[k]+limit90Exp[0]->GetEYhigh()[k]*(1+2*0.125));
+  }
+  //  twosigmalim->Draw();
 
 //PER DOPO - MISSING  // limit with no nuisance
 //PER DOPO - MISSING  TFile* fila = new TFile("PADME_sensitivity/output/statisticalTest_massSteps_71_massRange_16.22_17.62_UseNuis0_errorDownBy2.0_seed8501.root_limits.root");
@@ -492,6 +757,15 @@ void rereadfulllim(int seedStem){ // for example 8000
 //PER DOPO - MISSING  TGraph* pureBkgStat = (TGraph*) fila->Get("FeldmanCousinsLimit90");
 //PER DOPO - MISSING  pureBkgStat->SetLineColor(3);
 //PER DOPO - MISSING  //  pureBkgStat->Draw("Lsame");
+
+  if (saveout){
+    TFile* filoOut = new TFile(outfilename.Data(),"NEW");
+    limit90Exp[0]->Write();
+    limit90Exp[1]->Write();
+    limit90ExpMedian->Write();
+    filoOut->Write();
+    filoOut->Close();
+  } 
 
 }
 
