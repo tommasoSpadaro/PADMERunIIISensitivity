@@ -85,13 +85,17 @@ void prepareInput(TString fileout){
   TGraphErrors* gBkg = new TGraphErrors(); gBkg->SetName("gBkg");
   TGraphErrors* gEff = new TGraphErrors(); gEff->SetName("gEff");
   TGraphErrors* gNObs = new TGraphErrors();gNObs->SetName("gNObs");
+  TGraphErrors* gSqrts = new TGraphErrors();gNObs->SetName("gSqrts");
 
   
 
   
   for (int i=0; i<npts; i++){
     double xsqrts = gSqrtsInput->GetY()[i]; // s = 2me**2 + 2me*Ebeam -> [(s-2me^2)/2me]
-    // patch for Elisa's bug
+    gSqrts->SetPoint(i,xsqrts,i);
+
+    
+    gPoT->SetPoint(i,xsqrts,gPoTInput->GetY()[i]);    
     gPoT->SetPoint(i,xsqrts,gPoTInput->GetY()[i]);
     gPoT->SetPointError(i,0.,gPoTInput->GetEY()[i]);
 
@@ -331,6 +335,7 @@ void prepareInput(TString fileout){
   TGraphErrors* gBkgZip = new TGraphErrors(); gBkgZip->SetName("gBkg");
   TGraphErrors* gEffZip = new TGraphErrors(); gEffZip->SetName("gEff");
   TGraphErrors* gNObsZip = new TGraphErrors(); gNObsZip->SetName("gNObs");
+  TGraphErrors* gSqrtsZip = new TGraphErrors(); gSqrtsZip->SetName("gSqrts");
   TGraphErrors* gN2NoBkgOvN2Zip = new TGraphErrors(); gNObsZip->SetName("gN2NoBkgOvN2");
   TGraphErrors* gLeakageZip = new TGraphErrors(); gLeakage->SetName("gLeakage");
   TGraphErrors* gScanscaleZip = new TGraphErrors(); gScanscaleZip->SetName("gScanscale");
@@ -362,6 +367,9 @@ void prepareInput(TString fileout){
     //    cout << " writing into potzip" << endl;
     gNObsZip->SetPoint(ipts,gNObs->GetX()[i],gNObs->GetY()[i]);
     gNObsZip->SetPointError(ipts,gNObs->GetEX()[i],gNObs->GetEY()[i]);
+
+    //    cout << " writing into potzip" << endl;
+    gSqrtsZip->SetPoint(ipts,gSqrts->GetX()[i],gSqrts->GetY()[i]);
 
     gN2NoBkgOvN2Zip->SetPoint(ipts,gNObs->GetX()[i],gN2NoBkgOvN2->GetY()[i]);
     gN2NoBkgOvN2Zip->SetPointError(ipts,gNObs->GetEX()[i],gN2NoBkgOvN2->GetEY()[i]);
@@ -419,6 +427,12 @@ void prepareInput(TString fileout){
     }
   }
 
+  TCanvas* dsq = new TCanvas("dsq");
+  gSqrtsZip->SetMarkerStyle(20);
+  gSqrtsZip->Draw("PA");  
+
+
+  
   TCanvas* corrCanva = new TCanvas("corrCanva");
   corrCanva->Divide(2,3);
   for (int q=0; q<ncorrs; q++){
@@ -631,13 +645,17 @@ void prepareInput(TString fileout){
   }
   
   TCanvas* rcanva = new TCanvas("rcanva");
-  gRZipSideband->SetMarkerStyle(24);
+  gRZipSideband->SetMarkerStyle(20);
+  gRZipSideband->SetMarkerSize(1);
+  gRZipSideband->SetMarkerColor(kBlack);
   gRZipSideband->Draw("PA");
   gRZipMasked->SetMarkerStyle(20);
   gRZipMasked->SetMarkerColor(kRed);
+  gRZipMasked->SetLineColor(kRed);
   gRZipMasked->Draw("Psame");
-  gRZipScan1->SetMarkerStyle(28);
-  gRZipScan1->Draw("Psame");
+  gRZipScan1->SetMarkerStyle(25);
+  gRZipScan1->SetMarkerSize(2);
+  gRZipScan1->Draw("PXsame");
 
   
 //  bestSignal->Sort();
@@ -694,7 +712,7 @@ void prepareInput(TString fileout){
   
   // corrections plots
   
-  int colorcorr[5] = {kGreen+1,kPink-9,kMagenta-4,1,kRed+2};
+  int colorcorr[5] = {kBlack,kViolet-2,kMagenta-4,kGreen+1,kRed+2};
   int stylecorrOpen[5] = {25,26,46,24,28}; // open sysmbols: square, triangle, s.andrew-cross, circle
   int stylecorrFill[5] = {21,22,47,20,34}; // filled sysmbols:
   // corrections at various stages
@@ -745,22 +763,23 @@ void prepareInput(TString fileout){
 //  gRZipScan1->SetMarkerStyle(28);
 //  gRZipScan1->Draw("Psame");
   
-// plot of NPoT
+// plot of N2
 
   TCanvas* n2canva = new TCanvas("n2canva");
   n2canva->Divide(1,2);
-  n2canva->cd(1); gPoTZip->Draw("AP");
-  n2canva->cd(2); relErrRZip->Draw("AP");
+  n2canva->cd(1); gNObsZip->Draw("AP");
+  n2canva->cd(2); relErrNObsZip->Draw("AP");
   
   // plot of relative errors
   
   TGraph* relerrGraphs[4] = {relErrRZip,relErrNObsZip,relErrPoTZip,relErrBkgZip};
   TCanvas* relErrs = new TCanvas("relErr");
+  int colorcorrRel[4] = {kBlack,kViolet-2,kRed,kGreen+1};
   relErrs->DrawFrame(16.2,0.,17.5,0.015);
   for (int i=0; i<4; i++){
     relerrGraphs[i]->SetMarkerStyle(stylecorrFill[i]);
-    relerrGraphs[i]->SetMarkerColor(colorcorr[i]);
-    relerrGraphs[i]->SetLineColor(colorcorr[i]);
+    relerrGraphs[i]->SetMarkerColor(colorcorrRel[i]);
+    relerrGraphs[i]->SetLineColor(colorcorrRel[i]);
     relerrGraphs[i]->Draw("Psame");
   }
 }
