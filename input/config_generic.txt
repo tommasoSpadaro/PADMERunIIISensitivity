@@ -40,4 +40,4 @@ BkgBiasObsP0 1.01163
 BkgBiasObsP1 -0.0103
 BkgBiasErrP0 0.0013
 BkgBiasErrP1 0.004
-BkgBiasErrP0P1Corr -0.10
+BkgBiasErrP0P1Corr -0.06
