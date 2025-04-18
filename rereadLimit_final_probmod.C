@@ -14,25 +14,29 @@
 #include <iostream>
 #include "TEfficiency.h"
 
-void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, TString infilename, bool saveout, TString outfilename){ // for example 8000
+void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, TString infilename1, TString infilename2, bool saveout, TString outfilename){ // for example 8000
   TString clsstring = "";
   if (clsoption == 1) clsstring = "CLsb";
 
   // clsoption = 0, 1 -> use CLs, CLsb
-  // overlay -> if true, overlay the curve in infilename to the band
+  // overlay -> if true, overlay curves in the input filename(s) 
   // if (overlay)
-  //     overlaymode = 1 -> overlay a median upper limit curve
-  //     overlaymode = 2 -> overlay a 90CL curve "Limit90"
-  // infilename -> file to be overlaid, e.g.: /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed820001.root_limits.root
-  //            -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed970051.root_limits <-- POL1 fit from Ven
-  //            -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed970061.root_limits <-- POL0 fit from Tom using Ven sideb.
-  //            -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed970072.root_limits <-- POL1 fit from Ven, straightfit=2
-  //            -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed970081.root_limits <-- POL1 fit from Ven, straightfit=2, extended range in gve, finer binning in mass [WAS STRAIGHT FIT 2 OK?!]
+  //     overlaymode = 1 || 3 -> overlay a band upper limit curve
+  //     overlaymode = 2 || 3 -> overlay a 90CL curve "Limit90"
+  // infilename1 -> file with expected band for S+B
+  // infilename2 -> file with obs limit to be overlaid, e.g.:
+  //             -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed820001.root_limits.root
+  //             -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed970051.root_limits <-- POL1 fit from Ven
+  //             -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed970061.root_limits <-- POL0 fit from Tom using Ven sideb.
+  //             -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed970072.root_limits <-- POL1 fit from Ven, straightfit=2
+  //             -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed970081.root_limits <-- POL1 fit from Ven, straightfit=2, extended range in gve, finer binning in mass [WAS STRAIGHT FIT 2 OK?!]
   //            -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed970082.root_limits <-- POL1 fit from Ven, straightfit=1, extended range in gve, finer binning in mass, B vs sqrt(s) pol1 separate PER SCAN, 0.3% added on B error [GOES WITH 990000 SERIES]
   //            -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed970083.root_limits <-- POL1 fit from Ven, extended range in gve, standard binning in mass, straightfitmode = 2, 0.3% added on B error [GOES WITH 980000 OR 991000 BKG SERIES]
   //            -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_76_massRange_16.22_17.74_UseNuis1_seed970084.root_limits <-- POL1 fit from Ven, extended range in gve, FINER binning in mass, straightfitmode = 2, 0.3% added on B error [GOES WITH 980000 OR 991000 BKG SERIES]
+  //
   // saveout -> if true, save output in outfilename
-  // outfilename -> root filename with the limit curves
+  //
+  // outfilename -> root filename with the limit curves (median, +-1sigma, +-2 sigma coverages)
   
   TString inputFilesStem = "./output/statisticalTest_massSteps_71_massRange_16.22_17.62_UseNuis1_seed";
   int NPseudo = 30;
@@ -180,7 +184,7 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
   }
   if (seedStem==990000) {
     inputFilesStem = "./output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed";
-    NPseudo = 40; 
+    NPseudo = 250; 
     massMax = 17.74;
   }
   if (seedStem==991000) {
@@ -191,6 +195,16 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
   if (seedStem==992000) {
     inputFilesStem = "./output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed";
     NPseudo = 119; 
+    massMax = 17.74;
+  }
+  if (seedStem==993000) { // S+B
+    inputFilesStem = "./output/statisticalTest_massSteps_76_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 150; 
+    massMax = 17.74;
+  }
+  if (seedStem==994000) { // S+B
+    inputFilesStem = "./output/statisticalTest_massSteps_76_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 150; 
     massMax = 17.74;
   }
    
@@ -239,6 +253,8 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
   // 990000+j effcurvON, RunIII FINAL, pot corrections, straightFitMode=1 + B vs sqrt(s) with the parameters from the 2 scans, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results, ADD 0.3% on B as systematic error on each point
   // 991000+j effcurvON, RunIII FINAL, pot corrections, straightFitMode=2 + B vs sqrt(s) with the parameters from the 2 scans, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results, ADD 0.3% on B as systematic error on each point
   // 992000+j effcurvON, RunIII FINAL, pot corrections, straightFitMode=2 + B vs sqrt(s) with the parameters from the 2 scans, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results, ADD 0.0 B as systematic error on each point
+  // 993000+j effcurvON, RunIII FINAL, pot corrections, straightFitMode=2 + B vs sqrt(s) with the parameters from the 2 scans, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results, ADD 0.3% B as systematic error per point, S+B TOYS WITH M=16.9,g=5.5E-4
+  // 994000+j effcurvON, RunIII FINAL, pot corrections, straightFitMode=2 + B vs sqrt(s) with the parameters from the 2 scans, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results, ADD 0.3% B as systematic error per point, S+B TOYS WITH M=16.9,g=5.0E-4
   
   TGraph** limit90s = new TGraph*[NPseudo]; // UL for the various pseudoevents
   TGraph** limit90sRL = new TGraph*[NPseudo]; // RL UL for the various pseudoevents
@@ -263,6 +279,8 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
     if (seedStem==990000 && j==0) continue;
     if (seedStem==991000 && j==0) continue;
     if (seedStem==992000 && j==0) continue;
+    if (seedStem==993000 && j==0) continue;
+    if (seedStem==994000 && j==0) continue;
     
     TFile* filo = new TFile(Form("%s%d.root_limits.root",inputFilesStem.Data(),seedStem+j),"OLD");
     TGraph* grafo = (TGraph*) filo->Get(Form("Limit90%s",clsstring.Data()));
@@ -439,8 +457,8 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
 
   // calcolo look-elsewhere
 
-  const double massminLE = 16.6;//massMin;
-  const double massmaxLE = 17.2;//massMax;
+  double massminLE = 16.6;//16.85-3*0.04;//16.6;//massMin;
+  double massmaxLE = 17.2;//16.85+3*0.04;//17.2;//massMax;
   
   const int nLookEpts = 48; // 16 points between median and 1 sigma, 16 points between 1 sigma and 2 sigma, 16 above 2 sigma
   double probLookE[nLookEpts];
@@ -651,12 +669,23 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
     limit90ExpMedian->Draw("Lsame");
   }
 
-  TLegend *lego = new TLegend(0.65,0.22,0.88,0.58);
-  lego->SetHeader("90% CL UL:");
-  lego->AddEntry(limit90ExpMedian,"CLs Median","L");
-  lego->AddEntry(limit90Exp[0],"CLs #pm2#sigma","f");
-  lego->AddEntry(limit90Exp[1],"CLs #pm1#sigma","f");
+  TLegend *lego   = new TLegend(0.65,0.32,0.88,0.58);
+  TLegend *lego_sb = new TLegend(0.65,0.60,0.88,0.75);
+  TLegend *lego_obs = new TLegend(0.65,0.22,0.88,0.30);
 
+  lego->SetHeader("90% CL UL: B-only");
+  lego_sb->SetHeader("90% CL UL: B + S #splitline{M_{X} = 16.9 MeV}{g_{ve} = 5 #times 10^{-4}}");
+  lego_sb->SetNColumns(2);
+  if (clsoption == 0) {
+    lego->AddEntry(limit90ExpMedian,"CLs Median","L");
+    lego->AddEntry(limit90Exp[0],"CLs #pm2#sigma","f");
+    lego->AddEntry(limit90Exp[1],"CLs #pm1#sigma","f");
+  }
+  else {
+    lego->AddEntry(limit90ExpMedian,"CLsb Median","L");
+    lego->AddEntry(limit90Exp[0],"CLsb #pm2#sigma","f");
+    lego->AddEntry(limit90Exp[1],"CLsb #pm1#sigma","f");
+  }
   
   if (!overlay){
     limit90ExpMedianRL->SetLineColor(kBlack);
@@ -677,29 +706,31 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
   TGraph* quantileOneSided = new TGraph(); quantileOneSided->SetName("quantileOneSided");
   TGraphAsymmErrors* pvalueG = new TGraphAsymmErrors(); pvalueG->SetName("p-value");
   TGraphAsymmErrors* qvalueG = new TGraphAsymmErrors(); qvalueG->SetName("equivalent-Nsigma");
-  if (overlay) {
-    TFile* filoIn = new TFile(infilename.Data(),"OLD");
-    TGraph* limit90ExpMedianIn;
-    TGraph* limit90ObsRL = new TGraph();
-    TString legendEntry;
-    if (overlaymode == 1) {
-      TGraphAsymmErrors* limit90ExpIn[2];
-      for (int i=0; i<2; i++) limit90ExpIn[i] = (TGraphAsymmErrors*) filoIn->Get(Form("ExpLimit90CL_%dsigmaCov",2-i));
-      
-      limit90ExpMedianIn = (TGraphAsymmErrors*) filoIn->Get(Form("Median90CLUL"));
-      legendEntry = Form("Median B + S #splitline{M_{X} = 16.9 MeV}{g_{ve} = 7 #times 10^{-4}}");
-//    limit90ExpIn[0]->SetLineColor(kBlue);
-//    limit90ExpIn[0]->SetFillStyle(1001);
-//    limit90ExpIn[0]->Draw("3same");
-//    limit90ExpIn[1]->SetFillColor(kPink);
-//    limit90ExpIn[1]->SetFillStyle(1001);
-//    limit90ExpIn[1]->Draw("3same");
 
+  if (overlay) {
+    TGraph* limit90ExpMedianIn = nullptr;
+    if (overlaymode != 1 && overlaymode != 2 && overlaymode != 3) {
+      cout << "Internal inconsistency: if overlay = true, overlaymode must be 1,2 or 3"<< endl;
+      return;
     }
-    else {
+    if (overlaymode == 1 || overlaymode == 3) { // wants to retrieve the expected band
+      TFile* filoIn = new TFile(infilename1.Data(),"OLD");
+      TGraphAsymmErrors* limit90ExpIn[2];
+      for (int i=0; i<2; i++) limit90ExpIn[i] = (TGraphAsymmErrors*) filoIn->Get(Form("ExpLimit90CL_%dsigmaCov",2-i));      
+      limit90ExpMedianIn = (TGraphAsymmErrors*) filoIn->Get(Form("Median90CLUL"));
+      limit90ExpIn[0]->SetFillColorAlpha(kBlue-7,0.35);
+      limit90ExpIn[0]->SetFillStyle(1001);
+      limit90ExpIn[1]->SetFillColorAlpha(kBlue,0.35);
+      limit90ExpIn[1]->SetFillStyle(1001);
+      limit90ExpIn[0]->Draw("3same");
+      limit90ExpIn[1]->Draw("3same");
+      lego_sb->AddEntry(limit90ExpIn[0],"CLs #pm2#sigma","f");    
+      lego_sb->AddEntry(limit90ExpIn[1],"CLs #pm1#sigma","f");    
+    }
+    if (overlaymode == 2 || overlaymode == 3) { // wants to retrieve the obs limit
+      TFile* filoIn = new TFile(infilename2.Data(),"OLD");
       limit90ExpMedianIn = (TGraph*) filoIn->Get("Limit90");
-      legendEntry = Form("Observed PCL");
-      limit90ObsRL = (TGraph*) filoIn->Get("RolkeLopezLimit90");
+      //      limit90ObsRL = (TGraph*) filoIn->Get("RolkeLopezLimit90");
     }
 
     // evaluate PCL method observed limit and evaluate the maximum number of sigmas of which it exceeds the median UL
@@ -756,24 +787,29 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
       limit90ExpMedianPCL->SetLineStyle(1);
       limit90ExpMedianPCL->Draw("Lsame");
       if (overlaymode == 2) {
-	limit90ObsRL->SetLineColor(kBlue);
+	//	limit90ObsRL->SetLineColor(kBlue);
 	//      limit90ObsRL->Draw("Lsame");
       }
-      lego->AddEntry(limit90ExpMedianPCL,legendEntry.Data(),"L");    
-      lego->AddEntry(limit90ExpMedianIn,"Observed limit","L");    
+      lego_obs->AddEntry(limit90ExpMedianPCL,"Observed PCL","L");    
+      lego_obs->AddEntry(limit90ExpMedianIn,"Observed limit","L");    
     }
     else {
       limit90ExpMedianIn->SetLineColor(kRed);
       limit90ExpMedianIn->SetLineWidth(3);
       limit90ExpMedianIn->SetLineStyle(1);
       limit90ExpMedianIn->Draw("Lsame");
-      lego->AddEntry(limit90ExpMedianIn,"Observed limit","L");    
+      lego_obs->AddEntry(limit90ExpMedianIn,"Observed limit","L");    
     }
   }
 
   TLatex kloeleg; kloeleg.SetTextSize(0.04); kloeleg.DrawText(17.8,9E-4,"KLOE, 2015");
   TLatex na64leg; na64leg.SetTextSize(0.04); na64leg.DrawText(17.8,1E-4,"NA64, 2019");
   lego->Draw();
+  if (overlay) {
+    if (overlaymode == 1 || overlaymode == 3) lego_sb->Draw(""); // wants to show the S+B expected band
+    if (overlaymode == 2 || overlaymode == 3) lego_obs->Draw(""); // wants to show the Obs limit
+  }
+  
 //  if (seedStem == 6000) {
 //    TFile* filo = new TFile(Form("%s%d.root_limits.root",inputFilesStem.Data(),10004),"OLD");
 //    TGraph* grafo = (TGraph*) filo->Get("Limit90");
