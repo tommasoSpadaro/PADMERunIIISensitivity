@@ -33,6 +33,8 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
   //            -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed970082.root_limits <-- POL1 fit from Ven, straightfit=1, extended range in gve, finer binning in mass, B vs sqrt(s) pol1 separate PER SCAN, 0.3% added on B error [GOES WITH 990000 SERIES]
   //            -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed970083.root_limits <-- POL1 fit from Ven, extended range in gve, standard binning in mass, straightfitmode = 2, 0.3% added on B error [GOES WITH 980000 OR 991000 BKG SERIES]
   //            -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_76_massRange_16.22_17.74_UseNuis1_seed970084.root_limits <-- POL1 fit from Ven, extended range in gve, FINER binning in mass, straightfitmode = 2, 0.3% added on B error [GOES WITH 980000 OR 991000 BKG SERIES]
+  //            -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_76_massRange_16.22_17.74_UseNuis1_seed970085.root_limits <-- POL1 fit from Ven, FINER binning in mass, straightfitmode = 2, 0.3% added on B error, 0.1% on POT, slope vs potint with 0.007 error [GOES WITH 995000 BKG SERIES]
+  //            -> /Users/Tommaso1/PADME/PADME_sensitivity/output/statisticalTest_massSteps_76_massRange_16.22_17.74_UseNuis1_seed970086.root_limits <-- POL1 fit from Ven, FINER binning in mass, straightfitmode = 2, 0.3% added on B error, 0.1% on POT, slope vs potint with 0.004 error [GOES WITH 996000 BKG SERIES]
   //
   // saveout -> if true, save output in outfilename
   //
@@ -207,6 +209,16 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
     NPseudo = 150; 
     massMax = 17.74;
   }
+  if (seedStem==995000) { // B only
+    inputFilesStem = "./output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed";
+    NPseudo = 224; 
+    massMax = 17.74;
+  }
+  if (seedStem==996000) { // B only
+    inputFilesStem = "./output/statisticalTest_massSteps_33_massRange_16.32_17.6_UseNuis1_seed";
+    NPseudo = 350; 
+    massMax = 17.74;
+  }
    
   //use 100+j for the normal events
   // 3000+j for efficurveON events analysed with efficurveON
@@ -255,6 +267,8 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
   // 992000+j effcurvON, RunIII FINAL, pot corrections, straightFitMode=2 + B vs sqrt(s) with the parameters from the 2 scans, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results, ADD 0.0 B as systematic error on each point
   // 993000+j effcurvON, RunIII FINAL, pot corrections, straightFitMode=2 + B vs sqrt(s) with the parameters from the 2 scans, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results, ADD 0.3% B as systematic error per point, S+B TOYS WITH M=16.9,g=5.5E-4
   // 994000+j effcurvON, RunIII FINAL, pot corrections, straightFitMode=2 + B vs sqrt(s) with the parameters from the 2 scans, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results, ADD 0.3% B as systematic error per point, S+B TOYS WITH M=16.9,g=5.0E-4
+  // 995000+j effcurvON, RunIII FINAL, pot corrections, straightFitMode=2, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results, ADD 0.3% B as systematic error and 0.1% on POT syst for on each point, use POTSLOPE corr, 0.7% err
+  // 996000+j effcurvON, RunIII FINAL, pot corrections, straightFitMode=2, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results, ADD 0.3% B as systematic error and 0.1% on POT syst for on each point, use POTSLOPE corr, 0.4% err
   
   TGraph** limit90s = new TGraph*[NPseudo]; // UL for the various pseudoevents
   TGraph** limit90sRL = new TGraph*[NPseudo]; // RL UL for the various pseudoevents
@@ -281,6 +295,8 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
     if (seedStem==992000 && j==0) continue;
     if (seedStem==993000 && j==0) continue;
     if (seedStem==994000 && j==0) continue;
+    if (seedStem==995000 && j==0) continue;
+    if (seedStem==996000 && j==0) continue;
     
     TFile* filo = new TFile(Form("%s%d.root_limits.root",inputFilesStem.Data(),seedStem+j),"OLD");
     TGraph* grafo = (TGraph*) filo->Get(Form("Limit90%s",clsstring.Data()));
