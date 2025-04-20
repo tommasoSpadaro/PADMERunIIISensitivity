@@ -49,6 +49,7 @@ struct observables{
   vector<Double_t> SqrtsObs;       // estimated sqrts per point
   vector<Int_t> ScanPeriod;        // scan period index for that point
   vector<Double_t> POTObs;         // estimated POT per point, in 1E10 units
+  vector<Double_t> POTIntObs  ;    // Integrated POT
   vector<Double_t> SignalEffiLocalObs;  // estimated efficiency
   Double_t POTScaleObs;            // absolute relative scale correction on the POT [independent on sqrt(s)]
   vector<Double_t> BkgObs;         // estimated Number of bkg / POT per point
@@ -60,6 +61,7 @@ struct observables{
   Double_t EffiOverBkgObsP0[3];       // estimated value of par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2, total]
   Double_t EffiOverBkgObsP1[3];       // estimated value of par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2, total]
   Double_t BkgPerPOTVsSqrtsParObs[3][2];    // pol1 fit of B/POT vs sqrt(s): parameter values
+  Double_t POTSlopeCorrectionObs;    // slope of the POT correction vs Integrated POT
 };
 
 struct expectedErrors{
@@ -79,6 +81,7 @@ struct expectedErrors{
   Double_t EffiOverBkgErrP0P1Corr[3]; // estimated correlation on the errors of par0 and par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 3 periods of the scan [period 1, 2, total]
   Double_t BkgPerPOTVsSqrtsParErr[3][2]; // pol1 fit of B/POT vs sqrt(s): parameter errors
   Double_t BkgPerPOTVsSqrtsP0P1Corr[3];  // pol1 fit of B/POT vs sqrt(s): parameter P0P1 correlation
+  Double_t POTSlopeCorrectionErr;     // error of the POT correction slope vs Integrated POT
   //  vector<Double_t> SqrtsErr;      // error on the sqrts per point
 };
 
@@ -96,6 +99,7 @@ struct nuisancePars{
   Double_t EffiOverBkgTrueP0[3];       // true value of par0 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2, total]
   Double_t EffiOverBkgTrueP1[3];       // true value of par1 of the pol1 used to fit in sideband the ratio effisig/(bkg/pot) vs sqrt(s): 2 periods of the scan [period 1, 2, total]
   Double_t BkgPerPOTVsSqrtsParTrue[3][2];  // pol1 fit of B/POT vs sqrt(s): parameter values
+  Double_t POTSlopeCorrectionTrue;      // true value of the slope of the POT correction vs Integrated POT
   //  vector<Double_t> SqrtsTrue;       // true sqrts per point
 };
 
@@ -157,6 +161,8 @@ class Likelihood {
      // par[22+3*npts]= BkgFitP1_1            <---parameter 1 of a pol1 fit for B/POT vs sqrt(s) SCAN 1
      // par[23+3*npts]= BkgFitP0_2            <---parameter 0 of a pol1 fit for B/POT vs sqrt(s) SCAN ALL
      // par[24+3*npts]= BkgFitP1_2            <---parameter 1 of a pol1 fit for B/POT vs sqrt(s) SCAN ALL
+     // par[25+3*npts]= UsePOTSlopeCorrection <---always fixed. If 1: use a POT slope correction vs integrated POT
+     // par[26+3*npts]= POTSlopeCorrectionTrue<---free par is UsePOTSlopeCorrection == 1
      bool isSBfit = (par[0]==0);
      double mass = par[1];
      double gve  = par[2];
@@ -177,7 +183,8 @@ class Likelihood {
      int bkgFitMode = par[18+3*npts];
      double bkgFitP0[3] = {par[19+3*npts],par[21+3*npts],par[23+3*npts]};
      double bkgFitP1[3] = {par[20+3*npts],par[22+3*npts],par[24+3*npts]};
-
+     bool usePOTSlopeCorrection = par[25+3*npts];
+     double POTSlopeCorrectionTrue  = par[26+3*npts];
      //calculate -2log(likelihood)
 
      Double_t chisq = 0;
@@ -215,6 +222,14 @@ class Likelihood {
        }
      }
 
+     // POTSlope correction
+     if (usePOTSlopeCorrection) {
+       delta = pow((fObservables.POTSlopeCorrectionObs - POTSlopeCorrectionTrue)/fExpectedErrors.POTSlopeCorrectionErr,2);
+       chisq += delta;
+     }
+
+
+     
      if (isSBfit){ // signal + background fit
 
        // signal shape nuisances
@@ -254,6 +269,12 @@ class Likelihood {
        for (uint i=0; i < npts; i++) {        
 	 delta = (fObservables.NObs.at(i)/(fObservables.POTObs.at(i)*1E10)); // N2/(POTx1E10) 
 
+	 // pot correction vs integrated pot
+	 if (usePOTSlopeCorrection) {
+	   delta /= (1. + POTSlopeCorrectionTrue*fObservables.POTIntObs.at(i)/fObservables.POTIntObs.at(npts-1));
+	 }
+
+	 
 	 double relerrsq = 
 	   (fExpectedErrors.POTLocalErr.at(i)/fObservables.POTObs.at(i))*(fExpectedErrors.POTLocalErr.at(i)/fObservables.POTObs.at(i)) +
 	   (1./fObservables.NObs.at(i));
@@ -263,6 +284,7 @@ class Likelihood {
 	 if (useBkgBias) expval = (bkgBiasTrueP0 + bkgBiasTrueP1*(fObservables.SqrtsObs.at(i)-SQRTSMID));  // (BiasP0 + BiasP1*(sqrt(s)-16.92))
 	 else            expval = potScaleTrue;                                                            // POT_scale_true
 
+	 
 	 int iperiod = 2;
 	 if (bkgFitMode == 1) iperiod = fObservables.ScanPeriod.at(i); //0 or 1
 	 expval *= (bkgFitP0[iperiod] + bkgFitP1[iperiod]*(fObservables.SqrtsObs.at(i)-SQRTSMID));
@@ -286,6 +308,10 @@ class Likelihood {
        for (uint i=0; i < npts; i++) {        
 	 //	 delta = fObservables.NObs.at(i)/(fObservables.POTObs.at(i)*1E10*par[bkgTrueIdx + i]); // N2/(POTx1E10xB) 
 	 delta = fObservables.NObs.at(i)/(fObservables.POTObs.at(i)*1E10*fObservables.BkgObs.at(i)); // N2/(POTx1E10xB) 
+	 // pot correction vs integrated pot
+	 if (usePOTSlopeCorrection) {
+	   delta /= (1. + POTSlopeCorrectionTrue*fObservables.POTIntObs.at(i)/fObservables.POTIntObs.at(npts-1));
+	 }
 
 	 double relerrsq = 
 	   pow(fExpectedErrors.POTLocalErr.at(i)/fObservables.POTObs.at(i),2) +
@@ -313,6 +339,10 @@ class Likelihood {
 
        for (uint i=0; i < npts; i++) {        
 	 double bc = par[potTrueIdx + i]*1E10;
+	 // pot correction vs integrated pot
+	 if (usePOTSlopeCorrection) {
+	   bc *= (1. + POTSlopeCorrectionTrue*fObservables.POTIntObs.at(i)/fObservables.POTIntObs.at(npts-1));
+	 }
 
 	 if (bkgFitMode){
 	   int iperiod = 2;
@@ -359,6 +389,9 @@ class Likelihood {
 	   //	 std::cout << "mass = " << mass << " gve = " << gve << " eRes = " << eRes << " eBeam = " << eBeam << " signal = " << sc << endl;
 
 	   //	 if (i==23 || i==46) std::cout << "chisq step 2 i = " << i << " is " << chisq << endl;
+	   if (usePOTSlopeCorrection) {
+	     sc *= (1. + POTSlopeCorrectionTrue*fObservables.POTIntObs.at(i)/fObservables.POTIntObs.at(npts-1));
+	   }
 	 
 	 } 
 
@@ -460,6 +493,7 @@ private:
   TGraphErrors* fPotGraphUsed;
   TGraphErrors* fEffiGraphUsed;
   TGraphErrors* fBkgGraphUsed;
+  TGraph* fPotIntGraphUsed;
   TGraphErrors* fNormBkgGraphUsed[3];
   TGraphErrors* fBkgGraphUsedScan[3];
   TF1* fitfunB[3];

@@ -4,7 +4,7 @@ $maxjobs = $ARGV[0]; # max number of jobs simultaneously running together
 $username = $ARGV[1]; # needed to retrieve number of jobs running
 $seedStem = $ARGV[2]; # starting seed value
 
-$nSteps = 1;#315;#200;#1 #200;#9;#199; #number of pseudo-events
+$nSteps = 1;#350;#315;#200;#1 #200;#9;#199; #number of pseudo-events
 $iStep = 0;
 
 $loopCond = 1;
@@ -59,7 +59,8 @@ while ($loopCond == 1){
 #	    elsif (/InputFileName /) {print CONFIGOUT "InputFileName ~/PADME/PADME_sensitivity/input/MCVersion2_POTError0.02_BKG0.006_EFF0.004_POTnominalRunIII.root\n";}
 #	    elsif (/InputFileName /) {print CONFIGOUT "InputFileName ~/PADME/PADME_sensitivity/input/MCVersion2_POTErrorFinal_BKG0.004_EFF0.004_bugfix.root\n";}
 #	    elsif (/InputFileName /) {print CONFIGOUT "InputFileName ~/PADME/PADME_sensitivity/input/prova.root\n";}
-	    elsif (/InputFileName /) {print CONFIGOUT "InputFileName ~/PADME/PADME_sensitivity/input/completedRunIII_0.3pctOnB_0.3pctOnPoT.root\n";}
+#	    elsif (/InputFileName /) {print CONFIGOUT "InputFileName ~/PADME/PADME_sensitivity/input/completedRunIII_0.3pctOnB_0.3pctOnPoT.root\n";}
+	    elsif (/InputFileName /) {print CONFIGOUT "InputFileName ~/PADME/PADME_sensitivity/input/completedRunIII_0.3pctOnB_0.1pctOnPoT.root\n";}
 
 	    # VALUTAZIONE LIMITE OSSERVATO
 	    elsif (/ObsLimitMode /) {print CONFIGOUT "ObsLimitMode 1\n";} # OBSLIMIT!!!
@@ -69,6 +70,10 @@ while ($loopCond == 1){
 
 
 	    # INPUT FILENAME for PSEUDOEVENTS
+#	    elsif (/^ToyOfToyMode/) {print CONFIGOUT "ToyOfToyMode 0\n";} #generate toy-pseudoevents in memory
+#	    elsif (/^InputFileNameNObsFromFile/) {print CONFIGOUT "InputFileNameNObsFromFile /Users/Tommaso1/PADME/PADME_sensitivity/output/genecompletedRunIII_0.3pctOnB_0.3pctOnPoT_startSeed1000.root\n";}
+
+
 	    # elsif (/^InputFileNameNObsFromFile/) {print CONFIGOUT "InputFileNameNObsFromFile /Users/Tommaso1/PADME/PADME_sensitivity/output/geneToyMC_seed1000_useNuis1_useEffiOverBkgCurve1.root\n";}
 # elsif (/^InputFileNameNObsFromFile/) {print CONFIGOUT "InputFileNameNObsFromFile /Users/Tommaso1/PADME/PADME_sensitivity/output/geneToyMCVersion2_seed2100_useNuis1_useEffiOverBkgCurve0.root\n";}
 # elsif (/^InputFileNameNObsFromFile/) {print CONFIGOUT "InputFileNameNObsFromFile /Users/Tommaso1/PADME/PADME_sensitivity/output/geneToyMCVersion1_seed1200_useNuis1_useEffiOverBkgCurve1.root\n";}
@@ -82,12 +87,12 @@ while ($loopCond == 1){
 #	    elsif (/^ErrorImprove/) {print CONFIGOUT "ErrorImprove 10.\n";}
 
 	    # BKG-ONLY PSEUDOEVENTS
-	    elsif (/^NumberOfGenerations /) {print CONFIGOUT "NumberOfGenerations 200\n";} 
+#	    elsif (/^NumberOfGenerations /) {print CONFIGOUT "NumberOfGenerations 200\n";} 
 
 	    # SIG+BKG PSEUDOEVENTS
 #	    elsif (/^BkgOnlyPseudoEvents/) {print CONFIGOUT "BkgOnlyPseudoEvents 0\n";} # read sig+bkg input
-#	    elsif (/^WantedMassPseudoEvents/) {print CONFIGOUT "WantedMassPseudoEvents 16.92\n";} # use sig+bkg input
-#	    elsif (/^WantedGvePseudoEvents/) {print CONFIGOUT "WantedGvePseudoEvents 0.0007\n";}  # use sig+bkg input
+#	    elsif (/^WantedMassPseudoEvents/) {print CONFIGOUT "WantedMassPseudoEvents 16.9\n";} # use sig+bkg input
+#	    elsif (/^WantedGvePseudoEvents/) {print CONFIGOUT "WantedGvePseudoEvents 0.00050\n";}  # use sig+bkg input
 
 #	    elsif (/^InputFileNameNObsFromFile/) {print CONFIGOUT "InputFileNameNObsFromFile /Users/Tommaso1/PADME/PADME_sensitivity/output/geneToyMCVersionRunIV_seed1400_useNuis1_useEffiOverBkgCurve1.root\n";}
 #	    elsif (/^FirstEventNObsFromFile/){print CONFIGOUT "FirstEventNObsFromFile $iStep\n";}
@@ -116,6 +121,9 @@ while ($loopCond == 1){
 	    elsif (/^BkgBiasErrP1 /){print CONFIGOUT "BkgBiasErrP1 0.004\n";}
 	    elsif (/^BkgBiasErrP0P1Corr /){print CONFIGOUT "BkgBiasErrP0P1Corr -0.06\n";}
 
+	    elsif (/^UsePOTSlopeCorrection /){print CONFIGOUT "UsePOTSlopeCorrection 1\n";}
+	    elsif (/^POTSlopeCorrectionObs /){print CONFIGOUT "POTSlopeCorrectionObs 0.\n";}
+	    elsif (/^POTSlopeCorrectionErr /){print CONFIGOUT "POTSlopeCorrectionErr 0.004\n";}
 	    # TO PUT FREQ ONLY EVALUATION:
 #	    elsif (/^EvaluateExpLimit/){print CONFIGOUT "EvaluateExpLimit 0\n";} # ONLY FREQUENTIST
 

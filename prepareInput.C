@@ -14,7 +14,7 @@ double SignalShape(double* x, double* par);
 
 void prepareInput(TString fileout){
   double systOnB = 0.003;
-  double systOnPoT = 0.003;
+  double systOnPoT = 0.001;
   //  TString dirIn = "X17AnalysisNoPhicutRmaxEnforcedOn12";
   //  TString dirIn = "X17AnalysisPhicutTightRmaxEnforcedOn1";
   //  TString dirIn = "oldphiAnalysis"; // phi cut at pi/6, Rmax enforced on cluster 1 and 2, MC with magnetic field OFF, MC GEANT4
@@ -85,11 +85,12 @@ void prepareInput(TString fileout){
   TGraphErrors* gBkg = new TGraphErrors(); gBkg->SetName("gBkg");
   TGraphErrors* gEff = new TGraphErrors(); gEff->SetName("gEff");
   TGraphErrors* gNObs = new TGraphErrors();gNObs->SetName("gNObs");
-  TGraphErrors* gSqrts = new TGraphErrors();gNObs->SetName("gSqrts");
+  TGraphErrors* gSqrts = new TGraphErrors();gSqrts->SetName("gSqrts");
+  TGraph* gPoTInt = new TGraph(); gPoTInt->SetName("gPoTInt");
 
   
 
-  
+  double potint = 0;
   for (int i=0; i<npts; i++){
     double xsqrts = gSqrtsInput->GetY()[i]; // s = 2me**2 + 2me*Ebeam -> [(s-2me^2)/2me]
     gSqrts->SetPoint(i,xsqrts,i);
@@ -100,7 +101,12 @@ void prepareInput(TString fileout){
     gPoT->SetPointError(i,0.,gPoTInput->GetEY()[i]);
 
     // correct for the systematic error in the Ehit/POT vs POT fit
-    gPoT->SetPointError(i,0.,gPoTInput->GetY()[i]*TMath::Sqrt(systOnPoT*systOnPoT + pow(gPoTInput->GetEY()[i]/gPoTInput->GetY()[i],2)));
+    //    gPoT->SetPointError(i,0.,gPoTInput->GetY()[i]*TMath::Sqrt(systOnPoT*systOnPoT + pow(gPoTInput->GetEY()[i]/gPoTInput->GetY()[i],2)));
+    gPoT->SetPointError(i,0.,gPoTInput->GetY()[i]*systOnPoT);
+
+    potint += gPoTInput->GetY()[i];
+    gPoTInt->SetPoint(i,xsqrts,potint); // integrated pot
+
     
     // correct for the systematic error in B/pot
     gBkg->SetPoint(i,xsqrts,gBkgInput->GetY()[i]);
@@ -332,6 +338,7 @@ void prepareInput(TString fileout){
 
 
   TGraphErrors* gPoTZip = new TGraphErrors(); gPoTZip->SetName("gPoT");
+  TGraph* gPoTIntZip = new TGraph(); gPoTIntZip->SetName("gPoTInt");
   TGraphErrors* gBkgZip = new TGraphErrors(); gBkgZip->SetName("gBkg");
   TGraphErrors* gEffZip = new TGraphErrors(); gEffZip->SetName("gEff");
   TGraphErrors* gNObsZip = new TGraphErrors(); gNObsZip->SetName("gNObs");
@@ -356,6 +363,7 @@ void prepareInput(TString fileout){
     //    cout << " writing into potzip" << endl;
     gPoTZip->SetPoint(ipts,gPoT->GetX()[i],gPoT->GetY()[i]);
     gPoTZip->SetPointError(ipts,gPoT->GetEX()[i],gPoT->GetEY()[i]);
+    gPoTIntZip->SetPoint(ipts,gPoTInt->GetX()[i],gPoTInt->GetY()[i]);
     //    cout << " writing into bkgzip" << endl;
     gBkgZip->SetPoint(ipts,gBkg->GetX()[i],gBkg->GetY()[i]);
     gBkgZip->SetPointError(ipts,gBkg->GetEX()[i],gBkg->GetEY()[i]);
@@ -446,6 +454,7 @@ void prepareInput(TString fileout){
   
   TFile* outputFile = new TFile(Form("../PADME_sensitivity/input/%s.root",fileout.Data()),"NEW");
   gPoT->Write();
+  gPoTInt->Write();
   gBkg->Write();
   gEff->Write();
   gNObs->Write();
@@ -455,6 +464,7 @@ void prepareInput(TString fileout){
 
   TFile* outputFileZip = new TFile(Form("../PADME_sensitivity/input/%s_zip.root",fileout.Data()),"NEW");
   gPoTZip->Write();
+  gPoTIntZip->Write();
   gBkgZip->Write();
   gEffZip->Write();
   gNObsZip->Write();
@@ -712,7 +722,7 @@ void prepareInput(TString fileout){
   
   // corrections plots
   
-  int colorcorr[5] = {kBlack,kViolet-2,kMagenta-4,kGreen+1,kRed+2};
+  int colorcorr[5] = {kGreen+1,kViolet-2,kMagenta-4,kBlack,kRed+2};
   int stylecorrOpen[5] = {25,26,46,24,28}; // open sysmbols: square, triangle, s.andrew-cross, circle
   int stylecorrFill[5] = {21,22,47,20,34}; // filled sysmbols:
   // corrections at various stages

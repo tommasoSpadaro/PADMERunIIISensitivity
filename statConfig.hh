@@ -95,6 +95,9 @@ public:
   Double_t GetBkgBiasErrP1(){return fBkgBiasErrP1;}
   Double_t GetBkgBiasErrP0P1Corr(){return fBkgBiasErrP0P1Corr;}
 
+  Bool_t GetUsePOTSlopeCorrection(){return fUsePOTSlopeCorrection;}
+  Double_t GetPOTSlopeCorrectionObs(){return fPOTSlopeCorrectionObs;}
+  Double_t GetPOTSlopeCorrectionErr(){return fPOTSlopeCorrectionErr;}
 private:
   statConfig();
   ~statConfig();
@@ -168,5 +171,11 @@ private:
   Double_t fBkgBiasErrP0;
   Double_t fBkgBiasErrP1;
   Double_t fBkgBiasErrP0P1Corr;
+
+  Bool_t  fUsePOTSlopeCorrection;
+  Double_t fPOTSlopeCorrectionObs;
+  Double_t fPOTSlopeCorrectionErr;
+
+  
 };
 #endif

@@ -162,6 +162,13 @@ statConfig::statConfig(){
   fBkgBiasErrP0P1Corr = 0;
   fFieldStrings.push_back(std::pair{"BkgBiasErrP0P1Corr",sFFD});
 
+  // POT SLope correction
+  fUsePOTSlopeCorrection = false; // if true -> apply modification to the input POT using a slope in terms of relative integrated pots
+  fFieldStrings.push_back(std::pair{"UsePOTSlopeCorrection",sFFB});
+  fPOTSlopeCorrectionObs = 0;
+  fFieldStrings.push_back(std::pair{"POTSlopeCorrectionObs",sFFD});
+  fPOTSlopeCorrectionErr = 0;
+  fFieldStrings.push_back(std::pair{"POTSlopeCorrectionErr",sFFD});
 }
 
 statConfig::~statConfig(){
@@ -307,6 +314,8 @@ int statConfig::useInputString(TString sStr){
 	else if (fieldString.EqualTo("BkgBiasErrP0")) fBkgBiasErrP0 = inputstrvalD;
 	else if (fieldString.EqualTo("BkgBiasErrP1")) fBkgBiasErrP1 = inputstrvalD;
 	else if (fieldString.EqualTo("BkgBiasErrP0P1Corr")) fBkgBiasErrP0P1Corr = inputstrvalD;
+	else if (fieldString.EqualTo("POTSlopeCorrectionObs")) fPOTSlopeCorrectionObs = inputstrvalD;
+	else if (fieldString.EqualTo("POTSlopeCorrectionErr")) fPOTSlopeCorrectionErr = inputstrvalD;
 	else {
 	  std::cerr << "Wrong input field string for double value: " << fieldString.Data() << std::endl;
 	  return -1;
@@ -324,6 +333,7 @@ int statConfig::useInputString(TString sStr){
 	else if (fieldString.EqualTo("CorrectBkgBias")) fCorrectBkgBias = inputstrvalB;
 	else if (fieldString.EqualTo("EvaluateExpLimit")) fEvaluateExpLimit = inputstrvalB;
 	else if (fieldString.EqualTo("ManipulateInput")) fManipulateInput = inputstrvalB;
+	else if (fieldString.EqualTo("UsePOTSlopeCorrection")) fUsePOTSlopeCorrection = inputstrvalB;
 	else {
 	  std::cerr << "Wrong input field string for bool value: " << fieldString.Data() << std::endl;
 	  return -1;

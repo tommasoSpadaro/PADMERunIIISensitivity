@@ -154,10 +154,12 @@ void statisticalTreatmentTH::Init(){
   TGraphErrors* bkgGraph = (TGraphErrors*) filo->Get("gBkg");
   TGraphErrors* nobsGraph = (TGraphErrors*) filo->Get("gNObs");
   TGraph* partGraph = (TGraph*) filo->Get("ScanPartVsPeriod");
+  TGraph* potIntGraph = (TGraph*) filo->Get("gPoTInt");
     
   fObservables.NObs.clear();
   fObservables.SqrtsObs.clear();
   fObservables.POTObs.clear();
+  fObservables.POTIntObs.clear();
   fObservables.SignalEffiLocalObs.clear();
   fObservables.BkgObs.clear();
 
@@ -174,7 +176,6 @@ void statisticalTreatmentTH::Init(){
 //    bkgyieldFac = 0.5;
 //  }
 
-  
   for (int i=0; i<potGraph->GetN(); i++){
     if (potGraph->GetY()[i] < 1E6) continue; // might add sqrts range or other quality cuts to exclude given points here [e.g.: scan up points vs scan dw points]
     if (partGraph->GetY()[i] != 0 && partGraph->GetY()[i] != 1) continue; // remove the out-of-resonance points
@@ -191,7 +192,9 @@ void statisticalTreatmentTH::Init(){
     // retrieve expected background and error
     fObservables.BkgObs.push_back(bkgGraph->GetY()[i]*bkgyieldFac); // bkg yield
     fExpectedErrors.BkgErr.push_back(bkgGraph->GetEY()[i]*bkgyieldFac/fErrorImprove); // bkg yield error    
-
+    // retrieve integrated pots
+    fObservables.POTIntObs.push_back(potIntGraph->GetY()[i]/1E10); // POTInts observed in 1E10 units        
+    
     if (fConfigPtr->GetObsLimitMode()){
       fObservables.NObs.push_back(nobsGraph->GetY()[i]);
     } else {
@@ -213,6 +216,7 @@ void statisticalTreatmentTH::Init(){
   fPotGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fPotGraphUsed  ->SetName("fPotGraphUsed");
   fEffiGraphUsed = new TGraphErrors(fObservables.SqrtsObs.size()); fEffiGraphUsed ->SetName("fEffiGraphUsed");
   fBkgGraphUsed  = new TGraphErrors(fObservables.SqrtsObs.size()); fBkgGraphUsed  ->SetName("fBkgGraphUsed");
+  fPotIntGraphUsed  = new TGraph(fObservables.SqrtsObs.size()); fPotIntGraphUsed  ->SetName("fPotIntGraphUsed");
   for (uint i=0; i<3; i++){ // scan1, 2, all
     fNormBkgGraphUsed[i]  = new TGraphErrors(); fNormBkgGraphUsed[i]  ->SetName(Form("fNormBkgGraphUsed_period_%d",i));
     fBkgGraphUsedScan[i]  = new TGraphErrors(); fBkgGraphUsedScan[i]  ->SetName(Form("fBkgGraphUsedScan_period_%d",i));
@@ -226,6 +230,9 @@ void statisticalTreatmentTH::Init(){
 
     fBkgGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i));
     fBkgGraphUsed  ->SetPointError(i,0.,fExpectedErrors.BkgErr.at(i));
+
+    fPotIntGraphUsed  ->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.POTIntObs.at(i));
+
     int period = fObservables.ScanPeriod.at(i);
     int noldpts = fNormBkgGraphUsed[period]->GetN();
     double effioverbkgobs = fObservables.SignalEffiLocalObs.at(i)/fObservables.BkgObs.at(i);
@@ -307,6 +314,9 @@ void statisticalTreatmentTH::Init(){
   fExpectedErrors.BkgBiasErrP0 = fConfigPtr->GetBkgBiasErrP0();
   fExpectedErrors.BkgBiasErrP1 = fConfigPtr->GetBkgBiasErrP1();
   fExpectedErrors.BkgBiasErrP0P1Corr = fConfigPtr->GetBkgBiasErrP0P1Corr();
+
+  fObservables.POTSlopeCorrectionObs = fConfigPtr->GetPOTSlopeCorrectionObs(); 
+  fExpectedErrors.POTSlopeCorrectionErr = fConfigPtr->GetPOTSlopeCorrectionErr(); 
 
   // if needed, diagonalise covariance matrix to be able to generate fluctuations of correlated parameters
   
@@ -585,7 +595,8 @@ nuisancePars statisticalTreatmentTH::InitNuisanceToObservables(observables obs){
       nuis.BkgPerPOTVsSqrtsParTrue[q][i] = obs.BkgPerPOTVsSqrtsParObs[q][i];
     }
   }
-    
+  nuis.POTSlopeCorrectionTrue = obs.POTSlopeCorrectionObs;
+
   return nuis; // return it flagged as non-filled
 }
 
@@ -975,9 +986,11 @@ void statisticalTreatmentTH::initFitters(bool bonly, nuisancePars theta){
   // 22+3npts             BkgFitP1 scan period 1       <--- parameter 1 of a pol1 fit for B/POT vs sqrt(s)
   // 23+3npts             BkgFitP0 scan period all     <--- parameter 0 of a pol1 fit for B/POT vs sqrt(s)
   // 24+3npts             BkgFitP1 scan period all     <--- parameter 1 of a pol1 fit for B/POT vs sqrt(s)
-
+  // 25+3npts             UsePOTSlopeCorrection <---- always fixed, if 1 -> will use potSlopeCorrection vs POTIntegrated
+  // 26+3npts             POTSlopeCorrectionTrue       <--- fixed to 0 if above parameter != 1
+  
   // total number of parameters passed to the likelihood
-  int npars = 25+3*npts; // 7 always fixed, 13 + 3 * npts depending on the setup 
+  int npars = 27+3*npts; // 8 always fixed, 14 + 3 * npts depending on the setup 
 
   // Number of free parameters:
   // if (UseNuisance)     
@@ -1029,7 +1042,10 @@ void statisticalTreatmentTH::initFitters(bool bonly, nuisancePars theta){
   parnames[22+3*npts]= "BkgOverPotTrueP1_1"    ; parinput[22+3*npts]= theta.BkgPerPOTVsSqrtsParTrue[1][1]    ; parstep[22+3*npts]= fExpectedErrors.BkgPerPOTVsSqrtsParErr[1][1]*stepFac;
   parnames[23+3*npts]= "BkgOverPotTrueP0_2"    ; parinput[23+3*npts]= theta.BkgPerPOTVsSqrtsParTrue[2][0]    ; parstep[23+3*npts]= fExpectedErrors.BkgPerPOTVsSqrtsParErr[2][0]*stepFac;
   parnames[24+3*npts]= "BkgOverPotTrueP1_2"    ; parinput[24+3*npts]= theta.BkgPerPOTVsSqrtsParTrue[2][1]    ; parstep[24+3*npts]= fExpectedErrors.BkgPerPOTVsSqrtsParErr[2][1]*stepFac;
-  
+  parnames[25+3*npts]= "UsePOTSlopeCorrection" ; parinput[25+3*npts]= fConfigPtr->GetUsePOTSlopeCorrection() ; parstep[25+3*npts]= 0;
+  parnames[26+3*npts]= "POTSlopeCorrectionTrue"; parinput[26+3*npts]= theta.POTSlopeCorrectionTrue           ; parstep[26+3*npts]= fExpectedErrors.POTSlopeCorrectionErr*stepFac;
+
+   
   // assign which fitter must be initialised
   std::cout << "StatisticalTreatement > InitFitter > First fit par settings done for bonly = " << bonly << endl;
   ROOT::Fit::Fitter* fitter;
@@ -1059,6 +1075,7 @@ void statisticalTreatmentTH::initFitters(bool bonly, nuisancePars theta){
   fitter->Config().ParSettings(10+3*npts).Fix(); // flag to assume the Effi/(Bkg/pot) curve (options are 0, 1, 2)
   fitter->Config().ParSettings(17+3*npts).Fix(); // flag to apply a straight fit (options are 0, 1, 2)
   fitter->Config().ParSettings(18+3*npts).Fix(); // flag to apply a fit to B/POT vs s
+  fitter->Config().ParSettings(25+3*npts).Fix(); // flag to apply the POTSlope correction vs integrated pot
 
   // Bias on the POT vs sqrt(s)
   if (fConfigPtr->GetCorrectBkgBias()){ // USE the bias curve, therefore remove the potscale parameter, substituted by the curve
@@ -1097,6 +1114,11 @@ void statisticalTreatmentTH::initFitters(bool bonly, nuisancePars theta){
     }
   }
 
+  if (!fConfigPtr->GetUsePOTSlopeCorrection()){ // if not use the POTSlopeCorrection vs POTInt, set to 0 and fix the corresponding parameter
+    fitter->Config().ParSettings(26+3*npts).SetValue(0);
+    fitter->Config().ParSettings(26+3*npts).Fix();
+  }
+  
   // straight fit mode 1: fit N2/(POT)
   if (fConfigPtr->GetStraightFitMode() == 1){
     for (uint i=0; i<(uint)npts; i++)              fitter->Config().ParSettings(3+i).Fix(); // fix POT point-by-point
@@ -1170,6 +1192,7 @@ void statisticalTreatmentTH::initFitters(bool bonly, nuisancePars theta){
     " assumeEffiCurve = " << fConfigPtr->GetAssumeEffiOverBkgCurve() <<
     " straightFitMode = " << fConfigPtr->GetStraightFitMode() << 
     " BkgFitMode = " << fConfigPtr->GetAssumeBkgOverPotCurve() << 
+    " UsePOTSlopeCorrection = " << fConfigPtr->GetUsePOTSlopeCorrection() << 
     " freeParameters for bOnly = " << bonly << " are " << freePars << endl;
 
 //  if (bonly) fFitterB.SetNumberOfFitPoints((uint)(npts-freePars));
@@ -1236,6 +1259,10 @@ void statisticalTreatmentTH::fillPullHistograms(bool sbfitmode, double massn, do
   //  int potTrueIdx = 3; // presently not used because we are plotting the fit result in terms of fit values for N2/pot or N2/pot/B
   int effiTrueIdx = 3 + npts;
   int bkgTrueIdx = 7 + 2*npts;
+
+  bool usePotSlopeCorrection = fitter->Result().GetParams()[25+3*npts];
+  double potSlopeCorrection = fitter->Result().GetParams()[26+3*npts];
+
   // at the moment treat only the straighfitmode = 1 and bkgfitmode = 1 and assumeeffioverbkgcurve = 2
 
   int ig = (gven-fgveMin)/fgveStep + 0.5;
@@ -1248,6 +1275,9 @@ void statisticalTreatmentTH::fillPullHistograms(bool sbfitmode, double massn, do
     if (bkgFitMode) bkgPerPot = bkgFitP0 + bkgFitP1*(fObservables.SqrtsObs.at(i)-SQRTSMID);
     else            bkgPerPot = fitter->Result().GetParams()[bkgTrueIdx+i];
 
+    double potSlopeCorr = 1;
+    if (usePotSlopeCorrection) potSlopeCorr = 1./(1.+potSlopeCorrection*fObservables.POTIntObs.at(i)/fObservables.POTIntObs.at(npts-1));
+    
     double effiOverBkg = 0;
     if (assumeEffiOverBkgCurve) {
       int iperiod = 2;
@@ -1260,8 +1290,8 @@ void statisticalTreatmentTH::fillPullHistograms(bool sbfitmode, double massn, do
     if (sbfitmode) sc = gven*gven*Likelihood::SignalShape(signalPeakYieldTrue,BESTrue,signalLorentzianWidthTrue,massn,fObservables.SqrtsObs.at(i));
 
     double valfit = 0;
-    if (straightFitMode == 1) valfit = biasCorr*bkgPerPot; 
-    else                      valfit = biasCorr;
+    if (straightFitMode == 1) valfit = biasCorr*bkgPerPot*potSlopeCorr; 
+    else                      valfit = biasCorr*potSlopeCorr;
     if (sbfitmode)            valfit *= (1.+sc*effiOverBkg);
     
     if (!sbfitmode && !sbtoy && pseudo == 1) {
@@ -2097,7 +2127,15 @@ void statisticalTreatmentTH::GenerateGeneralPseudoData(nuisancePars nuis, bool s
     }
   }
   if (fVerbosity ==2) cout << " done generating bkg/pot parameters sbmode: " << sbmode << " toyoftoy = " << toyoftoy << endl;
-  
+
+  // pot scale correction
+  double potslopecorr = fConfigPtr->GetUsePOTSlopeCorrection() ? nuis.POTSlopeCorrectionTrue : 0;
+  if (fUseNuisance && fConfigPtr->GetUsePOTSlopeCorrection() && !toyoftoy){
+    potslopecorr += fRndmNumber->Gaus(0.,1.)*fExpectedErrors.POTSlopeCorrectionErr;
+  }
+  // store values in fObservables
+  if ( !toyoftoy ) fObservables.POTSlopeCorrectionObs = potslopecorr;
+
   // sample efficiency curves
 
   double efficurvepars[3][2];
@@ -2215,6 +2253,7 @@ void statisticalTreatmentTH::GenerateGeneralPseudoData(nuisancePars nuis, bool s
       poismean_s = gven*gven*pottrue*1E10*effisigtrue*Likelihood::SignalShape(nuis.SignalPeakYieldTrue,nuis.BESTrue,nuis.SignalLorentzianWidthTrue,massn,fObservables.SqrtsObs.at(i));
     }
 
+
     // for pseudoevents, fluctuate and set effi/B (always, even if sbmode = false!)
 
     if (!toyoftoy) {
@@ -2238,7 +2277,9 @@ void statisticalTreatmentTH::GenerateGeneralPseudoData(nuisancePars nuis, bool s
       poismeantot *= nuis.POTScaleTrue;
     }
     if (fVerbosity ==2) cout << "evaluated expected cnts pnt " << i << " S= " << poismean_s << " B = " << poismean << " tot = " << poismeantot << " sbmode: " << sbmode << " toyoftoy = " << toyoftoy << endl;
-
+    
+    // scale correction on the pot
+    if (fConfigPtr->GetUsePOTSlopeCorrection()) poismeantot *= (1.+potslopecorr*fObservables.POTIntObs.at(i)/fObservables.POTIntObs.at(npts-1)); //scale corr
 
     fObservables.NObs.at(i) = fRndmNumber->Gaus(poismeantot,TMath::Sqrt(poismeantot));
     if (fVerbosity >= 2) cout << "stored values in fObservables point " << i << " / " << npts << endl;
@@ -2601,6 +2642,10 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
     for (uint i=0; i<(uint)npts; i++)              fitter->Config().ParSettings(3+i).SetValue(nuis.POTTrue.at(i)); // set POT point-by-point
   }
 
+  if (fConfigPtr->GetUsePOTSlopeCorrection()){ // USE correction slope vs integrated pot
+    fitter->Config().ParSettings(26+3*npts).SetValue(nuis.POTSlopeCorrectionTrue);
+  }
+
   // for the signal+bkg fit, set the other parameters
 
   if (sbmode){
@@ -2633,7 +2678,7 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
 
   fLikeli.SetObservables(fObservables);
 
-  int npars = 25+3*npts; // FRAGILE 
+  int npars = 27+3*npts; // FRAGILE 
   int freePars = 0;
   for (uint ip=0; ip < npars; ip++) {
     if (!fitter->Config().ParSettings(ip).IsFixed()) freePars++;
@@ -2733,6 +2778,10 @@ nuisancePars statisticalTreatmentTH::MaximizeL(nuisancePars nuis, bool sbmode, d
 	for (uint i=0; i<2; i++) fitNuisance.BkgPerPOTVsSqrtsParTrue[2][i] = parRes[19+3*npts+i+4];      
     } else {
       for (int i=0; i<npts; i++) fitNuisance.BkgTrue.push_back(parRes[7+2*npts+i]);      
+    }
+    // store slope correction vs pot int
+    if (fConfigPtr->GetUsePOTSlopeCorrection()){
+      fitNuisance.POTSlopeCorrectionTrue = parRes[26+3*npts];
     }
 
     // store efficiency values
@@ -2977,7 +3026,7 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
   }
 
   // bkg only events  
-
+  filo->mkdir("BkgOnly")->cd();
   TGraph** nobsGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];
   TGraph** nbkgGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];
   TGraph** npotGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];
@@ -2990,7 +3039,7 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
     nbkgGraphBkgOnly[j] = new TGraph(); nbkgGraphBkgOnly[j]->SetName(Form("gNBkg_%d",j));
     npotGraphBkgOnly[j] = new TGraph(); npotGraphBkgOnly[j]->SetName(Form("gNPOT_%d",j));
     effiGraphBkgOnly[j] = new TGraph(); effiGraphBkgOnly[j]->SetName(Form("gEffi_%d",j));
-    otherParsGraphBkgOnly[j] = new TGraph(14); otherParsGraphBkgOnly[j]->SetName(Form("gOther_%d",j));
+    otherParsGraphBkgOnly[j] = new TGraph(19); otherParsGraphBkgOnly[j]->SetName(Form("gOther_%d",j));
     for (uint i=0; i<fObservables.SqrtsObs.size(); i++){
       nobsGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.NObs.at(i)); // sqrt(s) observed
       nbkgGraphBkgOnly[j]->SetPoint(i,fObservables.SqrtsObs.at(i),fObservables.BkgObs.at(i)); 
@@ -3011,6 +3060,8 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
     for (int q=0; q<3; q++) {
       for (int i=0; i<2; i++) otherParsGraphBkgOnly[j]->SetPoint(12+i+2*q,12+i+2*q,fObservables.BkgPerPOTVsSqrtsParObs[q][i]);
     }
+    otherParsGraphBkgOnly[j]->SetPoint(18,18,fObservables.POTSlopeCorrectionObs);
+
     nobsGraphBkgOnly[j]->Write();	
     nbkgGraphBkgOnly[j]->Write();	
     npotGraphBkgOnly[j]->Write();	
@@ -3034,6 +3085,8 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
   // signal plus background pseudoevents
   for (uint im = 0; im < (uint) fNMassBins; im++){
     double massn = fMassMin + im*fMassStep;
+    filo->cd();
+    filo->mkdir(Form("SB_mass%f",massn))->cd();
     for (uint ig = 0; ig < (uint) fNgveBins; ig++){
       double gven = fgveMin + fgveStep*ig; //TMath::Power(fgveMin*fgveMin*fgveMin*fgveMin + ig*fgveStep,0.25);
       TGraph** nobsGraph = new TGraph*[fNumberOfGenerationsExpectedLimit];
@@ -3046,7 +3099,7 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
 	nbkgGraph[j] = new TGraph(); nbkgGraph[j]->SetName(Form("gNBkg_Mass_%f_gve_%f_%d",massn,gven,j));
 	npotGraph[j] = new TGraph(); npotGraph[j]->SetName(Form("gNPOT_Mass_%f_gve_%f_%d",massn,gven,j));
 	effiGraph[j] = new TGraph(); effiGraph[j]->SetName(Form("gEffi_Mass_%f_gve_%f_%d",massn,gven,j));
-	otherParsGraph[j] = new TGraph(14); otherParsGraph[j]->SetName(Form("gOther_Mass_%f_gve_%f_%d",massn,gven,j));
+	otherParsGraph[j] = new TGraph(19); otherParsGraph[j]->SetName(Form("gOther_Mass_%f_gve_%f_%d",massn,gven,j));
 	//	GenerateSignalPlusBackgroundPseudoData(massn,gven,fTheta_B);
 	GenerateGeneralPseudoData(fTheta_S,true,massn,gven,false); // sbmode, mass, gve, toyoftoy
 	for (uint i=0; i<fObservables.SqrtsObs.size(); i++){
@@ -3069,6 +3122,8 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
 	for (int q=0; q<3; q++) {
 	  for (int i=0; i<2; i++) otherParsGraph[j]->SetPoint(12+i+2*q,12+i+2*q,fObservables.BkgPerPOTVsSqrtsParObs[q][i]);
 	}
+	otherParsGraphBkgOnly[j]->SetPoint(18,18,fObservables.POTSlopeCorrectionObs);
+
 	nobsGraph[j]->Write();	
 	nbkgGraph[j]->Write();	
 	npotGraph[j]->Write();	
@@ -3186,7 +3241,8 @@ void statisticalTreatmentTH::SetObservablesFromFile(TString filename, Bool_t sbm
 
   // find point in mass grid closest to wanted mass
   TString graphname;
-
+  TString dirname;
+  
   if (sbmode) {
     double mindistmass = 999999;
     int imc = -1;
@@ -3197,7 +3253,13 @@ void statisticalTreatmentTH::SetObservablesFromFile(TString filename, Bool_t sbm
 	imc = im;
       }
     }
+    double massn = fMassMin + imc*fMassStep;
+    std::stringstream streamMass;
+    streamMass << std::fixed << std::setprecision(3) << massn;
+    std::string sMass = streamMass.str();
+    dirname = Form("SB_mass%f",massn);
 
+    
   // find point in gve grid closest to wanted gve
     double mindistgve = 999999;
     int igc = -1;
@@ -3208,11 +3270,7 @@ void statisticalTreatmentTH::SetObservablesFromFile(TString filename, Bool_t sbm
 	igc = ig;
       }
     }
-    double massn = fMassMin + imc*fMassStep;
-    std::stringstream streamMass;
-    streamMass << std::fixed << std::setprecision(3) << massn;
-    std::string sMass = streamMass.str();
-
+    
     double gven = fgveMin + igc*fgveStep; // TMath::Power(fgveMin*fgveMin*fgveMin*fgveMin + igc*fgveStep,0.25);
     std::stringstream streamGve;
     streamGve << std::fixed << std::setprecision(6) << gven;
@@ -3220,6 +3278,7 @@ void statisticalTreatmentTH::SetObservablesFromFile(TString filename, Bool_t sbm
 
     graphname = Form("Mass_%s000_gve_%s_%d",sMass.c_str(),sGve.c_str(),count); //gNObs_Mass_17.540000_gve_0.000498_0
   } else {
+    dirname = ("BkgOnly");
     graphname = Form("%d",count); 
   }
   
@@ -3233,13 +3292,13 @@ void statisticalTreatmentTH::SetObservablesFromFile(TString filename, Bool_t sbm
 
 
   std::cout << "StatisticalTreatment: SetObservablesFromFile -> Retrieving nobs graph " << graphname.Data() << " from " << filename.Data() << endl;
-  TGraph* nobsGraph = (TGraph*) filo->Get(Form("gNObs_%s",graphname.Data())); 
-  TGraph* nbkgGraph = (TGraph*) filo->Get(Form("gNBkg_%s",graphname.Data())); 
-  TGraph* npotGraph = (TGraph*) filo->Get(Form("gNPOT_%s",graphname.Data())); 
-  TGraph* effiGraph = (TGraph*) filo->Get(Form("gEffi_%s",graphname.Data())); 
-  TGraph* otherGraph = (TGraph*) filo->Get(Form("gOther_%s",graphname.Data())); 
+  TGraph* nobsGraph = (TGraph*) filo->Get(Form("%s/gNObs_%s",dirname.Data(),graphname.Data())); 
+  TGraph* nbkgGraph = (TGraph*) filo->Get(Form("%s/gNBkg_%s",dirname.Data(),graphname.Data())); 
+  TGraph* npotGraph = (TGraph*) filo->Get(Form("%s/gNPOT_%s",dirname.Data(),graphname.Data())); 
+  TGraph* effiGraph = (TGraph*) filo->Get(Form("%s/gEffi_%s",dirname.Data(),graphname.Data())); 
+  TGraph* otherGraph = (TGraph*) filo->Get(Form("%s/gOther_%s",dirname.Data(),graphname.Data())); 
   if (nobsGraph == nullptr || nbkgGraph == nullptr || npotGraph == nullptr || effiGraph == nullptr || otherGraph == nullptr){
-    std::cout << "StatisticalTreatment: SetObservablesFromFile -> Cannot retrieve nobs,nbkg,npot graph " << graphname.Data() << " from " << filename.Data() << " " << nobsGraph << " " << nbkgGraph << " " << npotGraph << " " << effiGraph << " " << otherGraph << endl;
+    std::cout << "StatisticalTreatment: SetObservablesFromFile -> Cannot retrieve nobs,nbkg,npot graph " << dirname.Data()<<"/gNObs_"<<graphname.Data() << " from " << filename.Data() << " " << nobsGraph << " " << nbkgGraph << " " << npotGraph << " " << effiGraph << " " << otherGraph << endl;
     exit(1);
   }
 
@@ -3266,6 +3325,7 @@ void statisticalTreatmentTH::SetObservablesFromFile(TString filename, Bool_t sbm
       for (int i=0; i<2; i++) fObservables.BkgPerPOTVsSqrtsParObs[q][i] = otherGraph->GetY()[12+i+2*q];
     }
   }
+  fObservables.POTSlopeCorrectionObs  = otherGraph->GetY()[18];//CHECK
   fObservables.isNotFilled = false;
 
   filo->Close();
