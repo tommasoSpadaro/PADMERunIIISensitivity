@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 
   printf("Initializing statistical treatment classes...\n");
 
-  printf("...init of statConfig\n");
+  printf("...init of statConfig using file\n");
   statConfig* configPtr = statConfig::GetInstance();
   configPtr->readConfigFromFile(app.Argv(1));
   printf("...done\n");
