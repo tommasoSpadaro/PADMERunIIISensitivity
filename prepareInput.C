@@ -2,19 +2,23 @@
 #include "TFitResultPtr.h"
 #include "TFitResult.h"
 #include "TMatrixDSym.h"
+#include "TH1F.h"
 #include "TF1.h"
 #include "TCanvas.h"
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
 #include "TGraph.h"
+#include "TLine.h"
 #include "TString.h"
+#include "TLegend.h"
 
 double fitfun(double* x, double* par);
+double fitfunpulls(double* x, double* par);
 double SignalShape(double* x, double* par);
 
 void prepareInput(TString fileout){
   double systOnB = 0.003;
-  double systOnPoT = 0.001;
+  double systOnPoT = 0.003;
   //  TString dirIn = "X17AnalysisNoPhicutRmaxEnforcedOn12";
   //  TString dirIn = "X17AnalysisPhicutTightRmaxEnforcedOn1";
   //  TString dirIn = "oldphiAnalysis"; // phi cut at pi/6, Rmax enforced on cluster 1 and 2, MC with magnetic field OFF, MC GEANT4
@@ -96,13 +100,13 @@ void prepareInput(TString fileout){
     gSqrts->SetPoint(i,xsqrts,i);
 
     
-    gPoT->SetPoint(i,xsqrts,gPoTInput->GetY()[i]);    
-    gPoT->SetPoint(i,xsqrts,gPoTInput->GetY()[i]);
-    gPoT->SetPointError(i,0.,gPoTInput->GetEY()[i]);
+//    gPoT->SetPoint(i,xsqrts,gPoTInput->GetY()[i]);    
+//    gPoT->SetPointError(i,0.,gPoTInput->GetEY()[i]);
 
     // correct for the systematic error in the Ehit/POT vs POT fit
-    //    gPoT->SetPointError(i,0.,gPoTInput->GetY()[i]*TMath::Sqrt(systOnPoT*systOnPoT + pow(gPoTInput->GetEY()[i]/gPoTInput->GetY()[i],2)));
-    gPoT->SetPointError(i,0.,gPoTInput->GetY()[i]*systOnPoT);
+    gPoT->SetPoint(i,xsqrts,gPoTInput->GetY()[i]);
+    gPoT->SetPointError(i,0.,gPoTInput->GetY()[i]*TMath::Sqrt(systOnPoT*systOnPoT + pow(gPoTInput->GetEY()[i]/gPoTInput->GetY()[i],2)));
+    //gPoT->SetPointError(i,0.,gPoTInput->GetY()[i]*systOnPoT);
 
     potint += gPoTInput->GetY()[i];
     gPoTInt->SetPoint(i,xsqrts,potint); // integrated pot
@@ -233,11 +237,17 @@ void prepareInput(TString fileout){
   // plot fits
   
   TCanvas* cc =new TCanvas("cc");
-  cc->DrawFrame(16.2,19E3,17.6,40E3);
-
-  int markstyle[3] = {24,28,20};
-  int colorstyle[3] = {2,4,1};
-  int linestyle[3] = {1,2,3};
+  TH1F* ratioframe = cc->DrawFrame(16.2,20E3,17.6,30E3);
+  ratioframe->SetTitle(";#sqrt{s} (MeV);#varepsilon_{sig}/B");
+  ratioframe->GetYaxis()->SetNdivisions(505);
+  ratioframe->GetYaxis()->SetTitleOffset(1.1);
+  ratioframe->GetYaxis()->SetLabelSize(0.045);
+  int markstyle[3] = {24,20,28};
+  int colorstyle[3] = {2,1,4};
+  int linestyle[3] = {3,1,2};
+  TString labelscan[3] = {"1+2","1","2"};
+  TLegend* legoratio = new TLegend(0.2,0.7,0.6,0.85);
+  //  legoratio->SetHeader("#varepsilon_{sig}/B:");
   
   for (int kk=0; kk<3; kk++) {
     int k = (kk+1)%3; // 1,2,0
@@ -252,6 +262,11 @@ void prepareInput(TString fileout){
     fitres[k] = ratiosel[k]->Fit(funRatio[k],"S","same");
     covs.at(k) = fitres[k]->GetCovarianceMatrix();
     cors.at(k) = fitres[k]->GetCorrelationMatrix();
+    
+    if (k!=0) legoratio->AddEntry(ratiosel[k],Form("Scan %s: P0 = %d #pm %d, P1 = (%d #pm %d) MeV^{-1}, #chi^{2}/ndf = %.1f / %d, Prob = %.2f",labelscan[k].Data(),
+						   (int)(fitres[k]->Parameter(0)+0.5),(int)(fitres[k]->ParError(0)+0.5),
+						   (int)(fitres[k]->Parameter(1)+0.5),(int)(fitres[k]->ParError(1)+0.5),
+						   fitres[k]->Chi2(),(int)fitres[k]->Ndf(),fitres[k]->Prob()),"P");
     std::cout << "Covariance matrix scan part " << k << " = " << covs.at(k)[0][0] << " , " << covs.at(k)[0][1] << " , " << covs.at(k)[1][1] << endl;
     std::cout << "Covariance matrix scan part " << k << " = " << cors.at(k)[0][0] << " , " << cors.at(k)[0][1] << " , " << cors.at(k)[1][1] << endl;
     if (k==0)   funRatio[k]->Draw("same");
@@ -262,7 +277,8 @@ void prepareInput(TString fileout){
 //      funRatioDw[k]->Draw("same");
 //    }
   }
-
+  legoratio->Draw();
+  
   for (int kk=0; kk<3; kk++){
     int k = (kk+1)%3; // 1,2,0
     std::cout << Form("EffiOverBkgObsP0_%d",kk) << " " << funRatio[k]->GetParameter(0) << std::endl;
@@ -292,7 +308,7 @@ void prepareInput(TString fileout){
   // plot fits
   
   TCanvas* BPerPotCanva =new TCanvas("BPerPotCanva");
-  BPerPotCanva->DrawFrame(16.2,2E-6,17.6,4E-6);
+  BPerPotCanva->DrawFrame(16.25,2E-6,17.6,4E-6);
 
   for (int kk=0; kk<3; kk++) {
     int k = (kk+1)%3; // 1,2,0
@@ -343,7 +359,7 @@ void prepareInput(TString fileout){
   TGraphErrors* gEffZip = new TGraphErrors(); gEffZip->SetName("gEff");
   TGraphErrors* gNObsZip = new TGraphErrors(); gNObsZip->SetName("gNObs");
   TGraphErrors* gSqrtsZip = new TGraphErrors(); gSqrtsZip->SetName("gSqrts");
-  TGraphErrors* gN2NoBkgOvN2Zip = new TGraphErrors(); gNObsZip->SetName("gN2NoBkgOvN2");
+  TGraphErrors* gN2NoBkgOvN2Zip = new TGraphErrors(); gN2NoBkgOvN2Zip->SetName("gN2NoBkgOvN2");
   TGraphErrors* gLeakageZip = new TGraphErrors(); gLeakage->SetName("gLeakage");
   TGraphErrors* gScanscaleZip = new TGraphErrors(); gScanscaleZip->SetName("gScanscale");
   TGraphErrors* gRatioTPZip = new TGraphErrors(); gRatioTPZip->SetName("gRatioTP");
@@ -388,8 +404,17 @@ void prepareInput(TString fileout){
     gScanscaleZip->SetPoint(ipts,gNObs->GetX()[i],gScanscale->GetY()[i]);
     gScanscaleZip->SetPointError(ipts,gNObs->GetEX()[i],gScanscale->GetEY()[i]);
 
-    gRatioTPZip->SetPoint(ipts,gNObs->GetX()[i],gRatioTP->GetY()[i]);
-    gRatioTPZip->SetPointError(ipts,gNObs->GetEX()[i],gRatioTP->GetEY()[i]);
+    // points of low sqrts have large bkg subtraction due to the brem -> error inflated by 50%
+    double inflaerr = 1;
+    if (gSqrts->GetX()[i] < 16.59) inflaerr = 1.5;
+    else if (gSqrts->GetX()[i] > 17.3) inflaerr = 1.;
+    else  inflaerr = 1.0;
+
+//    gRatioTPZip->SetPoint(ipts,gNObs->GetX()[i],gRatioTP->GetY()[i]);
+//    gRatioTPZip->SetPointError(ipts,gNObs->GetEX()[i],gRatioTP->GetEY()[i]*inflaerr);
+
+    gRatioTPZip->SetPoint(ipts,gNObs->GetX()[i],pow(gRatioTP->GetY()[i],2));
+    gRatioTPZip->SetPointError(ipts,gNObs->GetEX()[i],2*gRatioTP->GetY()[i]*gRatioTP->GetEY()[i]*inflaerr);
 
     int tobefilled = 0;
     double valfill = 0;
@@ -416,6 +441,8 @@ void prepareInput(TString fileout){
 
     ipts++;
   }
+
+  
   const int ncorrs = 5;
   TGraphErrors* corrGraphs[ncorrs] = {gN2NoBkgOvN2Zip,gLeakageZip,gScanscaleZip,gRatioTPZip,gRMaxsystZip};
   double avgZipCorr[ncorrs] = {0,0,0,0,0};
@@ -435,20 +462,134 @@ void prepareInput(TString fileout){
     }
   }
 
-  TCanvas* dsq = new TCanvas("dsq");
-  gSqrtsZip->SetMarkerStyle(20);
-  gSqrtsZip->Draw("PA");  
-
-
+  // plot scan part definitions
   
-  TCanvas* corrCanva = new TCanvas("corrCanva");
-  corrCanva->Divide(2,3);
+  TGraph* gSqrtsZipScan[2];
+  for (int i = 0; i < 2; i++){ gSqrtsZipScan[i] = new TGraph(); gSqrtsZipScan[i]->SetName(Form("gPeriodIDVsSqrts_Scan%d",i)); }
+  for (int i = 0; i < gSqrtsZip->GetN(); i++){
+    int scanpart = gScanPartVsSqrtsZip->GetY()[i];
+    int nold = gSqrtsZipScan[scanpart]->GetN();
+    gSqrtsZipScan[scanpart]->SetPoint(nold,gSqrtsZip->GetX()[i],gSqrtsZip->GetY()[i]);
+  }
+  
+  TCanvas* dsq = new TCanvas("dsq");
+  TH1F* scanparth = (TH1F*) dsq->DrawFrame(16.4,-0.5,17.6,48.5);
+  scanparth->SetTitle(";#sqrt{s} (MeV);Energy point ID");
+  for (int i=0; i<2 ; i++){
+    gSqrtsZipScan[i]->SetMarkerStyle(20+4*i);
+    gSqrtsZipScan[i]->SetMarkerSize(1.5);
+    gSqrtsZipScan[i]->SetLineWidth(2);
+    gSqrtsZipScan[i]->Draw("Psame");  
+  }
+
+  // plot of pot vs sqrts paper-grade
+  TGraphErrors* gPoTAllVsSqrts = new TGraphErrors(); gPoTAllVsSqrts->SetName("PoTAllVsSqrts");
+  TGraphErrors* gPoTAllVsE = new TGraphErrors(); gPoTAllVsE->SetName("PoTAllVsE");
+  TGraphErrors* gPoTAllVsSqrtsBelowRes = new TGraphErrors(); gPoTAllVsSqrtsBelowRes->SetName("PoTAllVsSqrtsBelowRes");
+  TGraphErrors* gPoTAllVsEBelowRes = new TGraphErrors(); gPoTAllVsEBelowRes->SetName("PoTAllVsEBelowRes");
+  for (int i = 0; i < gPoT->GetN(); i++){
+    if (i > 46) continue;
+    gPoTAllVsSqrts->SetPoint(i,gPoT->GetX()[i],gPoT->GetY()[i]); 
+    gPoTAllVsSqrts->SetPointError(i,0.,gPoT->GetEY()[i]); 
+
+    double ebeam = (gPoT->GetX()[i]*gPoT->GetX()[i]-2.*0.511*0.511)/(2.*0.511); // s = 2me^2 + 2me*p -> p = (s-2me^2)/(2me);
+    gPoTAllVsE->SetPoint(i,ebeam,gPoT->GetY()[i]); 
+    gPoTAllVsE->SetPointError(i,0.,gPoT->GetEY()[i]); 
+
+    if (gPoT->GetX()[i] < 15.5){
+      int nold = gPoTAllVsSqrtsBelowRes->GetN();
+      gPoTAllVsSqrtsBelowRes->SetPoint(nold,gPoT->GetX()[i],gPoT->GetY()[i]); 
+      gPoTAllVsSqrtsBelowRes->SetPointError(nold,0.,gPoT->GetEY()[i]); 
+      gPoTAllVsEBelowRes->SetPoint(nold,ebeam,gPoT->GetY()[i]); // s = 2me^2 + 2me*p -> p = (s-2me^2)/(2me);
+      gPoTAllVsEBelowRes->SetPointError(nold,0.,gPoT->GetEY()[i]); 
+    }
+  }
+  TGraphErrors* gPoTAllVsSqrtsAboveRes = new TGraphErrors(); gPoTAllVsSqrtsAboveRes->SetName("PoTAllVsSqrtsAboveRes");
+  TGraphErrors* gPoTAllVsEAboveRes = new TGraphErrors(); gPoTAllVsEAboveRes->SetName("PoTAllVsEAboveRes");
+  const double overResEBeam = 402.5;
+  const double overResPOT = 1.1E10;
+  double overResSqrts = TMath::Sqrt(2.*0.511*0.511+2.*0.511*overResEBeam);
+  int nptsall = gPoTAllVsE->GetN();
+  gPoTAllVsSqrts->SetPoint(nptsall,overResSqrts,overResPOT); 
+  gPoTAllVsSqrts->SetPointError(nptsall,0.,0.003*overResPOT); 
+  gPoTAllVsSqrtsAboveRes->SetPoint(0,overResSqrts,overResPOT); 
+  gPoTAllVsSqrtsAboveRes->SetPointError(0,0.,0.003*overResPOT); 
+
+  gPoTAllVsE->SetPoint(nptsall,overResEBeam,overResPOT); // s = 2me^2 + 2me*p -> p = (s-2me^2)/(2me);
+  gPoTAllVsE->SetPointError(nptsall,0.,0.003*overResPOT);     
+  gPoTAllVsEAboveRes->SetPoint(nptsall,overResEBeam,overResPOT);
+  gPoTAllVsEAboveRes->SetPointError(nptsall,0.,0.003*overResPOT);     
+
+
+  TCanvas* dpotvssqrts = new TCanvas("dpotvssqrts");
+  gPoTAllVsSqrts->SetTitle(";#sqrt{s} (MeV);N_{PoT}");
+  gPoTAllVsSqrts->SetMarkerStyle(20);gPoTAllVsSqrts->SetMarkerColor(kBlue); gPoTAllVsSqrts->Draw("AP");
+  gPoTAllVsSqrtsBelowRes->SetMarkerStyle(20);gPoTAllVsSqrtsBelowRes->SetMarkerColor(kGreen); gPoTAllVsSqrtsBelowRes->Draw("PSame");
+  gPoTAllVsSqrtsAboveRes->SetMarkerStyle(20);gPoTAllVsSqrtsAboveRes->SetMarkerColor(kRed); gPoTAllVsSqrtsAboveRes->Draw("PSame");
+
+  TCanvas* dpotvse = new TCanvas("dpotvse");
+  gPoTAllVsE->SetTitle(";E_{Beam} (MeV);N_{PoT}");
+  gPoTAllVsE->SetMarkerStyle(20)        ;gPoTAllVsE->SetMarkerColor(kBlue)         ; gPoTAllVsE->Draw("AP");
+  gPoTAllVsEBelowRes->SetMarkerStyle(20);gPoTAllVsEBelowRes->SetMarkerColor(kGreen); gPoTAllVsEBelowRes->Draw("PSame");
+  gPoTAllVsEAboveRes->SetMarkerStyle(20);gPoTAllVsEAboveRes->SetMarkerColor(kRed)  ; gPoTAllVsEAboveRes->Draw("PSame");
+
+  cout << "NPOINTS!!!!!! " << gPoT->GetN() << " " << gPoTZip->GetN() << endl;
+    
+
+  // plot of the corrections vs sqrts and vs period
+  TString corrStr[ncorrs] = {"Background subtraction","Energy loss correction","Radiation induced correction","Tag and probe correction","Acceptance R_{MaX} stability"};
+  double ymincorrs[ncorrs] = {999999,999999,999999,999999,999999};
+  double ymaxcorrs[ncorrs] = {-999999,-999999,-999999,-999999,-999999};
+  TGraphErrors* corrGraphsVsSqrts[ncorrs];
   for (int q=0; q<ncorrs; q++){
+    corrGraphsVsSqrts[q] = new TGraphErrors();
+    corrGraphsVsSqrts[q]->SetName(Form("%s",corrStr[q].Data()));
+    for (int i = 0; i<corrGraphs[q]->GetN(); i++){
+      int nold = corrGraphsVsSqrts[q]->GetN();
+      corrGraphsVsSqrts[q]->SetPoint(nold,gScanPartVsSqrtsZip->GetX()[i],corrGraphs[q]->GetY()[i]);
+      corrGraphsVsSqrts[q]->SetPointError(nold,0.,corrGraphs[q]->GetEY()[i]);
+      if (corrGraphs[q]->GetY()[i]-corrGraphs[q]->GetEY()[i] < ymincorrs[q]) ymincorrs[q] = corrGraphs[q]->GetY()[i]-corrGraphs[q]->GetEY()[i];
+      if (corrGraphs[q]->GetY()[i]+corrGraphs[q]->GetEY()[i] > ymaxcorrs[q]) ymaxcorrs[q] = corrGraphs[q]->GetY()[i]+corrGraphs[q]->GetEY()[i];
+    }
+  }
+
+
+  //  bool singlecanva = kTRUE; // IF TRUE ONLY PLOT CORRECTION VS SQRTS IN A SINGLE PANEL
+  
+  for (int q=0; q<ncorrs; q++){
+    TCanvas* corrCanva = new TCanvas(Form("%s",corrStr[q].Data())); // {gN2NoBkgOvN2Zip,gLeakageZip,gScanscaleZip,gRatioTPZip,gRMaxsystZip};
     //    corrGraphs[q]->Sort();
+    corrCanva->Divide(1,2);
+    TH1F* framo = corrCanva->cd(1)->DrawFrame(-2.5,ymincorrs[q]-(ymaxcorrs[q]-ymincorrs[q])*0.01,41.5,ymaxcorrs[q]+(ymaxcorrs[q]-ymincorrs[q])*0.01);
+    framo->SetTitle(Form(";Energy point ID;%s",corrStr[q].Data()));
+    framo->GetYaxis()->SetNdivisions(404);
+    framo->GetYaxis()->SetTitleOffset(0.8);
     corrGraphs[q]->SetMarkerStyle(20+4*q);
     corrGraphs[q]->SetMarkerColor(1);
-    corrCanva->cd(q+1);
-    corrGraphs[q]->Draw("AP");
+    corrGraphs[q]->Draw("Psame");
+    TH1F* frame = corrCanva->cd(2)->DrawFrame(16.35,ymincorrs[q]-(ymaxcorrs[q]-ymincorrs[q])*0.01,17.45,ymaxcorrs[q]+(ymaxcorrs[q]-ymincorrs[q])*0.01);
+    frame->SetTitle(Form(";#sqrt{s} (MeV);%s",corrStr[q].Data()));
+    frame->GetYaxis()->SetTitleOffset(0.8);
+    frame->GetYaxis()->SetNdivisions(404);
+    corrGraphsVsSqrts[q]->SetMarkerStyle(20+4*q);
+    corrGraphsVsSqrts[q]->SetMarkerColor(1);
+    corrGraphsVsSqrts[q]->Draw("Psame");
+    if (corrStr[q].Contains("stability")){
+      TLine* linermaxup[2];
+      for (int nl = 0; nl < 2; nl++) {
+	linermaxup[nl] = new TLine(16.35, (nl==0? (1+0.002) : (1.-0.002)),17.45,(nl==0? (1.+0.002) : (1.-0.002)));
+	linermaxup[nl]->SetLineStyle(2);
+	linermaxup[nl]->Draw("same");
+      }
+      cout << "FITTING RMAX " << endl;
+      corrGraphsVsSqrts[q]->Fit("pol0","","same");
+    }
+    if (corrStr[q].Contains("Tag")){
+      cout << "FITTING TAGANDPROBE " << endl;
+//      TF1* fittp = new TF1("funfitp",fitfun,16.,18.,2);
+//      corrGraphsVsSqrts[q]->Fit(fittp,"","same");
+      corrGraphsVsSqrts[q]->Fit("pol0","","same");
+    }
   }
 
   
@@ -473,6 +614,9 @@ void prepareInput(TString fileout){
   outputFileZip->Close();
 
   // info from the automatic procedure
+//==SignalPotAccCorr==  Best chi2 achieved: 24.1649  NDF:  30  with mask starting at:  13  Starting from chi2:   40.0596
+//==SignalPotAccCorr==  Mean value on Y:   1.01132  RMS:  0.00792875 Relative spread: 0.00784003  RMS of the pulls/sigma:   0.882887
+//==SignalPotAccCorr==  Const:   1.01165 +- 0.00163108   Slope:  -0.0103716 +- 0.00501069
   
   const double massFound = 16.888;
   const double parFound[2] = {1.0116,-0.0103};
@@ -543,6 +687,7 @@ void prepareInput(TString fileout){
   TGraph* relErrBkgZip = new TGraph(); relErrBkgZip->SetName("BkgRelErr");
   TGraph* relErrRZip = new TGraph(); relErrRZip->SetName("RRelErr");
 
+  const double relerrUnit = 100;
   for (int i=0; i<gPoTZip->GetN(); i++){
     PointsSidebandGraph->SetPoint(i,TMath::Abs(gPoTZip->GetX()[i]-massFound),i);
 
@@ -560,10 +705,10 @@ void prepareInput(TString fileout){
       + pow(gBkgZip->GetEY()[i]/gBkgZip->GetY()[i],2)
 			       )*rnow;
     
-    relErrNObsZip->SetPoint(i,gPoTZip->GetX()[i],gNObsZip->GetEY()[i]/gNObsZip->GetY()[i]);
-    relErrPoTZip->SetPoint(i, gPoTZip->GetX()[i],gPoTZip->GetEY()[i]/gPoTZip->GetY()[i]);
-    relErrBkgZip->SetPoint(i, gPoTZip->GetX()[i],TMath::Sqrt(pow(gBkgZip->GetEY()[i]/gBkgZip->GetY()[i],2)));
-    relErrRZip->SetPoint(i,   gPoTZip->GetX()[i],ernow/rnow);
+    relErrNObsZip->SetPoint(i,gPoTZip->GetX()[i],gNObsZip->GetEY()[i]/gNObsZip->GetY()[i]*relerrUnit);
+    relErrPoTZip->SetPoint(i, gPoTZip->GetX()[i],gPoTZip->GetEY()[i]/gPoTZip->GetY()[i]*relerrUnit);
+    relErrBkgZip->SetPoint(i, gPoTZip->GetX()[i],TMath::Sqrt(pow(gBkgZip->GetEY()[i]/gBkgZip->GetY()[i],2))*relerrUnit);
+    relErrRZip->SetPoint(i,   gPoTZip->GetX()[i],ernow/rnow*relerrUnit);
 
 
     gRZip->SetPoint(i,gPoTZip->GetX()[i],rnow);
@@ -592,8 +737,13 @@ void prepareInput(TString fileout){
   int isMasked[100] = {0};
   for (int i=0; i<maskedNPts; i++) isMasked[(int)PointsSidebandGraph->GetY()[i]] = 1;
   
-  TGraphErrors* gRZipMasked = new TGraphErrors(); gRZipMasked->SetName("gRMasked");
-  TGraphErrors* gRZipSideband = new TGraphErrors(); gRZipSideband->SetName("gRSideband");
+  TGraphErrors* gRZipMasked[3];  //scan1,2,all
+  TGraphErrors* gRZipSideband[3];//scan1,2,all
+  for (int i=0; i<3; i++){
+    gRZipMasked[i] = new TGraphErrors(); gRZipMasked[i]->SetName(Form("gRMasked_scan%d",i));
+    gRZipSideband[i] = new TGraphErrors(); gRZipSideband[i]->SetName(Form("gRSideband_scan%d",i));
+  }
+  TGraph* gRZipPullsSideband = new TGraph(); gRZipPullsSideband->SetName("gRPullsSideband");
 
   TGraphErrors* gRZipMaskedAtStage[5];   // do not apply bkgsub, loss, ageing, apply all, apply tp also
   TGraphErrors* gRZipSidebandAtStage[5]; // do not apply bkgsub, loss, ageing, apply all, apply tp also
@@ -621,9 +771,17 @@ void prepareInput(TString fileout){
       corrGraphs[3]->GetY()[i]};
 
     if (isMasked[i]) {
-      int nnow = gRZipMasked->GetN();
-      gRZipMasked->SetPoint(nnow,gRZip->GetX()[i],gRZip->GetY()[i]);
-      gRZipMasked->SetPointError(nnow,gRZip->GetEX()[i],gRZip->GetEY()[i]);
+      // fill for all scans
+      int nnow = gRZipMasked[2]->GetN();
+      gRZipMasked[2]->SetPoint(nnow,gRZip->GetX()[i],gRZip->GetY()[i]);
+      gRZipMasked[2]->SetPointError(nnow,gRZip->GetEX()[i],gRZip->GetEY()[i]);
+
+      // fill scan-level
+      int scanid = gScanPartVsSqrtsZip->GetY()[i];  
+      int nnowscan = gRZipMasked[scanid]->GetN();
+      gRZipMasked[scanid]->SetPoint(nnowscan,gRZip->GetX()[i],gRZip->GetY()[i]);
+      gRZipMasked[scanid]->SetPointError(nnowscan,gRZip->GetEX()[i],gRZip->GetEY()[i]);
+
       if (gRZip->GetX()[i] < sqrtsMaskedRangeMin) sqrtsMaskedRangeMin = gRZip->GetX()[i];
       if (gRZip->GetY()[i] > sqrtsMaskedRangeMax) sqrtsMaskedRangeMax = gRZip->GetX()[i];
 
@@ -632,40 +790,90 @@ void prepareInput(TString fileout){
 	gRZipMaskedAtStage[q]->SetPointError(nnow,0.,gRZip->GetEY()[i]*corrval[q]);
       }
     } else {
-      int nnow = gRZipSideband->GetN();
-      gRZipSideband->SetPoint(nnow,gRZip->GetX()[i],gRZip->GetY()[i]);
-      gRZipSideband->SetPointError(nnow,gRZip->GetEX()[i],gRZip->GetEY()[i]);
-
+      // fill for all scans together
+      int nnow = gRZipSideband[2]->GetN();
+      gRZipSideband[2]->SetPoint(nnow,gRZip->GetX()[i],gRZip->GetY()[i]);
+      gRZipSideband[2]->SetPointError(nnow,gRZip->GetEX()[i],gRZip->GetEY()[i]);
+      gRZipPullsSideband->SetPoint(nnow,nnow,(gRZip->GetY()[i]-(parFound[0]+parFound[1]*(gRZip->GetX()[i]-16.92)))/gRZip->GetEY()[i]);
       for (int q=0; q<5; q++) {
 	gRZipSidebandAtStage[q]->SetPoint(nnow,gRZip->GetX()[i],gRZip->GetY()[i]*corrval[q]);
 	gRZipSidebandAtStage[q]->SetPointError(nnow,0.,gRZip->GetEY()[i]*corrval[q]);
       }
+
+      // fill scan-level
+      int scanid = gScanPartVsSqrtsZip->GetY()[i];  
+      int nnowscan = gRZipSideband[scanid]->GetN();
+      gRZipSideband[scanid]->SetPoint(nnowscan,gRZip->GetX()[i],gRZip->GetY()[i]);
+      gRZipSideband[scanid]->SetPointError(nnowscan,gRZip->GetEX()[i],gRZip->GetEY()[i]);
+      
     }
   }
   // refine range to fit with the sideband points
   double distanceToRangeMin = 99999;
   double distanceToRangeMax = 99999;
-  for (int i=0; i<gRZipSideband->GetN(); i++){    
-    if (TMath::Abs(gRZipSideband->GetX()[i]-sqrtsMaskedRangeMin) < distanceToRangeMin) {
-      distanceToRangeMin = TMath::Abs(gRZipSideband->GetX()[i]-sqrtsMaskedRangeMin);
+  for (int i=0; i<gRZipSideband[2]->GetN(); i++){    
+    if (TMath::Abs(gRZipSideband[2]->GetX()[i]-sqrtsMaskedRangeMin) < distanceToRangeMin) {
+      distanceToRangeMin = TMath::Abs(gRZipSideband[2]->GetX()[i]-sqrtsMaskedRangeMin);
     }
-    if (TMath::Abs(gRZipSideband->GetX()[i]-sqrtsMaskedRangeMax) < distanceToRangeMax) {
-      distanceToRangeMax = TMath::Abs(gRZipSideband->GetX()[i]-sqrtsMaskedRangeMax);
+    if (TMath::Abs(gRZipSideband[2]->GetX()[i]-sqrtsMaskedRangeMax) < distanceToRangeMax) {
+      distanceToRangeMax = TMath::Abs(gRZipSideband[2]->GetX()[i]-sqrtsMaskedRangeMax);
     }
   }
+
+  TCanvas* pullcanva = new TCanvas("pullCanva");
+  TH1F* pullframe = pullcanva->DrawFrame(-0.5,-3.,32.5,3.);
+  pullframe->SetTitle(";Energy point ID; g_{R} Fit Pulls");
+  pullframe->GetYaxis()->SetTitleOffset(1.0);
+  pullframe->GetXaxis()->SetLabelOffset(0.006);
+
+  gRZipPullsSideband->SetMarkerStyle(20);
+  gRZipPullsSideband->SetMarkerSize(1);
+  gRZipPullsSideband->SetMarkerColor(kBlack);
+  gRZipPullsSideband->Draw("Psame");
+  TF1* funPulls = new TF1("funPulls",fitfunpulls,0.,35.,2);
+  funPulls->SetParameter(0,0.);
+  funPulls->SetParameter(1,0.);
+  funPulls->SetLineColor(kBlue);
+  funPulls->SetLineWidth(2);
+  funPulls->SetLineStyle(2);
   
+  TFitResultPtr fitrespulls = gRZipPullsSideband->Fit(funPulls,"S","same");
+  TLegend* legopulls = new TLegend(0.2,0.7,0.8,0.85);
+  legopulls->AddEntry(funPulls,Form("#splitline{P0 = %.2f #pm %.2f, P1 = (%.2f #pm %.2f)}{#chi^{2}/ndf = %.1f / %d, Prob = %.2f}",
+						   fitrespulls->Parameter(0),fitrespulls->ParError(0),
+						   fitrespulls->Parameter(1),fitrespulls->ParError(1),
+						   fitrespulls->Chi2(),(int)fitrespulls->Ndf(),fitrespulls->Prob()),"L");
+  legopulls->Draw();
+
+  //
+
+  
+
+  
+  // gR plots
   TCanvas* rcanva = new TCanvas("rcanva");
-  gRZipSideband->SetMarkerStyle(20);
-  gRZipSideband->SetMarkerSize(1);
-  gRZipSideband->SetMarkerColor(kBlack);
-  gRZipSideband->Draw("PA");
-  gRZipMasked->SetMarkerStyle(20);
-  gRZipMasked->SetMarkerColor(kRed);
-  gRZipMasked->SetLineColor(kRed);
-  gRZipMasked->Draw("Psame");
-  gRZipScan1->SetMarkerStyle(25);
-  gRZipScan1->SetMarkerSize(2);
-  gRZipScan1->Draw("PXsame");
+  TH1F* framer = rcanva->DrawFrame(16.3,0.98,17.5,1.07);
+  framer->SetTitle(";#sqrt{s} (MeV);g_{R}(s)");
+  framer->GetYaxis()->SetNdivisions(405);
+  framer->GetYaxis()->SetTitleOffset(1.1);
+  TLegend* legogr = new TLegend(0.6,0.6,0.85,0.85);
+  
+  for (int i=0; i<2; i++){
+    gRZipSideband[i]->SetMarkerStyle(20+i);
+    gRZipSideband[i]->SetMarkerSize(1);
+    gRZipSideband[i]->SetMarkerColor(kBlack);
+    gRZipSideband[i]->SetLineColor(kBlack);
+    gRZipSideband[i]->Draw("Psame");
+
+    gRZipMasked[i]->SetMarkerStyle(20+i);
+    gRZipMasked[i]->SetMarkerColor(kRed);
+    gRZipMasked[i]->SetLineColor(kRed);
+    gRZipMasked[i]->Draw("Psame");
+
+  }
+  for (int i=0; i<2; i++) legogr->AddEntry(gRZipSideband[i],Form("Sideband data, scan %d",i+1),"PE");
+  for (int i=0; i<2; i++) legogr->AddEntry(gRZipMasked[i],  Form("Masked   data, scan %d",i+1),"PE");
+  //  gRZipScan1->Draw("PXsame");
 
   
 //  bestSignal->Sort();
@@ -676,8 +884,9 @@ void prepareInput(TString fileout){
   sbfitobs->Sort();
   sbfitobs->SetLineStyle(1);
   sbfitobs->SetLineWidth(2);
-  sbfitobs->SetLineColor(kBlue);
+  sbfitobs->SetLineColor(kOrange+7); sbfitobs->SetMarkerColor(kOrange+7); 
   sbfitobs->Draw("PLsame");
+
 
   
   // add sideband fit and interpolation
@@ -718,7 +927,10 @@ void prepareInput(TString fileout){
   for (int i=0; i<3; i++){
     sidebands[i]->Draw("Lsame");
   }
-  
+  legogr->AddEntry(sidebands[0],"Sideband fit","L");
+  legogr->AddEntry(sidebands[1],"Sideband fit in masked region","L");
+  legogr->AddEntry(sbfitobs,"S+B fit","PL");
+  legogr->Draw();
   
   // corrections plots
   
@@ -748,7 +960,7 @@ void prepareInput(TString fileout){
     else      gRZipMaskedAtStage[i]->Draw("Psame");
   }
   for (int j=0; j<3; j++) sidebands[j]->Draw("Lsame");
-  sbfitobs->SetLineColor(kOrange+7); sbfitobs->SetMarkerColor(kOrange+7); sbfitobs->Draw("PLsame");
+  sbfitobs->Draw("PLsame");
   
 //  gRZipScan1->SetMarkerStyle(28);
 //  gRZipScan1->Draw("Psame");
@@ -781,21 +993,34 @@ void prepareInput(TString fileout){
   n2canva->cd(2); relErrNObsZip->Draw("AP");
   
   // plot of relative errors
-  
+  TLegend* relerrleg = new TLegend(0.2,0.68,0.43,0.88);
+  //  relerrleg->SetHeader("Relative errors on g_{R}(s):");
+  TString relerrnames[4] = {"g_{R}","N_{2}","N_{PoT}","B"};
   TGraph* relerrGraphs[4] = {relErrRZip,relErrNObsZip,relErrPoTZip,relErrBkgZip};
   TCanvas* relErrs = new TCanvas("relErr");
   int colorcorrRel[4] = {kBlack,kViolet-2,kRed,kGreen+1};
-  relErrs->DrawFrame(16.2,0.,17.5,0.015);
-  for (int i=0; i<4; i++){
+  TH1F* framerelerr = relErrs->DrawFrame(16.2,0.,17.5,0.015*relerrUnit);
+  framerelerr->SetTitle(";#sqrt{s} (MeV);Relative error, %");
+  framerelerr->GetYaxis()->SetTitleOffset(1.0);
+  framerelerr->GetXaxis()->SetLabelOffset(0.006);
+  int ordo[4] = {0,1,3,2};
+  for (int ii=0; ii<4; ii++){
+    int i = ordo[ii];
     relerrGraphs[i]->SetMarkerStyle(stylecorrFill[i]);
     relerrGraphs[i]->SetMarkerColor(colorcorrRel[i]);
     relerrGraphs[i]->SetLineColor(colorcorrRel[i]);
     relerrGraphs[i]->Draw("Psame");
+    relerrleg->AddEntry(relerrGraphs[i],relerrnames[i].Data());
   }
+  relerrleg->Draw();
 }
 
 double fitfun(double* x, double* par){
   return par[0]+par[1]*(x[0]-16.92);//+par[2]*(x[0]-16.92)*(x[0]-16.92);
+}
+
+double fitfunpulls(double* x, double* par){
+  return par[0]+par[1]*(x[0]-15)/15.;
 }
 
 
@@ -811,3 +1036,4 @@ double SignalShape(double* x, double* par){  // return number of signal events p
     double eBeam = (sqrts*sqrts - 2*me*me)/(2.*me); // s = 2me^2 + 2meEbeam -> eBeam = (s-2me^2) / 2me
     return signalpeak*TMath::Voigt(eBeam-eRes,bes*eRes,lorewidth*2,5); // last input was 4 but with low BES can have rounding problems
   }
+
