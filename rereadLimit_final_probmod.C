@@ -15,6 +15,9 @@
 #include "TEfficiency.h"
 
 void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, TString infilename1, TString infilename2, bool saveout, TString outfilename){ // for example 8000
+  const double massMinPVal = 16.3;
+  const double massMaxPVal = 17.5;
+
   TString clsstring = "";
   if (clsoption == 1) clsstring = "CLsb";
 
@@ -219,6 +222,16 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
     NPseudo = 350; 
     massMax = 17.74;
   }
+  if (seedStem==997000) { // B only, RunIV projection
+    inputFilesStem = "./output/statisticalTest_massSteps_76_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 200; 
+    massMax = 17.74;
+  }
+  if (seedStem==998000) { // B only, RunIV projection only scan1
+    inputFilesStem = "./output/statisticalTest_massSteps_76_massRange_16.22_17.74_UseNuis1_seed";
+    NPseudo = 200; 
+    massMax = 17.74;
+  }
    
   //use 100+j for the normal events
   // 3000+j for efficurveON events analysed with efficurveON
@@ -269,6 +282,7 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
   // 994000+j effcurvON, RunIII FINAL, pot corrections, straightFitMode=2 + B vs sqrt(s) with the parameters from the 2 scans, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results, ADD 0.3% B as systematic error per point, S+B TOYS WITH M=16.9,g=5.0E-4
   // 995000+j effcurvON, RunIII FINAL, pot corrections, straightFitMode=2, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results, ADD 0.3% B as systematic error and 0.1% on POT syst for on each point, use POTSLOPE corr, 0.7% err
   // 996000+j effcurvON, RunIII FINAL, pot corrections, straightFitMode=2, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results, ADD 0.3% B as systematic error and 0.1% on POT syst for on each point, use POTSLOPE corr, 0.4% err
+  // 997000+j effcurvON, RunIVProj: x2 in pot, x2 in acc. straightFitMode=2, assumeeffioverb=2, MINIMIZE ON THE TOYS, new generation of pseudoevents, evaluate asimptotic limits, store pulls and fitresult graphs, scale with a P1 using Ven's fit results ERRORS DOWN BY 2, 0.3% B as systematic error and 0.3% on POT syst for each point, no AGEING CORR
   
   TGraph** limit90s = new TGraph*[NPseudo]; // UL for the various pseudoevents
   TGraph** limit90sRL = new TGraph*[NPseudo]; // RL UL for the various pseudoevents
@@ -297,6 +311,8 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
     if (seedStem==994000 && j==0) continue;
     if (seedStem==995000 && j==0) continue;
     if (seedStem==996000 && j==0) continue;
+    if (seedStem==997000 && j==0) continue;
+    if (seedStem==998000 && j==0) continue;
     
     TFile* filo = new TFile(Form("%s%d.root_limits.root",inputFilesStem.Data(),seedStem+j),"OLD");
     TGraph* grafo = (TGraph*) filo->Get(Form("Limit90%s",clsstring.Data()));
@@ -360,9 +376,9 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
   // evaluate quantiles for the standard limits
 
   TCanvas* canvaQuantileAllLim = new TCanvas("canvaQuantileAllLim");
-  canvaQuantileAllLim->Divide(6,5);
+  canvaQuantileAllLim->Divide(8,9);
   TCanvas* canvaQuantileAllLimFit = new TCanvas("canvaQuantileAllLimFit");
-  canvaQuantileAllLimFit->Divide(6,5);
+  canvaQuantileAllLimFit->Divide(8,9);
 
   int npts = 0;
   TH1D** limitsPerPoint = 0; // define an histogram of limits for each mass point
@@ -638,23 +654,32 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
 
   //  PLOT OF UPPER LIMITS
   
-  TCanvas* dd =new TCanvas("dd");
+  TCanvas* dd =new TCanvas("dd","resultC",970,600);
+  dd->Divide(1,2);
+  TVirtualPad* pad1 = dd->cd(1);
+  pad1->SetPad(0,0.35,1,1);
+  pad1->SetBottomMargin(0.0);  
   TH2D* framepl = new TH2D("framepl",";M_{X} (MeV);g_{ve};",100,16.,18.5,100,5E-5,1E-3);
+//  TPad *pad1 = new TPad("pad1","pad1",0.1,0.2,0.9,1.,0,0);
+//  pad1->Draw();
+//  TPad *pad2 = new TPad("pad2","pad2",0.1,0.,0.9,0.2,0,0);
+//  pad2->Draw();
+  pad1->cd();
   framepl->Draw("");
   framepl->GetYaxis()->SetMaxDigits(3);
+  framepl->GetYaxis()->SetNdivisions(505);
   framepl->SetStats(kFALSE);
   framepl->SetLabelSize(0.04,"X");
-  framepl->SetLabelSize(0.04,"Y");
+  framepl->SetLabelSize(0.065,"Y");
   framepl->SetTitleSize(0.05,"X");
-  framepl->SetTitleSize(0.05,"Y");
+  framepl->SetTitleSize(0.08,"Y");
   framepl->SetTitleOffset(0.8,"X");
-  framepl->SetTitleOffset(0.8,"Y");
-
+  framepl->SetTitleOffset(0.6,"Y");
 
   // KLOE
   
-  kloelim->SetFillColor(kGray);
-  kloelim->SetFillStyle(3001);
+  kloelim->SetFillColor(17);//kGray);
+  kloelim->SetFillStyle(1001);
   kloelim->Draw("3same");
 
 //  kloeulcorr->SetLineColor(2);
@@ -664,8 +689,8 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
 
 // NA64
   
-  na64lim->SetFillColor(kGray);
-  na64lim->SetFillStyle(3001);
+  na64lim->SetFillColor(14);//kGray);
+  na64lim->SetFillStyle(1001);
   na64lim->Draw("3same");
 
 
@@ -679,15 +704,20 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
     limit90Exp[1]->SetFillStyle(1001);
     limit90Exp[1]->Draw("3same");
 
+
     limit90ExpMedian->SetLineColor(overlay? kBlue : kRed);
     limit90ExpMedian->SetLineWidth(3);
     limit90ExpMedian->SetLineStyle(overlay? 2 : 1);
     limit90ExpMedian->Draw("Lsame");
   }
 
-  TLegend *lego   = new TLegend(0.65,0.32,0.88,0.58);
-  TLegend *lego_sb = new TLegend(0.65,0.60,0.88,0.75);
-  TLegend *lego_obs = new TLegend(0.65,0.22,0.88,0.30);
+  TLegend *legopast = new TLegend(0.64,0.65,0.85,0.88);
+  TLegend *lego     = new TLegend(0.64,0.32,0.85,0.58);
+  TLegend *lego_sb  = new TLegend(0.64,0.60,0.85,0.73);
+  TLegend *lego_obs = new TLegend(0.64,0.22,0.85,0.30);
+  legopast->SetHeader("90% CL UL: past experiments");
+  legopast->AddEntry(kloelim,"KLOE 2015","f");
+  legopast->AddEntry(na64lim,"NA64 2019","f");
 
   lego->SetHeader("90% CL UL: B-only");
   lego_sb->SetHeader("90% CL UL: B + S #splitline{M_{X} = 16.9 MeV}{g_{ve} = 5 #times 10^{-4}}");
@@ -712,7 +742,7 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
   }
 
   limitStat->SetLineColor(kBlue);
-  limitStat->SetLineWidth(2);
+  limitStat->SetLineWidth(3);
   limitStat->SetLineStyle(3);
   limitStat->Draw("Lsame");
   lego->AddEntry(limitStat,"Bkg stat only","L");
@@ -720,8 +750,11 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
   
   double maxDeviation = -99999;
   TGraph* quantileOneSided = new TGraph(); quantileOneSided->SetName("quantileOneSided");
+
   TGraphAsymmErrors* pvalueG = new TGraphAsymmErrors(); pvalueG->SetName("p-value");
   TGraphAsymmErrors* qvalueG = new TGraphAsymmErrors(); qvalueG->SetName("equivalent-Nsigma");
+  TGraphAsymmErrors* limit90ExpMedianLocalP = new TGraphAsymmErrors();
+  limit90ExpMedianLocalP->SetName("LocalP");
 
   if (overlay) {
     TGraph* limit90ExpMedianIn = nullptr;
@@ -749,40 +782,128 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
       //      limit90ObsRL = (TGraph*) filoIn->Get("RolkeLopezLimit90");
     }
 
+    // evaluate local pvalue
+
+    TGraph* limit90ExpMedianLocalPErrUp = new TGraph(); limit90ExpMedianLocalPErrUp->SetName("LocalPUp");
+    TGraph* limit90ExpMedianLocalPErrLow= new TGraph(); limit90ExpMedianLocalPErrLow->SetName("LocalPLow");
+
+    // first, use the coincident points 
+    for (int q = 0; q< limit90ExpMedianIn->GetN(); q++){
+      double medianX   = limit90ExpMedianIn->GetX()[q];
+      double limmedian = limit90ExpMedianIn->GetY()[q];
+      if (medianX < massMinPVal || medianX > massMaxPVal) continue;
+      // find x point in the bkg-only band closest to the present point
+      double minMassDist = 99999;
+      int immin = -1;
+      for (int im = 0; im < limit90s[0]->GetN(); im++){
+	double diffo = medianX - limit90s[0]->GetX()[im];
+	if (TMath::Abs(diffo) < minMassDist){
+	  minMassDist = TMath::Abs(diffo);
+	  immin = im;
+	}
+      }
+      if (minMassDist < 1E-6){ // points that do not need to be extrapolated
+	int nbx = limitsPerPoint[immin]->GetXaxis()->GetNbins();
+	double wdx = (limitsPerPoint[immin]->GetXaxis()->GetXmax() - limitsPerPoint[immin]->GetXaxis()->GetXmin())/nbx;
+	int ixmin = (limmedian - limitsPerPoint[immin]->GetXaxis()->GetXmin())/wdx + 0.5;
+	TEfficiency effo;
+	effo.SetConfidenceLevel(0.68);
+	//	effo.SetStatisticOption(option);
+	effo.SetTotalEvents(1, limitsPerPoint[immin]->Integral(0,nbx));
+	effo.SetPassedEvents(1,limitsPerPoint[immin]->Integral(ixmin,nbx));
+	int nold = limit90ExpMedianLocalP->GetN();
+	limit90ExpMedianLocalP->SetPoint(nold,medianX,effo.GetEfficiency(1));
+	limit90ExpMedianLocalP->SetPointError(nold,0.,0.,effo.GetEfficiencyErrorUp(1),effo.GetEfficiencyErrorLow(1));
+	limit90ExpMedianLocalPErrUp->SetPoint(nold,medianX,effo.GetEfficiency(1) + effo.GetEfficiencyErrorUp(1));
+	limit90ExpMedianLocalPErrLow->SetPoint(nold,medianX,effo.GetEfficiency(1) - effo.GetEfficiencyErrorLow(1));
+      }
+    }
+    // now for the other points, interpolate
+    for (int q = 0; q< limit90ExpMedianIn->GetN(); q++){
+      double medianX = limit90ExpMedianIn->GetX()[q];
+      double limmedian = limit90ExpMedianIn->GetY()[q];
+      if (medianX < massMinPVal || medianX > massMaxPVal) continue;
+
+      // find x point in the bkg-only band closest to the present point
+      double minMassDist = 99999;
+      int immin = -1;
+      for (int im = 0; im < limit90s[0]->GetN(); im++){
+	double diffo = medianX - limit90s[0]->GetX()[im];
+	if (TMath::Abs(diffo) < minMassDist){
+	  minMassDist = TMath::Abs(diffo);
+	  immin = im;
+	}
+      }
+      if (minMassDist < 40E-3 && minMassDist > 1E-3 && limmedian < 1.02E-3){ // points that deserve an Eval
+	int nold = limit90ExpMedianLocalP->GetN();
+	limit90ExpMedianLocalP->SetPoint(nold,medianX,limit90ExpMedianLocalP->Eval(medianX));
+	limit90ExpMedianLocalP->SetPointError(nold,0.,0.,
+					      limit90ExpMedianLocalPErrUp->Eval(medianX)-limit90ExpMedianLocalP->Eval(medianX),
+					      limit90ExpMedianLocalP->Eval(medianX)-limit90ExpMedianLocalPErrLow->Eval(medianX));
+      }
+    }
+    
     // evaluate PCL method observed limit and evaluate the maximum number of sigmas of which it exceeds the median UL
     
-    for (int q = 0; q<10000; q++) quantileOneSided->SetPoint(q,1.-0.5*(1.+TMath::Erf(float(5*q/10000.)/TMath::Sqrt(2.))),5*q/10000.);
+    TF1* realquantile = new TF1("realquantile","1-ROOT::Math::normal_cdf(x)",-5,5);
+    //    for (int q = 0; q<10000; q++) quantileOneSided->SetPoint(q,1.-0.5*(1.+TMath::Erf(float(5*q/10000.)/TMath::Sqrt(2.))),5*q/10000.);
+    for (int q = 0; q<10000; q++) quantileOneSided->SetPoint(q,realquantile->Eval(-5+10*q/10000.),-5+10*q/10000.);
+    //    for (int q = 0; q<10000; q++) quantileOneSided->SetPoint(q,1.-0.5*(1.+TMath::Erf(float(5*q/10000.)/TMath::Sqrt(2.))),5*q/10000.);
     
     int indexOfMaxDeviation = -1;
     TGraph* limit90ExpMedianPCL = new TGraph();
+
     for (int q = 0; q< limit90ExpMedianIn->GetN(); q++){
       double medianX = limit90ExpMedianIn->GetX()[q];
       double limmedian = limit90ExpMedian->Eval(medianX);
       double limmedianPlus1Sigma = limit90ExpMedianPlus1Sigma->Eval(medianX);
       double limmedianPlus2Sigma = limit90ExpMedianPlus2Sigma->Eval(medianX);
-      if (limit90ExpMedianIn->GetY()[q] < limmedian)
-	limit90ExpMedianPCL->SetPoint(q,limit90ExpMedianIn->GetX()[q],limmedian);
-      else
-	limit90ExpMedianPCL->SetPoint(q,limit90ExpMedianIn->GetX()[q],limit90ExpMedianIn->GetY()[q]);
+
+
+      //      if (limit90ExpMedianIn->GetY()[q] < limmedian)
+      //	limit90ExpMedianPCL->SetPoint(q,limit90ExpMedianIn->GetX()[q],limmedian);
+	//      else
+      limit90ExpMedianPCL->SetPoint(q,limit90ExpMedianIn->GetX()[q],limit90ExpMedianIn->GetY()[q]);
 
       double deltawrtmedian = limit90ExpMedianPCL->GetY()[q]-limmedian;
       double deviation = 0;
-      if (deltawrtmedian < (limmedianPlus1Sigma-limmedian)) { // below 1 sigma
+      if (deltawrtmedian > 0 && deltawrtmedian < (limmedianPlus1Sigma-limmedian)) { // below 1 sigma
 	deviation =  deltawrtmedian/(limmedianPlus1Sigma-limmedian);
       }
-      else if (deltawrtmedian < (limmedianPlus2Sigma-limmedian)) { // above 1 sigma, below 2sigma
+      else if (deltawrtmedian > 0 && deltawrtmedian < (limmedianPlus2Sigma-limmedian)) { // above 1 sigma, below 2sigma
 	deviation =  1 + (deltawrtmedian-(limmedianPlus1Sigma-limmedian))/(limmedianPlus2Sigma-limmedianPlus1Sigma);
-      } else {
+      } else if (deltawrtmedian > 0) {
 	deviation =  deltawrtmedian/(limmedianPlus2Sigma-limmedian)*2;
+      } else {
+	deviation =  deltawrtmedian/(limmedianPlus1Sigma-limmedian);
       }
+      if (medianX < massMinPVal || medianX > massMaxPVal) continue;
       int pvalueGnpt = pvalueG->GetN();
-      pvalueG->SetPoint(pvalueGnpt,limit90ExpMedianIn->GetX()[q],trueProb[1]->Eval(deviation));
+      double pvaluen = trueProb[1]->Eval(deviation);
+      if (pvaluen > 1) pvaluen = 1;
+      //if (deltawrtmedian < 0) pvaluen = 1-pvaluen;
+      pvalueG->SetPoint(pvalueGnpt,limit90ExpMedianIn->GetX()[q],pvaluen);
       pvalueG->SetPointError(pvalueGnpt,0.,0.,trueProb[1]->Eval(deviation)-trueProb[0]->Eval(deviation),trueProb[2]->Eval(deviation)-trueProb[1]->Eval(deviation));
-      qvalueG->SetPoint(pvalueGnpt,limit90ExpMedianIn->GetX()[q],quantileOneSided->Eval(trueProb[1]->Eval(deviation)));
+      //      qvalueG->SetPoint(pvalueGnpt,limit90ExpMedianIn->GetX()[q],quantileOneSided->Eval(trueProb[1]->Eval(deviation)));
+      double qvaluen = quantileOneSided->Eval(pvaluen);
+      double qvaluenerrlo = qvaluen - quantileOneSided->Eval(trueProb[0]->Eval(deviation));
+      double qvaluenerrhi = quantileOneSided->Eval(trueProb[2]->Eval(deviation)) - qvaluen;
+      if (pvaluen == 1) {
+	qvaluen = -5;
+	cout << "QUESTOCASO : " << deviation << " " << quantileOneSided->Eval(trueProb[0]->Eval(deviation)) << " " << quantileOneSided->Eval(trueProb[2]->Eval(deviation)) << " " << endl;
+	qvaluenerrlo = qvaluen - quantileOneSided->Eval(trueProb[0]->Eval(0));
+	qvaluenerrhi = quantileOneSided->Eval(trueProb[2]->Eval(0)) - qvaluen;
+      }
+      qvalueG->SetPoint(pvalueGnpt,limit90ExpMedianIn->GetX()[q],qvaluen);
       qvalueG->SetPointError(pvalueGnpt,0.,0.,
-			     quantileOneSided->Eval(trueProb[1]->Eval(deviation)) - quantileOneSided->Eval(trueProb[0]->Eval(deviation)),
-			     quantileOneSided->Eval(trueProb[2]->Eval(deviation)) - quantileOneSided->Eval(trueProb[1]->Eval(deviation))
+			     qvaluenerrlo,
+			     qvaluenerrhi
 			     );
+//      qvalueG->SetPoint(pvalueGnpt,limit90ExpMedianIn->GetX()[q],realquantile->Eval(pvaluen));
+//      qvalueG->SetPointError(pvalueGnpt,0.,0.,
+//			     realquantile->Eval(trueProb[1]->Eval(deviation)) - realquantile->Eval(trueProb[0]->Eval(deviation)),
+//			     realquantile->Eval(trueProb[2]->Eval(deviation)) - realquantile->Eval(trueProb[1]->Eval(deviation))
+//			     );
 
       cout << "DEviation " << deviation << " " << medianX << " " << limmedianPlus2Sigma << endl;
       if (deviation > maxDeviation) {
@@ -790,8 +911,9 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
 	indexOfMaxDeviation = q;
       }
     }
-    cout << "Max deviation = " << maxDeviation << " Mass of max deviation " << limit90ExpMedianPCL->GetX()[indexOfMaxDeviation] << " coupling of max deviation " << limit90ExpMedianPCL->GetY()[indexOfMaxDeviation] << endl;
+    cout << "Max deviation = " << maxDeviation << " Mass of max deviation " << limit90ExpMedianPCL->GetX()[indexOfMaxDeviation] << " coupling of max deviation " << limit90ExpMedianPCL->GetY()[indexOfMaxDeviation] << " number of coincident points " << limit90ExpMedianLocalP->GetN() << endl;
 
+    
 
     if (clsoption == 1) {      
       limit90ExpMedianIn->SetLineColor(kRed);
@@ -818,8 +940,9 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
     }
   }
 
-  TLatex kloeleg; kloeleg.SetTextSize(0.04); kloeleg.DrawText(17.8,9E-4,"KLOE, 2015");
-  TLatex na64leg; na64leg.SetTextSize(0.04); na64leg.DrawText(17.8,1E-4,"NA64, 2019");
+//  TLatex kloeleg; kloeleg.SetTextSize(0.04); kloeleg.DrawText(17.8,9E-4,"KLOE, 2015");
+//  TLatex na64leg; na64leg.SetTextSize(0.04); na64leg.DrawText(17.8,1E-4,"NA64, 2019");
+  legopast->Draw();
   lego->Draw();
   if (overlay) {
     if (overlaymode == 1 || overlaymode == 3) lego_sb->Draw(""); // wants to show the S+B expected band
@@ -841,9 +964,42 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
 //    grafo->SetLineWidth(2);
 //    grafo->Draw("Lsame");
 //  }
+//  dd->cd(0);
+//  TPad *pad2 = new TPad("pad2","pad2",0.1,0.,0.9,0.2);
+//  pad2->Draw();
+  if (overlay && (overlaymode == 2 || overlaymode == 3)) {
+    
+    pad1->SetFrameLineWidth(2);
+    framepl->Draw("sameaxis");
 
+    TVirtualPad* pad2 = dd->cd(2);
+    pad2->SetPad(0.,0.,1,0.35);
+    pad2->SetTopMargin(0.0);
+    pad2->SetBottomMargin(0.4);
+    pad2->SetLogy();
 
-  
+    TLegend* legoprob = new TLegend(0.64,0.52,0.85,0.78);
+    
+    TH2D* frameplprob = new TH2D("frameplprob",";M_{X} (MeV);P value;",100,16.,18.5,110,3.E-3,2.);
+    frameplprob->SetStats(kFALSE);
+    frameplprob->SetLabelSize(0.14,"X");
+    frameplprob->SetLabelOffset(0.06);
+    frameplprob->SetLabelSize(0.12,"Y");
+    frameplprob->SetTitleSize(0.16,"X");
+    frameplprob->SetTitleSize(0.15,"Y");
+    frameplprob->SetTitleOffset(1.1,"X");
+    frameplprob->SetTitleOffset(0.3,"Y");
+    frameplprob->GetYaxis()->SetNdivisions(404);
+
+    frameplprob->Draw("");
+    limit90ExpMedianLocalP->SetMarkerStyle(20);
+    limit90ExpMedianLocalP->Draw("Psame");
+    pvalueG->SetMarkerColor(2); pvalueG->SetLineColor(2);
+    pvalueG->Draw("Psame");
+    legoprob->AddEntry(pvalueG,"Global probability","P");
+    legoprob->AddEntry(limit90ExpMedianLocalP,"Local probability","P");
+    legoprob->Draw();
+  }
   // evaluate look-elsewhere effect at 2, 3, 4, 5 sigma
 
   // use mass range
@@ -872,12 +1028,23 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
     std::cout << " prob to be outside " << nsigmatest << " sigma is " << 1.*numLookE[j]/jgood << " vs " << quantile << " ratio = " << 1.*numLookE[j]/jgood/quantile << std::endl;
   }
 
-  TGraph* twosigmalim = new TGraph();
+  TGraph* plustwosigmalim = new TGraph();
+  TGraph* plusonesigmalim = new TGraph();
+  TGraph* minusonesigmalim = new TGraph();
+  TGraph* minustwosigmalim = new TGraph();
   for (int k=0; k < limit90Exp[0]->GetN(); k++){
-    twosigmalim->SetPoint(twosigmalim->GetN(),limit90Exp[0]->GetX()[k],limit90Exp[0]->GetY()[k]+limit90Exp[0]->GetEYhigh()[k]*(1+2*0.125));
+    plustwosigmalim->SetPoint(plustwosigmalim->GetN(),limit90Exp[0]->GetX()[k],limit90Exp[0]->GetY()[k]+limit90Exp[0]->GetEYhigh()[k]);
+    minustwosigmalim->SetPoint(minustwosigmalim->GetN(),limit90Exp[0]->GetX()[k],limit90Exp[0]->GetY()[k]-limit90Exp[0]->GetEYlow()[k]);
+    plusonesigmalim->SetPoint(plusonesigmalim->GetN(),limit90Exp[1]->GetX()[k],limit90Exp[1]->GetY()[k]+limit90Exp[1]->GetEYhigh()[k]);
+    minusonesigmalim->SetPoint(minusonesigmalim->GetN(),limit90Exp[1]->GetX()[k],limit90Exp[1]->GetY()[k]-limit90Exp[1]->GetEYlow()[k]);
   }
   //  twosigmalim->Draw();
 
+  for (int k=0; k < limit90Exp[0]->GetN(); k++){
+    cout << "point k " << k << " (x,y) = " << limit90Exp[0]->GetX()[k] << " , " << limit90Exp[0]->GetY()[k] << " +-2sigma = " << plustwosigmalim->GetY()[k] << " " << minustwosigmalim->GetY()[k] << endl;
+  }
+
+  
 //PER DOPO - MISSING  // limit with no nuisance
 //PER DOPO - MISSING  TFile* fila = new TFile("PADME_sensitivity/output/statisticalTest_massSteps_71_massRange_16.22_17.62_UseNuis0_errorDownBy2.0_seed8501.root_limits.root");
 //PER DOPO - MISSING  TGraph* nonuis = (TGraph*) fila->Get("Limit90");
@@ -912,6 +1079,8 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
 //PER DOPO - MISSING  pureBkgStat->SetLineColor(3);
 //PER DOPO - MISSING  //  pureBkgStat->Draw("Lsame");
 
+
+  
   if (saveout){
     TFile* filoOut = new TFile(outfilename.Data(),"NEW");
     limit90Exp[0]->Write();
