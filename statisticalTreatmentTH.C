@@ -179,6 +179,7 @@ void statisticalTreatmentTH::Init(){
   for (int i=0; i<potGraph->GetN(); i++){
     if (potGraph->GetY()[i] < 1E6) continue; // might add sqrts range or other quality cuts to exclude given points here [e.g.: scan up points vs scan dw points]
     if (partGraph->GetY()[i] != 0 && partGraph->GetY()[i] != 1) continue; // remove the out-of-resonance points
+    //    if (partGraph->GetY()[i] != 0) continue; // ONLY SCAN1!!!!!!
     // retrieve Sqrt(s) values
     fObservables.SqrtsObs.push_back(potGraph->GetX()[i]); // sqrt(s) observed
     fObservables.ScanPeriod.push_back(partGraph->GetY()[i]); 
@@ -254,6 +255,7 @@ void statisticalTreatmentTH::Init(){
   // fit of B/POT vs sqrt(s)
 
   for (int i=0; i<3; i++){ // scan1, scan2, scan all
+    if (fBkgGraphUsedScan[i]->GetN() < 2) continue;
     fitfunB[i] = new TF1(Form("fitfunB%d",i),"([0]+[1]*(x-16.92))",15.,19.);
     fitfunB[i]->SetParameter(0,3.E-6);
     fitfunB[i]->SetParameter(1,3.E-7);
@@ -274,6 +276,7 @@ void statisticalTreatmentTH::Init(){
   // fit of epsilon_sig/(B/Pot) vs sqrt(s)
 
   for (int i=0; i<3; i++){ // scan1, scan2, scan all
+    if (fNormBkgGraphUsed[i]->GetN() < 2) continue;
     fitfunEpsOverB[i] = new TF1(Form("fitfunEpsOverB_period%d",i),"[0]+[1]*(x-16.92)",15.,19.);
     fitfunEpsOverB[i]->SetParameter(0,2E5);
     fitfunEpsOverB[i]->SetParameter(1,2E3);
@@ -374,6 +377,7 @@ void statisticalTreatmentTH::Init(){
   if (fConfigPtr->GetAssumeBkgOverPotCurve()){ 
     for (int q = 0; q<3; q++) {
       std::cout << "Init... preparing cholesky decomposition for Bkg over pot Pol1 for scan " << q << endl;
+      if (fBkgGraphUsedScan[q]->GetN() < 2) continue; // could not fit bkg vs pot
       double corrFactor = 1E5;
       double elements[4] = {
 	corrFactor*corrFactor*fExpectedErrors.BkgPerPOTVsSqrtsParErr[q][0]*fExpectedErrors.BkgPerPOTVsSqrtsParErr[q][0],
@@ -403,6 +407,7 @@ void statisticalTreatmentTH::Init(){
   if (fConfigPtr->GetAssumeEffiOverBkgCurve()){ 
     for (int k=0; k<3; k++){ // first, second periods of the scan, all scan
       std::cout << "Init... preparing cholesky decomposition for Effi/(B/Pot) Pol1" << k << endl;
+      if (fNormBkgGraphUsed[k]->GetN() < 2) continue;// could not fit Effi/B pol1
       double elements[4] = {
 	fExpectedErrors.EffiOverBkgErrP0[k]*fExpectedErrors.EffiOverBkgErrP0[k],
 	fExpectedErrors.EffiOverBkgErrP0[k]*fExpectedErrors.EffiOverBkgErrP1[k]*fExpectedErrors.EffiOverBkgErrP0P1Corr[k],
@@ -2250,6 +2255,7 @@ void statisticalTreatmentTH::GenerateGeneralPseudoData(nuisancePars nuis, bool s
 	effisigtrue = nuis.SignalEffiLocalTrue.at(i);
       }
 
+      if (fVerbosity ==2) cout << "generating expsig at point " << i << " sbmode: " << sbmode << " toyoftoy = " << toyoftoy << " eps = " << effisigtrue << " gve = " << gven << endl;
       poismean_s = gven*gven*pottrue*1E10*effisigtrue*Likelihood::SignalShape(nuis.SignalPeakYieldTrue,nuis.BESTrue,nuis.SignalLorentzianWidthTrue,massn,fObservables.SqrtsObs.at(i));
     }
 
@@ -2260,7 +2266,7 @@ void statisticalTreatmentTH::GenerateGeneralPseudoData(nuisancePars nuis, bool s
       if (fConfigPtr->GetAssumeEffiOverBkgCurve()){
 	int iperiod = 2;
 	if (fConfigPtr->GetAssumeEffiOverBkgCurve() == 1) iperiod = fObservables.ScanPeriod.at(i);
-	fObservables.SignalEffiLocalObs.at(i) = efficurvepars[iperiod][0] + efficurvepars[iperiod][1]*(fObservables.SqrtsObs.at(i)-SQRTSMID);
+	fObservables.SignalEffiLocalObs.at(i) = bkgtrue*(efficurvepars[iperiod][0] + efficurvepars[iperiod][1]*(fObservables.SqrtsObs.at(i)-SQRTSMID));
       } else {
 	if (fUseNuisance) fObservables.SignalEffiLocalObs.at(i) = nuis.SignalEffiLocalTrue.at(i) + fRndmNumber->Gaus(0.,fExpectedErrors.SignalEffiLocalErr.at(i));
 	else              fObservables.SignalEffiLocalObs.at(i) = nuis.SignalEffiLocalTrue.at(i);
@@ -3032,6 +3038,8 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
   TGraph** npotGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];
   TGraph** effiGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit];
   TGraph** otherParsGraphBkgOnly = new TGraph*[fNumberOfGenerationsExpectedLimit]; // other observables
+
+  if (fVerbosity == 2) cout << "Generating bkg only events " << endl;
   for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++){
     GenerateGeneralPseudoData(fTheta_B,false,0.,0., false); // sbmode = false, ..., toyoftoy = false  
 
@@ -3054,13 +3062,13 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
     otherParsGraphBkgOnly[j]->SetPoint(4,4,fObservables.BkgBiasObsP0);
     otherParsGraphBkgOnly[j]->SetPoint(5,5,fObservables.BkgBiasObsP1);
     for (int i=0; i<3; i++) {
-      otherParsGraphBkgOnly[j]->SetPoint(6+2*i,6+2*i,fObservables.EffiOverBkgObsP0[i]);
-      otherParsGraphBkgOnly[j]->SetPoint(7+2*i,7+2*i,fObservables.EffiOverBkgObsP1[i]);
+      otherParsGraphBkgOnly[j]->SetPoint(6+2*i,6+2*i,fObservables.EffiOverBkgObsP0[i]);//6,8,10
+      otherParsGraphBkgOnly[j]->SetPoint(7+2*i,7+2*i,fObservables.EffiOverBkgObsP1[i]);//7,9,11
     }
     for (int q=0; q<3; q++) {
-      for (int i=0; i<2; i++) otherParsGraphBkgOnly[j]->SetPoint(12+i+2*q,12+i+2*q,fObservables.BkgPerPOTVsSqrtsParObs[q][i]);
+      for (int i=0; i<2; i++) otherParsGraphBkgOnly[j]->SetPoint(12+i+2*q,12+i+2*q,fObservables.BkgPerPOTVsSqrtsParObs[q][i]);//12,13,14,15,16,17
     }
-    otherParsGraphBkgOnly[j]->SetPoint(18,18,fObservables.POTSlopeCorrectionObs);
+    otherParsGraphBkgOnly[j]->SetPoint(18,18,fObservables.POTSlopeCorrectionObs);//18
 
     nobsGraphBkgOnly[j]->Write();	
     nbkgGraphBkgOnly[j]->Write();	
@@ -3068,6 +3076,8 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
     effiGraphBkgOnly[j]->Write();
     otherParsGraphBkgOnly[j]->Write();
   }
+
+  if (fVerbosity == 2) cout << "...done, now cleaning up memory" << endl;
 
   for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++) {
     delete nobsGraphBkgOnly[j];
@@ -3083,10 +3093,14 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
   delete[] otherParsGraphBkgOnly;
 
   // signal plus background pseudoevents
+  if (fVerbosity == 2) cout << "Generating sig+bkg events " << endl;
+
   for (uint im = 0; im < (uint) fNMassBins; im++){
     double massn = fMassMin + im*fMassStep;
     filo->cd();
     filo->mkdir(Form("SB_mass%f",massn))->cd();
+    if (fVerbosity == 2) cout << "mass = " << massn << endl;
+
     for (uint ig = 0; ig < (uint) fNgveBins; ig++){
       double gven = fgveMin + fgveStep*ig; //TMath::Power(fgveMin*fgveMin*fgveMin*fgveMin + ig*fgveStep,0.25);
       TGraph** nobsGraph = new TGraph*[fNumberOfGenerationsExpectedLimit];
@@ -3122,7 +3136,7 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
 	for (int q=0; q<3; q++) {
 	  for (int i=0; i<2; i++) otherParsGraph[j]->SetPoint(12+i+2*q,12+i+2*q,fObservables.BkgPerPOTVsSqrtsParObs[q][i]);
 	}
-	otherParsGraphBkgOnly[j]->SetPoint(18,18,fObservables.POTSlopeCorrectionObs);
+	otherParsGraph[j]->SetPoint(18,18,fObservables.POTSlopeCorrectionObs);
 
 	nobsGraph[j]->Write();	
 	nbkgGraph[j]->Write();	
@@ -3130,6 +3144,9 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
 	effiGraph[j]->Write();
 	otherParsGraph[j]->Write();
       }
+
+      if (fVerbosity == 2) cout << "coupling " << gven << " ...done, now cleaning up memory for this coupling and mass " << massn << endl;
+
       for (int j=0; j<fNumberOfGenerationsExpectedLimit; j++) {
 	delete nobsGraph[j];
 	delete nbkgGraph[j];
@@ -3143,6 +3160,7 @@ void statisticalTreatmentTH::SimulatePseudoDataToFile(TString filename){
       delete[] effiGraph;
       delete[] otherParsGraph;
     }
+    if (fVerbosity == 2) cout << "...mass " << massn << " done" << endl;
   }
   filo->Close();
   delete filo;
