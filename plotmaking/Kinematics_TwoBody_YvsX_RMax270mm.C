@@ -4,7 +4,7 @@
 void Kinematics_TwoBody_YvsX_RMax270mm()
 {
 //=========Macro generated from canvas: radiiCanva_0/radiiCanva_0
-//=========  (Tue May 27 14:48:59 2025) by ROOT version 6.30/04
+//=========  (Wed May 28 14:22:06 2025) by ROOT version 6.30/04
    TCanvas *radiiCanva_0 = new TCanvas("radiiCanva_0", "radiiCanva_0",0,66,800,800);
    gStyle->SetOptFit(1);
    gStyle->SetOptTitle(0);
@@ -731,6 +731,16 @@ void Kinematics_TwoBody_YvsX_RMax270mm()
    ellipse->SetNoEdges();
    ellipse->Draw();
    
+   ellipse = new TEllipse(0,0,300,300,319.8892,360,0);
+   ellipse->SetFillStyle(0);
+
+   ci = TColor::GetColor("#333399");
+   ellipse->SetLineColor(ci);
+   ellipse->SetLineStyle(2);
+   ellipse->SetLineWidth(3);
+   ellipse->SetNoEdges();
+   ellipse->Draw();
+   
    ellipse = new TEllipse(0,0,158.9305,158.9305,0,40.1108,0);
    ellipse->SetFillStyle(0);
 
@@ -749,6 +759,16 @@ void Kinematics_TwoBody_YvsX_RMax270mm()
    ellipse->SetNoEdges();
    ellipse->Draw();
    
+   ellipse = new TEllipse(0,0,300,300,0,40.1108,0);
+   ellipse->SetFillStyle(0);
+
+   ci = TColor::GetColor("#333399");
+   ellipse->SetLineColor(ci);
+   ellipse->SetLineStyle(2);
+   ellipse->SetLineWidth(3);
+   ellipse->SetNoEdges();
+   ellipse->Draw();
+   
    ellipse = new TEllipse(0,0,158.9305,158.9305,139.8892,220.1108,0);
    ellipse->SetFillStyle(0);
 
@@ -763,6 +783,16 @@ void Kinematics_TwoBody_YvsX_RMax270mm()
 
    ci = TColor::GetColor("#ff0000");
    ellipse->SetLineColor(ci);
+   ellipse->SetLineWidth(3);
+   ellipse->SetNoEdges();
+   ellipse->Draw();
+   
+   ellipse = new TEllipse(0,0,300,300,139.8892,220.1108,0);
+   ellipse->SetFillStyle(0);
+
+   ci = TColor::GetColor("#333399");
+   ellipse->SetLineColor(ci);
+   ellipse->SetLineStyle(2);
    ellipse->SetLineWidth(3);
    ellipse->SetNoEdges();
    ellipse->Draw();
@@ -820,19 +850,19 @@ void Kinematics_TwoBody_YvsX_RMax270mm()
    ellipse->SetLineWidth(3);
    ellipse->SetNoEdges();
    ellipse->Draw();
-   TLine *line = new TLine(105.2755,88.6841,206.496,173.9523);
+   TLine *line = new TLine(105.2755,88.6841,229.44,193.2803);
    line->SetLineStyle(2);
    line->SetLineWidth(2);
    line->Draw();
-   line = new TLine(105.2755,-88.6841,206.496,-173.9523);
+   line = new TLine(105.2755,-88.6841,229.44,-193.2803);
    line->SetLineStyle(2);
    line->SetLineWidth(2);
    line->Draw();
-   line = new TLine(-105.2755,88.6841,-206.496,173.9523);
+   line = new TLine(-105.2755,88.6841,-229.44,193.2803);
    line->SetLineStyle(2);
    line->SetLineWidth(2);
    line->Draw();
-   line = new TLine(-105.2755,-88.6841,-206.496,-173.9523);
+   line = new TLine(-105.2755,-88.6841,-229.44,-193.2803);
    line->SetLineStyle(2);
    line->SetLineWidth(2);
    line->Draw();

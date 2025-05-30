@@ -4,9 +4,9 @@
 void FitPulls_gR()
 {
 //=========Macro generated from canvas: pullCanva/
-//=========  (Tue May 27 22:35:31 2025) by ROOT version 6.30/04
+//=========  (Fri May 30 11:38:47 2025) by ROOT version 6.30/04
    TCanvas *pullCanva = new TCanvas("pullCanva", "",900,66,700,500);
-   gStyle->SetOptFit(0);
+   gStyle->SetOptFit(1);
    gStyle->SetOptTitle(0);
    pullCanva->Range(-6.578947,-4.105263,36.84211,3.789474);
    pullCanva->SetFillColor(0);
@@ -36,7 +36,7 @@ void FitPulls_gR()
    hframe__1->GetYaxis()->SetLabelFont(42);
    hframe__1->GetYaxis()->SetLabelSize(0.06);
    hframe__1->GetYaxis()->SetTitleSize(0.06);
-   hframe__1->GetYaxis()->SetTitleOffset(0.7);
+   hframe__1->GetYaxis()->SetTitleOffset(0.8);
    hframe__1->GetZaxis()->SetLabelFont(42);
    hframe__1->GetZaxis()->SetLabelSize(0.06);
    hframe__1->GetZaxis()->SetTitleSize(0.06);
@@ -211,32 +211,28 @@ void FitPulls_gR()
    funPulls2->SetParent(graph);
    graph->GetListOfFunctions()->Add(funPulls2);
    
-//   TPaveStats *ptstats = new TPaveStats(0.49,0.65,0.85,0.85,"brNDC");
-//   ptstats->SetName("stats");
-//   ptstats->SetBorderSize(0);
-//   ptstats->SetFillColor(0);
-//   ptstats->SetTextAlign(12);
-//   ptstats->SetTextFont(42);
-//   TText *ptstats_LaTex = ptstats->AddText("#chi^{2} / ndf = 23.58 / 30");
-//   ptstats_LaTex = ptstats->AddText("Prob  = 0.7907");
-//   ptstats_LaTex = ptstats->AddText("p0       = 0.01342 #pm 0.157 ");
-//   ptstats_LaTex = ptstats->AddText("p1       = -0.2737 #pm 0.2546 ");
-//   ptstats->SetOptStat(0);
-//   ptstats->SetOptFit(1111);
-//   ptstats->Draw();
-//   graph->GetListOfFunctions()->Add(ptstats);
-//   ptstats->SetParent(graph->GetListOfFunctions());
+   TPaveStats *ptstats = new TPaveStats(0.49,0.65,0.85,0.85,"brNDC");
+   ptstats->SetName("stats");
+   ptstats->SetBorderSize(0);
+   ptstats->SetFillColor(0);
+   ptstats->SetTextAlign(12);
+   ptstats->SetTextFont(42);
+   ptstats->SetOptStat(0);
+   ptstats->SetOptFit(0);
+   ptstats->Draw();
+   graph->GetListOfFunctions()->Add(ptstats);
+   ptstats->SetParent(graph->GetListOfFunctions());
    graph->Draw("p");
    
-   TLegend *leg = new TLegend(0.2,0.7,0.8,0.85,NULL,"brNDC");
+   TLegend *leg = new TLegend(0.2,0.7,0.7,0.85,NULL,"brNDC");
    leg->SetTextFont(62);
-   leg->SetTextSize(0.04);
+   leg->SetTextSize(0.05894737);
    leg->SetLineColor(1);
    leg->SetLineStyle(1);
    leg->SetLineWidth(1);
    leg->SetFillColor(0);
    leg->SetFillStyle(1001);
-   TLegendEntry *entry=leg->AddEntry("funPulls","#splitline{P0 = 0.01 #pm 0.16, P1 = (-0.27 #pm 0.25)}{#chi^{2}/ndf = 23.6 / 30, Prob = 0.79}","L");
+   TLegendEntry *entry=leg->AddEntry("funPulls","#splitline{P0 =   0.01 #pm 0.16}{P1 = #minus0.27 #pm 0.25}","L");
 
    ci = TColor::GetColor("#0000ff");
    entry->SetLineColor(ci);

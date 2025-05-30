@@ -4,7 +4,7 @@
 void Kinematics_TwoBody_YvsX_RMax300mm()
 {
 //=========Macro generated from canvas: radiiCanva_0/radiiCanva_0
-//=========  (Tue May 27 14:43:12 2025) by ROOT version 6.30/04
+//=========  (Wed May 28 14:22:48 2025) by ROOT version 6.30/04
    TCanvas *radiiCanva_0 = new TCanvas("radiiCanva_0", "radiiCanva_0",0,66,800,800);
    gStyle->SetOptFit(1);
    gStyle->SetOptTitle(0);
@@ -731,6 +731,16 @@ void Kinematics_TwoBody_YvsX_RMax300mm()
    ellipse->SetNoEdges();
    ellipse->Draw();
    
+   ellipse = new TEllipse(0,0,300,300,319.8892,360,0);
+   ellipse->SetFillStyle(0);
+
+   ci = TColor::GetColor("#333399");
+   ellipse->SetLineColor(ci);
+   ellipse->SetLineStyle(2);
+   ellipse->SetLineWidth(3);
+   ellipse->SetNoEdges();
+   ellipse->Draw();
+   
    ellipse = new TEllipse(0,0,139.8695,139.8695,0,40.1108,0);
    ellipse->SetFillStyle(0);
 
@@ -749,6 +759,16 @@ void Kinematics_TwoBody_YvsX_RMax300mm()
    ellipse->SetNoEdges();
    ellipse->Draw();
    
+   ellipse = new TEllipse(0,0,300,300,0,40.1108,0);
+   ellipse->SetFillStyle(0);
+
+   ci = TColor::GetColor("#333399");
+   ellipse->SetLineColor(ci);
+   ellipse->SetLineStyle(2);
+   ellipse->SetLineWidth(3);
+   ellipse->SetNoEdges();
+   ellipse->Draw();
+   
    ellipse = new TEllipse(0,0,139.8695,139.8695,139.8892,220.1108,0);
    ellipse->SetFillStyle(0);
 
@@ -763,6 +783,16 @@ void Kinematics_TwoBody_YvsX_RMax300mm()
 
    ci = TColor::GetColor("#ff0000");
    ellipse->SetLineColor(ci);
+   ellipse->SetLineWidth(3);
+   ellipse->SetNoEdges();
+   ellipse->Draw();
+   
+   ellipse = new TEllipse(0,0,300,300,139.8892,220.1108,0);
+   ellipse->SetFillStyle(0);
+
+   ci = TColor::GetColor("#333399");
+   ellipse->SetLineColor(ci);
+   ellipse->SetLineStyle(2);
    ellipse->SetLineWidth(3);
    ellipse->SetNoEdges();
    ellipse->Draw();

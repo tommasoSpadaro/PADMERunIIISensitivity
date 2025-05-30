@@ -4,7 +4,7 @@
 void ECalTrueEfficiency()
 {
 //=========Macro generated from canvas: canvaEffi/canvaTrueEffi
-//=========  (Tue May 27 14:41:06 2025) by ROOT version 6.30/04
+//=========  (Wed May 28 14:33:31 2025) by ROOT version 6.30/04
    TCanvas *canvaEffi = new TCanvas("canvaEffi", "canvaTrueEffi",0,66,800,800);
    gStyle->SetOptFit(1);
    gStyle->SetOptTitle(0);
@@ -366,7 +366,7 @@ void ECalTrueEfficiency()
    ECalYXEffiTrue2__1->GetYaxis()->SetLabelFont(42);
    ECalYXEffiTrue2__1->GetYaxis()->SetLabelSize(0.04);
    ECalYXEffiTrue2__1->GetYaxis()->SetTitleSize(0.05);
-   ECalYXEffiTrue2__1->GetYaxis()->SetTitleOffset(1.5);
+   ECalYXEffiTrue2__1->GetYaxis()->SetTitleOffset(1.3);
    ECalYXEffiTrue2__1->GetZaxis()->SetLabelFont(42);
    ECalYXEffiTrue2__1->GetZaxis()->SetLabelSize(0.025);
    ECalYXEffiTrue2__1->GetZaxis()->SetTitleSize(0.06);
@@ -391,6 +391,16 @@ void ECalTrueEfficiency()
    ellipse->SetNoEdges();
    ellipse->Draw();
    
+   ellipse = new TEllipse(-12.4,-0.5,300,300,321.8892,360,0);
+   ellipse->SetFillStyle(0);
+
+   ci = TColor::GetColor("#333399");
+   ellipse->SetLineColor(ci);
+   ellipse->SetLineStyle(2);
+   ellipse->SetLineWidth(3);
+   ellipse->SetNoEdges();
+   ellipse->Draw();
+   
    ellipse = new TEllipse(-12.4,-0.5,158.9305,158.9305,0,38.1108,0);
    ellipse->SetFillStyle(0);
 
@@ -409,6 +419,16 @@ void ECalTrueEfficiency()
    ellipse->SetNoEdges();
    ellipse->Draw();
    
+   ellipse = new TEllipse(-12.4,-0.5,300,300,0,38.1108,0);
+   ellipse->SetFillStyle(0);
+
+   ci = TColor::GetColor("#333399");
+   ellipse->SetLineColor(ci);
+   ellipse->SetLineStyle(2);
+   ellipse->SetLineWidth(3);
+   ellipse->SetNoEdges();
+   ellipse->Draw();
+   
    ellipse = new TEllipse(-12.4,-0.5,158.9305,158.9305,137.8892,222.1108,0);
    ellipse->SetFillStyle(0);
 
@@ -423,6 +443,16 @@ void ECalTrueEfficiency()
 
    ci = TColor::GetColor("#ff0000");
    ellipse->SetLineColor(ci);
+   ellipse->SetLineWidth(3);
+   ellipse->SetNoEdges();
+   ellipse->Draw();
+   
+   ellipse = new TEllipse(-12.4,-0.5,300,300,137.8892,222.1108,0);
+   ellipse->SetFillStyle(0);
+
+   ci = TColor::GetColor("#333399");
+   ellipse->SetLineColor(ci);
+   ellipse->SetLineStyle(2);
    ellipse->SetLineWidth(3);
    ellipse->SetNoEdges();
    ellipse->Draw();
@@ -480,19 +510,19 @@ void ECalTrueEfficiency()
    ellipse->SetLineWidth(3);
    ellipse->SetNoEdges();
    ellipse->Draw();
-   TLine *line = new TLine(72.97033,61.47023,238.8012,201.1662);
+   TLine *line = new TLine(72.97033,61.47023,229.44,193.2803);
    line->SetLineStyle(2);
    line->SetLineWidth(2);
    line->Draw();
-   line = new TLine(72.97033,-61.47023,238.8012,-201.1662);
+   line = new TLine(72.97033,-61.47023,229.44,-193.2803);
    line->SetLineStyle(2);
    line->SetLineWidth(2);
    line->Draw();
-   line = new TLine(-72.97033,61.47023,-238.8012,201.1662);
+   line = new TLine(-72.97033,61.47023,-229.44,193.2803);
    line->SetLineStyle(2);
    line->SetLineWidth(2);
    line->Draw();
-   line = new TLine(-72.97033,-61.47023,-238.8012,-201.1662);
+   line = new TLine(-72.97033,-61.47023,-229.44,-193.2803);
    line->SetLineStyle(2);
    line->SetLineWidth(2);
    line->Draw();
