@@ -1,25 +1,25 @@
 #ifdef __CLING__
 #pragma cling optimize(0)
 #endif
-void LeakageCorrection()
+void LeakageCorr()
 {
 //=========Macro generated from canvas: Radiation induced correction/
 //=========  (Wed May 28 10:50:17 2025) by ROOT version 6.30/04
-   TCanvas *Radiation induced correction = new TCanvas("Radiation induced correction", "",900,66,700,500);
+   TCanvas *Radiation_induced_correction = new TCanvas("Radiation induced correction", "",900,66,700,500);
    gStyle->SetOptFit(1);
    gStyle->SetOptTitle(0);
-   Radiation->Range(0,0,1,1);
-   Radiation->SetFillColor(0);
-   Radiation->SetBorderMode(0);
-   Radiation->SetBorderSize(2);
-   Radiation->SetTickx(1);
-   Radiation->SetTicky(1);
-   Radiation->SetLeftMargin(0.14);
-   Radiation->SetBottomMargin(0.14);
-   Radiation->SetFrameBorderMode(0);
+   Radiation_induced_correction->Range(0,0,1,1);
+   Radiation_induced_correction->SetFillColor(0);
+   Radiation_induced_correction->SetBorderMode(0);
+   Radiation_induced_correction->SetBorderSize(2);
+   Radiation_induced_correction->SetTickx(1);
+   Radiation_induced_correction->SetTicky(1);
+   Radiation_induced_correction->SetLeftMargin(0.14);
+   Radiation_induced_correction->SetBottomMargin(0.14);
+   Radiation_induced_correction->SetFrameBorderMode(0);
   
 // ------------>Primitives in pad: Radiation induced correction_1
-   TPad *Radiation__2 = new TPad("Radiation induced correction_1", "Radiation induced correction_1",0.01,0.51,0.99,0.99);
+   TPad *Radiation__2 = new TPad("Radiation_induced_correction_1", "Radiation_induced_correction_1",0.01,0.51,0.99,0.99);
    Radiation__2->Draw();
    Radiation__2->cd();
    Radiation__2->Range(-10.60526,0.9352196,47.28947,1.068274);
@@ -97,7 +97,7 @@ void LeakageCorrection()
    
    gre->Draw("p");
    Radiation__2->Modified();
-   Radiation->cd();
+   Radiation_induced_correction->cd();
   
 // ------------>Primitives in pad: Radiation induced correction_2
    TPad *Radiation__3 = new TPad("Radiation induced correction_2", "Radiation induced correction_2",0.01,0.01,0.99,0.49);
@@ -138,19 +138,19 @@ void LeakageCorrection()
    hframe__4->GetZaxis()->SetTitleOffset(0.7);
    hframe__4->Draw(" ");
    
-   Double_t Radiation induced correction_fx1006[42] = { 17.12853, 17.26818, 17.22433, 17.17917, 17.40201, 17.35996, 17.31664, 17.09748, 17.06696, 16.99856, 16.9516, 16.90572, 16.85911, 16.81358, 16.76397, 16.71757, 16.67104,
+   Double_t Radiation_induced_correction_fx1006[42] = { 17.12853, 17.26818, 17.22433, 17.17917, 17.40201, 17.35996, 17.31664, 17.09748, 17.06696, 16.99856, 16.9516, 16.90572, 16.85911, 16.81358, 16.76397, 16.71757, 16.67104,
    16.62377, 16.57698, 16.52852, 16.48146, 16.43395, 16.38631, 17.3367, 17.29449, 17.25071, 17.20592, 17.16429, 17.12077, 17.07475, 17.0289, 16.98232, 16.93562,
    16.88848, 16.84394, 16.79442, 16.74658, 16.698, 16.65049, 16.60224, 16.55508, 17.38262 };
-   Double_t Radiation induced correction_fy1006[42] = { 0.9514393, 0.9531289, 0.9557525, 0.9578893, 0.9599854, 0.9619449, 0.9640117, 0.9662956, 0.9684259, 0.9705587, 0.9727935, 0.9750433, 0.9772847, 0.9795258, 0.9816668, 0.98385, 0.9860371,
+   Double_t Radiation_induced_correction_fy1006[42] = { 0.9514393, 0.9531289, 0.9557525, 0.9578893, 0.9599854, 0.9619449, 0.9640117, 0.9662956, 0.9684259, 0.9705587, 0.9727935, 0.9750433, 0.9772847, 0.9795258, 0.9816668, 0.98385, 0.9860371,
    0.9883865, 0.9907452, 0.9931115, 0.9953925, 0.9978558, 1.000195, 1.012646, 1.014816, 1.016923, 1.01998, 1.022141, 1.023597, 1.02583, 1.027825, 1.030042, 1.031948,
    1.033818, 1.035931, 1.038175, 1.040261, 1.042193, 1.04426, 1.046265, 1.048124, 1.050416 };
-   Double_t Radiation induced correction_fex1006[42] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   Double_t Radiation_induced_correction_fex1006[42] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0, 0 };
-   Double_t Radiation induced correction_fey1006[42] = { -0.003399235, -0.003280419, -0.003095928, -0.00294567, -0.002798272, -0.002660478, -0.002515139, -0.002354533, -0.002204726, -0.002054749, -0.001897597, -0.001739391, -0.001581776, -0.001424178, -0.001273618, -0.001120096, -0.0009663002,
+   Double_t Radiation_induced_correction_fey1006[42] = { -0.003399235, -0.003280419, -0.003095928, -0.00294567, -0.002798272, -0.002660478, -0.002515139, -0.002354533, -0.002204726, -0.002054749, -0.001897597, -0.001739391, -0.001581776, -0.001424178, -0.001273618, -0.001120096, -0.0009663002,
    -0.0008010896, -0.0006352188, -0.0004688203, -0.0003084209, -0.0001352011, 2.928599e-05, 0.0009048842, 0.001057471, 0.001205602, 0.001420618, 0.001572549, 0.001674952, 0.001831985, 0.001972227, 0.002128144, 0.00226216,
    0.002393682, 0.002542273, 0.002700039, 0.00284677, 0.002982608, 0.003127993, 0.00326897, 0.003399689, 0.003560878 };
-   gre = new TGraphErrors(42,Radiation induced correction_fx1006,Radiation induced correction_fy1006,Radiation induced correction_fex1006,Radiation induced correction_fey1006);
+   gre = new TGraphErrors(42,Radiation_induced_correction_fx1006,Radiation_induced_correction_fy1006,Radiation_induced_correction_fex1006,Radiation_induced_correction_fey1006);
    gre->SetName("Radiation induced correction");
    gre->SetTitle("");
    gre->SetFillStyle(1000);
@@ -174,11 +174,11 @@ void LeakageCorrection()
    Graph_RadiationsPinducedsPcorrection1006->GetZaxis()->SetLabelSize(0.06);
    Graph_RadiationsPinducedsPcorrection1006->GetZaxis()->SetTitleSize(0.06);
    Graph_RadiationsPinducedsPcorrection1006->GetZaxis()->SetTitleOffset(0.7);
-   gre->SetHistogram(Graph_Radiation induced correction1006);
+   gre->SetHistogram(Graph_RadiationsPinducedsPcorrection1006);
    
    gre->Draw("p");
    Radiation__3->Modified();
-   Radiation->cd();
-   Radiation->Modified();
-   Radiation induced correction->SetSelected(Radiation induced correction);
+   Radiation_induced_correction->cd();
+   Radiation_induced_correction->Modified();
+   Radiation_induced_correction->SetSelected(Radiation_induced_correction);
 }

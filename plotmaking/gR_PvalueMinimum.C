@@ -229,7 +229,7 @@ void gR_PvalueMinimum()
    Graph_SBFitOnBToyGraph_im34_ig20_mass16dO900000_gven0dO000550_pseudoEvts1->GetZaxis()->SetLabelSize(0.06);
    Graph_SBFitOnBToyGraph_im34_ig20_mass16dO900000_gven0dO000550_pseudoEvts1->GetZaxis()->SetTitleSize(0.06);
    Graph_SBFitOnBToyGraph_im34_ig20_mass16dO900000_gven0dO000550_pseudoEvts1->GetZaxis()->SetTitleOffset(0.7);
-   graph->SetHistogram(Graph_SBFitOnBToyGraph_im34_ig20_mass1690_gven000550_pseudoEvts1);
+   graph->SetHistogram(Graph_SBFitOnBToyGraph_im34_ig20_mass16dO900000_gven0dO000550_pseudoEvts1);
    
    graph->Draw("pl");
    

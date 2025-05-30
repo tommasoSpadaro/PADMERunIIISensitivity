@@ -1,22 +1,22 @@
 #ifdef __CLING__
 #pragma cling optimize(0)
 #endif
-void TPCorrection()
+void TagAndProbeCorr()
 {
 //=========Macro generated from canvas: Tag and probe correction/
 //=========  (Wed May 28 10:49:31 2025) by ROOT version 6.30/04
-   TCanvas *Tag and probe correction = new TCanvas("Tag and probe correction", "",900,66,700,500);
+   TCanvas *Tag_and_probe_correction = new TCanvas("Tag and probe correction", "",900,66,700,500);
    gStyle->SetOptFit(1);
    gStyle->SetOptTitle(0);
-   Tag->Range(0,0,1,1);
-   Tag->SetFillColor(0);
-   Tag->SetBorderMode(0);
-   Tag->SetBorderSize(2);
-   Tag->SetTickx(1);
-   Tag->SetTicky(1);
-   Tag->SetLeftMargin(0.14);
-   Tag->SetBottomMargin(0.14);
-   Tag->SetFrameBorderMode(0);
+   Tag_and_probe_correction->Range(0,0,1,1);
+   Tag_and_probe_correction->SetFillColor(0);
+   Tag_and_probe_correction->SetBorderMode(0);
+   Tag_and_probe_correction->SetBorderSize(2);
+   Tag_and_probe_correction->SetTickx(1);
+   Tag_and_probe_correction->SetTicky(1);
+   Tag_and_probe_correction->SetLeftMargin(0.14);
+   Tag_and_probe_correction->SetBottomMargin(0.14);
+   Tag_and_probe_correction->SetFrameBorderMode(0);
   
 // ------------>Primitives in pad: Tag and probe correction_1
    TPad *Tag__0 = new TPad("Tag and probe correction_1", "Tag and probe correction_1",0.01,0.51,0.99,0.99);
@@ -97,7 +97,7 @@ void TPCorrection()
    
    gre->Draw("p");
    Tag__0->Modified();
-   Tag->cd();
+   Tag_and_probe_correction->cd();
   
 // ------------>Primitives in pad: Tag and probe correction_2
    TPad *Tag__1 = new TPad("Tag and probe correction_2", "Tag and probe correction_2",0.01,0.01,0.99,0.49);
@@ -138,19 +138,19 @@ void TPCorrection()
    hframe__2->GetZaxis()->SetTitleOffset(0.7);
    hframe__2->Draw(" ");
    
-   Double_t Tag and probe correction_fx1002[42] = { 17.12853, 17.26818, 17.22433, 17.17917, 17.40201, 17.35996, 17.31664, 17.09748, 17.06696, 16.99856, 16.9516, 16.90572, 16.85911, 16.81358, 16.76397, 16.71757, 16.67104,
+   Double_t Tag_and_probe_correction_fx1002[42] = { 17.12853, 17.26818, 17.22433, 17.17917, 17.40201, 17.35996, 17.31664, 17.09748, 17.06696, 16.99856, 16.9516, 16.90572, 16.85911, 16.81358, 16.76397, 16.71757, 16.67104,
    16.62377, 16.57698, 16.52852, 16.48146, 16.43395, 16.38631, 17.3367, 17.29449, 17.25071, 17.20592, 17.16429, 17.12077, 17.07475, 17.0289, 16.98232, 16.93562,
    16.88848, 16.84394, 16.79442, 16.74658, 16.698, 16.65049, 16.60224, 16.55508, 17.38262 };
-   Double_t Tag and probe correction_fy1002[42] = { 0.9653157, 0.9821663, 1.040522, 0.9755274, 1.024487, 1.015691, 1.009968, 1.005492, 0.9989658, 0.9862509, 1.023646, 1.004755, 1.025542, 0.9897898, 1.034313, 1.004568, 1.007708,
+   Double_t Tag_and_probe_correction_fy1002[42] = { 0.9653157, 0.9821663, 1.040522, 0.9755274, 1.024487, 1.015691, 1.009968, 1.005492, 0.9989658, 0.9862509, 1.023646, 1.004755, 1.025542, 0.9897898, 1.034313, 1.004568, 1.007708,
    1.000844, 1.017439, 0.981537, 0.9743422, 0.9536991, 0.9801878, 1.02941, 1.027122, 0.9675629, 1.033734, 1.014986, 1.012468, 1.023675, 1.016821, 1.002855, 0.9848139,
    0.9860235, 0.974163, 0.9638195, 0.988247, 0.987406, 0.9595034, 0.9618753, 0.9776346, 1.042838 };
-   Double_t Tag and probe correction_fex1002[42] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   Double_t Tag_and_probe_correction_fex1002[42] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0, 0 };
-   Double_t Tag and probe correction_fey1002[42] = { 0.02151043, 0.02410935, 0.02161758, 0.02158431, 0.02286843, 0.02327728, 0.0223906, 0.02183823, 0.02190836, 0.02190175, 0.02289437, 0.02164873, 0.02219269, 0.02172602, 0.02294937, 0.0221836, 0.02219998,
+   Double_t Tag_and_probe_correction_fey1002[42] = { 0.02151043, 0.02410935, 0.02161758, 0.02158431, 0.02286843, 0.02327728, 0.0223906, 0.02183823, 0.02190836, 0.02190175, 0.02289437, 0.02164873, 0.02219269, 0.02172602, 0.02294937, 0.0221836, 0.02219998,
    0.02159703, 0.03320996, 0.03171855, 0.03186191, 0.03057934, 0.03222275, 0.0216081, 0.0217599, 0.02036175, 0.01911124, 0.02158556, 0.02511173, 0.02142916, 0.02191946, 0.02086188, 0.02149863,
    0.02190794, 0.02044428, 0.02014992, 0.02127322, 0.02191492, 0.02075106, 0.02166696, 0.03361209, 0.02125416 };
-   gre = new TGraphErrors(42,Tag and probe correction_fx1002,Tag and probe correction_fy1002,Tag and probe correction_fex1002,Tag and probe correction_fey1002);
+   gre = new TGraphErrors(42,Tag_and_probe_correction_fx1002,Tag_and_probe_correction_fy1002,Tag_and_probe_correction_fex1002,Tag_and_probe_correction_fey1002);
    gre->SetName("Tag and probe correction");
    gre->SetTitle("");
    gre->SetFillStyle(1000);
@@ -174,7 +174,7 @@ void TPCorrection()
    Graph_TagsPandsPprobesPcorrection1002->GetZaxis()->SetLabelSize(0.06);
    Graph_TagsPandsPprobesPcorrection1002->GetZaxis()->SetTitleSize(0.06);
    Graph_TagsPandsPprobesPcorrection1002->GetZaxis()->SetTitleOffset(0.7);
-   gre->SetHistogram(Graph_Tag and probe correction1002);
+   gre->SetHistogram(Graph_TagsPandsPprobesPcorrection1002);
    
    
    TF1 *pol01003 = new TF1("pol0","pol0",16.28474,17.50358, TF1::EAddToList::kNo);
@@ -218,7 +218,7 @@ void TPCorrection()
    ptstats->SetParent(gre->GetListOfFunctions());
    gre->Draw("p");
    Tag__1->Modified();
-   Tag->cd();
-   Tag->Modified();
-   Tag and probe correction->SetSelected(Tag and probe correction);
+   Tag_and_probe_correction->cd();
+   Tag_and_probe_correction->Modified();
+   Tag_and_probe_correction->SetSelected(Tag_and_probe_correction);
 }

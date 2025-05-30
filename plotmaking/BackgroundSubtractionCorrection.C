@@ -5,18 +5,18 @@ void BackgroundSubtractionCorrection()
 {
 //=========Macro generated from canvas: Background subtraction/
 //=========  (Wed May 28 10:50:46 2025) by ROOT version 6.30/04
-   TCanvas *Background subtraction = new TCanvas("Background subtraction", "",900,66,700,500);
+   TCanvas *Background_subtraction = new TCanvas("Background subtraction", "",900,66,700,500);
    gStyle->SetOptFit(1);
    gStyle->SetOptTitle(0);
-   Background->Range(0,0,1,1);
-   Background->SetFillColor(0);
-   Background->SetBorderMode(0);
-   Background->SetBorderSize(2);
-   Background->SetTickx(1);
-   Background->SetTicky(1);
-   Background->SetLeftMargin(0.14);
-   Background->SetBottomMargin(0.14);
-   Background->SetFrameBorderMode(0);
+   Background_subtraction->Range(0,0,1,1);
+   Background_subtraction->SetFillColor(0);
+   Background_subtraction->SetBorderMode(0);
+   Background_subtraction->SetBorderSize(2);
+   Background_subtraction->SetTickx(1);
+   Background_subtraction->SetTicky(1);
+   Background_subtraction->SetLeftMargin(0.14);
+   Background_subtraction->SetBottomMargin(0.14);
+   Background_subtraction->SetFrameBorderMode(0);
   
 // ------------>Primitives in pad: Background subtraction_1
    TPad *Background__6 = new TPad("Background subtraction_1", "Background subtraction_1",0.01,0.51,0.99,0.99);
@@ -97,7 +97,7 @@ void BackgroundSubtractionCorrection()
    
    gre->Draw("p");
    Background__6->Modified();
-   Background->cd();
+   Background_subtraction->cd();
   
 // ------------>Primitives in pad: Background subtraction_2
    TPad *Background__7 = new TPad("Background subtraction_2", "Background subtraction_2",0.01,0.01,0.99,0.49);
@@ -138,19 +138,19 @@ void BackgroundSubtractionCorrection()
    hframe__8->GetZaxis()->SetTitleOffset(0.7);
    hframe__8->Draw(" ");
    
-   Double_t Background subtraction_fx1010[42] = { 17.12853, 17.26818, 17.22433, 17.17917, 17.40201, 17.35996, 17.31664, 17.09748, 17.06696, 16.99856, 16.9516, 16.90572, 16.85911, 16.81358, 16.76397, 16.71757, 16.67104,
+   Double_t Background_subtraction_fx1010[42] = { 17.12853, 17.26818, 17.22433, 17.17917, 17.40201, 17.35996, 17.31664, 17.09748, 17.06696, 16.99856, 16.9516, 16.90572, 16.85911, 16.81358, 16.76397, 16.71757, 16.67104,
    16.62377, 16.57698, 16.52852, 16.48146, 16.43395, 16.38631, 17.3367, 17.29449, 17.25071, 17.20592, 17.16429, 17.12077, 17.07475, 17.0289, 16.98232, 16.93562,
    16.88848, 16.84394, 16.79442, 16.74658, 16.698, 16.65049, 16.60224, 16.55508, 17.38262 };
-   Double_t Background subtraction_fy1010[42] = { 1.003312, 1.003824, 0.999191, 0.9943999, 1.004546, 1.000374, 0.9881919, 1.002374, 1.003613, 1.00118, 0.9969095, 0.9999726, 0.9985126, 0.9932358, 1.000578, 0.9985634, 0.9985533,
+   Double_t Background_subtraction_fy1010[42] = { 1.003312, 1.003824, 0.999191, 0.9943999, 1.004546, 1.000374, 0.9881919, 1.002374, 1.003613, 1.00118, 0.9969095, 0.9999726, 0.9985126, 0.9932358, 1.000578, 0.9985634, 0.9985533,
    1.006968, 1.005861, 1.008901, 1.005486, 1.008066, 1.004688, 0.9994277, 0.9941543, 0.9995586, 0.9930887, 0.9961398, 0.9976745, 0.9941725, 0.9975303, 0.990504, 0.9980961,
    1.000101, 1.003376, 1.002899, 0.9957205, 1.008855, 1.001578, 0.9935611, 1.008643, 0.9857681 };
-   Double_t Background subtraction_fex1010[42] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   Double_t Background_subtraction_fex1010[42] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0, 0 };
-   Double_t Background subtraction_fey1010[42] = { 0.001489397, 0.00170805, 0.001417364, 0.001628151, 0.001513137, 0.001619333, 0.001713477, 0.001485108, 0.001518152, 0.001545351, 0.001579884, 0.001526794, 0.001549593, 0.001618943, 0.001571236, 0.001586538, 0.00159699,
+   Double_t Background_subtraction_fey1010[42] = { 0.001489397, 0.00170805, 0.001417364, 0.001628151, 0.001513137, 0.001619333, 0.001713477, 0.001485108, 0.001518152, 0.001545351, 0.001579884, 0.001526794, 0.001549593, 0.001618943, 0.001571236, 0.001586538, 0.00159699,
    0.001433569, 0.001448286, 0.001400491, 0.00146977, 0.001393983, 0.001478853, 0.001475908, 0.001523525, 0.001504538, 0.001301928, 0.001528547, 0.001851356, 0.001535436, 0.001555379, 0.00156108, 0.001594073,
    0.001595102, 0.001464199, 0.001430482, 0.00158141, 0.001462214, 0.001521954, 0.001650745, 0.001514388, 0.001571775 };
-   gre = new TGraphErrors(42,Background subtraction_fx1010,Background subtraction_fy1010,Background subtraction_fex1010,Background subtraction_fey1010);
+   gre = new TGraphErrors(42,Background_subtraction_fx1010,Background_subtraction_fy1010,Background_subtraction_fex1010,Background_subtraction_fey1010);
    gre->SetName("Background subtraction");
    gre->SetTitle("");
    gre->SetFillStyle(1000);
@@ -174,11 +174,11 @@ void BackgroundSubtractionCorrection()
    Graph_BackgroundsPsubtraction1010->GetZaxis()->SetLabelSize(0.06);
    Graph_BackgroundsPsubtraction1010->GetZaxis()->SetTitleSize(0.06);
    Graph_BackgroundsPsubtraction1010->GetZaxis()->SetTitleOffset(0.7);
-   gre->SetHistogram(Graph_Background subtraction1010);
+   gre->SetHistogram(Graph_BackgroundsPsubtraction1010);
    
    gre->Draw("p");
    Background__7->Modified();
-   Background->cd();
-   Background->Modified();
-   Background subtraction->SetSelected(Background subtraction);
+   Background_subtraction->cd();
+   Background_subtraction->Modified();
+   Background_subtraction->SetSelected(Background_subtraction);
 }

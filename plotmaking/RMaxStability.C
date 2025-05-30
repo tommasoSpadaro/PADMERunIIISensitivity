@@ -5,18 +5,18 @@ void RMaxStability()
 {
 //=========Macro generated from canvas: Acceptance R_{MaX} stability/
 //=========  (Wed May 28 10:48:22 2025) by ROOT version 6.30/04
-   TCanvas *Acceptance R_{MaX} stability = new TCanvas("Acceptance R_{MaX} stability", "",869,472,700,500);
+   TCanvas *Acceptance_RMax_stability = new TCanvas("Acceptance R_{MaX} stability", "",869,472,700,500);
    gStyle->SetOptFit(1);
    gStyle->SetOptTitle(0);
-   Acceptance->Range(0,0,1,1);
-   Acceptance->SetFillColor(0);
-   Acceptance->SetBorderMode(0);
-   Acceptance->SetBorderSize(2);
-   Acceptance->SetTickx(1);
-   Acceptance->SetTicky(1);
-   Acceptance->SetLeftMargin(0.14);
-   Acceptance->SetBottomMargin(0.14);
-   Acceptance->SetFrameBorderMode(0);
+   Acceptance_RMax_stability->Range(0,0,1,1);
+   Acceptance_RMax_stability->SetFillColor(0);
+   Acceptance_RMax_stability->SetBorderMode(0);
+   Acceptance_RMax_stability->SetBorderSize(2);
+   Acceptance_RMax_stability->SetTickx(1);
+   Acceptance_RMax_stability->SetTicky(1);
+   Acceptance_RMax_stability->SetLeftMargin(0.14);
+   Acceptance_RMax_stability->SetBottomMargin(0.14);
+   Acceptance_RMax_stability->SetFrameBorderMode(0);
   
 // ------------>Primitives in pad: Acceptance R_{MaX} stability_1
    TPad *Acceptance__0 = new TPad("Acceptance R_{MaX} stability_1", "Acceptance R_{MaX} stability_1",0.01,0.51,0.99,0.99);
@@ -97,7 +97,7 @@ void RMaxStability()
    
    gre->Draw("p");
    Acceptance__0->Modified();
-   Acceptance->cd();
+   Acceptance_RMax_stability->cd();
   
 // ------------>Primitives in pad: Acceptance R_{MaX} stability_2
    TPad *Acceptance__1 = new TPad("Acceptance R_{MaX} stability_2", "Acceptance R_{MaX} stability_2",0.01,0.01,0.99,0.49);
@@ -138,43 +138,43 @@ void RMaxStability()
    hframe__2->GetZaxis()->SetTitleOffset(0.7);
    hframe__2->Draw(" ");
    
-   Double_t Acceptance R_{MaX} stability_fx1002[41] = { 17.12853, 17.26818, 17.22433, 17.17917, 17.40201, 17.35996, 17.31664, 17.09748, 17.06696, 16.99856, 16.9516, 16.90572, 16.85911, 16.81358, 16.76397, 16.71757, 16.67104,
+   Double_t Acceptance_RMax_stability_fx1002[41] = { 17.12853, 17.26818, 17.22433, 17.17917, 17.40201, 17.35996, 17.31664, 17.09748, 17.06696, 16.99856, 16.9516, 16.90572, 16.85911, 16.81358, 16.76397, 16.71757, 16.67104,
    16.62377, 16.57698, 16.52852, 16.48146, 16.43395, 16.38631, 17.3367, 17.29449, 17.25071, 17.20592, 17.16429, 17.12077, 17.07475, 17.0289, 16.98232, 16.93562,
    16.88848, 16.84394, 16.79442, 16.74658, 16.698, 16.65049, 16.60224, 16.55508 };
-   Double_t Acceptance R_{MaX} stability_fy1002[41] = { 0.9978657, 0.9991548, 1.000855, 0.9970159, 0.9972961, 1.003064, 1.001659, 0.9989649, 1.001466, 0.9993423, 0.9955243, 0.9969419, 0.9987997, 0.9962668, 0.9997057, 0.998176, 0.9979927,
+   Double_t Acceptance_RMax_stability_fy1002[41] = { 0.9978657, 0.9991548, 1.000855, 0.9970159, 0.9972961, 1.003064, 1.001659, 0.9989649, 1.001466, 0.9993423, 0.9955243, 0.9969419, 0.9987997, 0.9962668, 0.9997057, 0.998176, 0.9979927,
    0.9985409, 0.9950961, 0.9957755, 0.9983814, 1.001029, 0.9984819, 1.002459, 1.000995, 1.002025, 0.9997302, 0.9978949, 1.001468, 1.005232, 1.002895, 1.000549, 1.002456,
    1.003133, 1.001657, 1.001709, 1.00264, 0.9992372, 1.001832, 1.00157, 1.005644 };
-   Double_t Acceptance R_{MaX} stability_fex1002[41] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   Double_t Acceptance_RMax_stability_fex1002[41] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0 };
-   Double_t Acceptance R_{MaX} stability_fey1002[41] = { 0.002295091, 0.002298056, 0.002301966, 0.002293137, 0.002293781, 0.002307048, 0.002303816, 0.002297619, 0.002303372, 0.002298487, 0.002289706, 0.002292966, 0.002297239, 0.002291414, 0.002299323, 0.002295805, 0.002295383,
+   Double_t Acceptance_RMax_stability_fey1002[41] = { 0.002295091, 0.002298056, 0.002301966, 0.002293137, 0.002293781, 0.002307048, 0.002303816, 0.002297619, 0.002303372, 0.002298487, 0.002289706, 0.002292966, 0.002297239, 0.002291414, 0.002299323, 0.002295805, 0.002295383,
    0.002296644, 0.002288721, 0.002290284, 0.002296277, 0.002302366, 0.002296508, 0.002305656, 0.00230229, 0.002304656, 0.002299379, 0.002295158, 0.002303375, 0.002312034, 0.002306659, 0.002301264, 0.002305649,
    0.002307206, 0.00230381, 0.002303931, 0.002306073, 0.002298245, 0.002304213, 0.00230361, 0.002312982 };
-   gre = new TGraphErrors(41,Acceptance R_{MaX} stability_fx1002,Acceptance R_{MaX} stability_fy1002,Acceptance R_{MaX} stability_fex1002,Acceptance R_{MaX} stability_fey1002);
+   gre = new TGraphErrors(41,Acceptance_RMax_stability_fx1002,Acceptance_RMax_stability_fy1002,Acceptance_RMax_stability_fex1002,Acceptance_RMax_stability_fey1002);
    gre->SetName("Acceptance R_{MaX} stability");
    gre->SetTitle("");
    gre->SetFillStyle(1000);
    gre->SetMarkerStyle(36);
    
-   TH1F *Graph_AcceptancesPR_{MaX}sPstability1002 = new TH1F("Graph_AcceptancesPR_{MaX}sPstability1002","",100,16.28474,17.50358);
-   Graph_AcceptancesPR_{MaX}sPstability1002->SetMinimum(0.9912924);
-   Graph_AcceptancesPR_{MaX}sPstability1002->SetMaximum(1.009472);
-   Graph_AcceptancesPR_{MaX}sPstability1002->SetDirectory(nullptr);
-   Graph_AcceptancesPR_{MaX}sPstability1002->SetStats(0);
-   Graph_AcceptancesPR_{MaX}sPstability1002->SetLineWidth(2);
-   Graph_AcceptancesPR_{MaX}sPstability1002->SetMarkerStyle(20);
-   Graph_AcceptancesPR_{MaX}sPstability1002->GetXaxis()->SetLabelFont(42);
-   Graph_AcceptancesPR_{MaX}sPstability1002->GetXaxis()->SetLabelSize(0.06);
-   Graph_AcceptancesPR_{MaX}sPstability1002->GetXaxis()->SetTitleSize(0.06);
-   Graph_AcceptancesPR_{MaX}sPstability1002->GetXaxis()->SetTitleOffset(1.1);
-   Graph_AcceptancesPR_{MaX}sPstability1002->GetYaxis()->SetLabelFont(42);
-   Graph_AcceptancesPR_{MaX}sPstability1002->GetYaxis()->SetLabelSize(0.06);
-   Graph_AcceptancesPR_{MaX}sPstability1002->GetYaxis()->SetTitleSize(0.06);
-   Graph_AcceptancesPR_{MaX}sPstability1002->GetZaxis()->SetLabelFont(42);
-   Graph_AcceptancesPR_{MaX}sPstability1002->GetZaxis()->SetLabelSize(0.06);
-   Graph_AcceptancesPR_{MaX}sPstability1002->GetZaxis()->SetTitleSize(0.06);
-   Graph_AcceptancesPR_{MaX}sPstability1002->GetZaxis()->SetTitleOffset(0.7);
-   gre->SetHistogram(Graph_Acceptance R_{MaX} stability1002);
+   TH1F *Graph_AcceptancesPRMaXsPstability1002 = new TH1F("Graph_AcceptancesPR_{MaX}sPstability1002","",100,16.28474,17.50358);
+   Graph_AcceptancesPRMaXsPstability1002->SetMinimum(0.9912924);
+   Graph_AcceptancesPRMaXsPstability1002->SetMaximum(1.009472);
+   Graph_AcceptancesPRMaXsPstability1002->SetDirectory(nullptr);
+   Graph_AcceptancesPRMaXsPstability1002->SetStats(0);
+   Graph_AcceptancesPRMaXsPstability1002->SetLineWidth(2);
+   Graph_AcceptancesPRMaXsPstability1002->SetMarkerStyle(20);
+   Graph_AcceptancesPRMaXsPstability1002->GetXaxis()->SetLabelFont(42);
+   Graph_AcceptancesPRMaXsPstability1002->GetXaxis()->SetLabelSize(0.06);
+   Graph_AcceptancesPRMaXsPstability1002->GetXaxis()->SetTitleSize(0.06);
+   Graph_AcceptancesPRMaXsPstability1002->GetXaxis()->SetTitleOffset(1.1);
+   Graph_AcceptancesPRMaXsPstability1002->GetYaxis()->SetLabelFont(42);
+   Graph_AcceptancesPRMaXsPstability1002->GetYaxis()->SetLabelSize(0.06);
+   Graph_AcceptancesPRMaXsPstability1002->GetYaxis()->SetTitleSize(0.06);
+   Graph_AcceptancesPRMaXsPstability1002->GetZaxis()->SetLabelFont(42);
+   Graph_AcceptancesPRMaXsPstability1002->GetZaxis()->SetLabelSize(0.06);
+   Graph_AcceptancesPRMaXsPstability1002->GetZaxis()->SetTitleSize(0.06);
+   Graph_AcceptancesPRMaXsPstability1002->GetZaxis()->SetTitleOffset(0.7);
+   gre->SetHistogram(Graph_AcceptancesPRMaXsPstability1002);
    
    
    TF1 *pol01003 = new TF1("pol0","pol0",16.28474,17.50358, TF1::EAddToList::kNo);
@@ -224,7 +224,7 @@ void RMaxStability()
    line->SetLineStyle(2);
    line->Draw();
    Acceptance__1->Modified();
-   Acceptance->cd();
-   Acceptance->Modified();
-   Acceptance R_{MaX} stability->SetSelected(Acceptance R_{MaX} stability);
+   Acceptance_RMax_stability->cd();
+   Acceptance_RMax_stability->Modified();
+   Acceptance_RMax_stability->SetSelected(Acceptance_RMax_stability);
 }
