@@ -641,11 +641,13 @@ void signalMacro_ASF()
    entry->SetMarkerSize(1);
    entry->SetTextFont(62);
    leg->Draw();
-   TLatex *   tex = new TLatex(288.0315,4.083103e-06,"PADME");
+   TLatex *   tex = new TLatex(287.68315,4.083103e-06,"PADME");
    tex->SetTextSize(0.06736842);
    tex->SetLineWidth(2);
    tex->Draw();
    cc->Modified();
    cc->SetSelected(cc);
    cc->ToggleToolBar();
+
+   cc->Print("signalMacro_ASF.pdf");
 }

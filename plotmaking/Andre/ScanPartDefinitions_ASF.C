@@ -117,4 +117,6 @@ void ScanPartDefinitions_ASF()
    dsq->Modified();
    dsq->SetSelected(dsq);
    dsq->ToggleToolBar();
+
+   dsq->Print("ScanPartDefinitions_ASF.pdf");
 }

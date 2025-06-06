@@ -4,8 +4,8 @@
 void final_ASF()
 {
 //=========Macro generated from canvas: c1/c1
-//=========  (Thu May 29 20:22:51 2025) by ROOT version 6.34.08
-   TCanvas *c1 = new TCanvas("c1", "c1",231,84,1125,809);
+//=========  (Fri May 30 01:44:55 2025) by ROOT version 6.34.08
+   TCanvas *c1 = new TCanvas("c1", "c1",231,168,612,461);
    gStyle->SetOptFit(1);
    gStyle->SetOptTitle(0);
    c1->SetHighLightColor(2);
@@ -23,7 +23,7 @@ void final_ASF()
    TPad *c1_1__0 = new TPad("c1_1", "c1_1",0.001335708,0.2946939,0.9995548,0.9528571);
    c1_1__0->Draw();
    c1_1__0->cd();
-   c1_1__0->Range(-59.62422,0.2539337,55.31775,1.34218);
+   c1_1__0->Range(-59.59806,0.2539337,55.15534,1.34218);
    c1_1__0->SetFillColor(0);
    c1_1__0->SetBorderMode(0);
    c1_1__0->SetBorderSize(2);
@@ -50,37 +50,37 @@ void final_ASF()
    gre->SetMarkerColor(2);
    gre->SetMarkerStyle(20);
    
-   TH1F *Graph_Graph_Graph_Norm100110011001 = new TH1F("Graph_Graph_Graph_Norm100110011001","MC",100,-78,78);
-   Graph_Graph_Graph_Norm100110011001->SetMinimum(0.41);
-   Graph_Graph_Graph_Norm100110011001->SetMaximum(1.3);
-   Graph_Graph_Graph_Norm100110011001->SetDirectory(nullptr);
-   Graph_Graph_Graph_Norm100110011001->SetStats(0);
+   TH1F *Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001 = new TH1F("Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001","MC",100,-78,78);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->SetMinimum(0.41);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->SetMaximum(1.3);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->SetDirectory(nullptr);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->SetStats(0);
 
    Int_t ci;      // for color index setting
    TColor *color; // for color definition with alpha
    ci = TColor::GetColor("#000099");
-   Graph_Graph_Graph_Norm100110011001->SetLineColor(ci);
-   Graph_Graph_Graph_Norm100110011001->SetLineWidth(2);
-   Graph_Graph_Graph_Norm100110011001->SetMarkerStyle(20);
-   Graph_Graph_Graph_Norm100110011001->GetXaxis()->SetTitle("Y [mm]");
-   Graph_Graph_Graph_Norm100110011001->GetXaxis()->SetRange(23,78);
-   Graph_Graph_Graph_Norm100110011001->GetXaxis()->SetLabelFont(42);
-   Graph_Graph_Graph_Norm100110011001->GetXaxis()->SetLabelSize(0);
-   Graph_Graph_Graph_Norm100110011001->GetXaxis()->SetTitleSize(0);
-   Graph_Graph_Graph_Norm100110011001->GetXaxis()->SetTitleOffset(1.1);
-   Graph_Graph_Graph_Norm100110011001->GetXaxis()->SetTitleFont(42);
-   Graph_Graph_Graph_Norm100110011001->GetYaxis()->SetTitle("E / E_{y=0}");
-   Graph_Graph_Graph_Norm100110011001->GetYaxis()->SetLabelFont(42);
-   Graph_Graph_Graph_Norm100110011001->GetYaxis()->SetLabelSize(0.045);
-   Graph_Graph_Graph_Norm100110011001->GetYaxis()->SetTitleSize(0.045);
-   Graph_Graph_Graph_Norm100110011001->GetYaxis()->SetTitleOffset(0.8);
-   Graph_Graph_Graph_Norm100110011001->GetYaxis()->SetTitleFont(42);
-   Graph_Graph_Graph_Norm100110011001->GetZaxis()->SetLabelFont(42);
-   Graph_Graph_Graph_Norm100110011001->GetZaxis()->SetLabelSize(0.06);
-   Graph_Graph_Graph_Norm100110011001->GetZaxis()->SetTitleSize(0.06);
-   Graph_Graph_Graph_Norm100110011001->GetZaxis()->SetTitleOffset(1);
-   Graph_Graph_Graph_Norm100110011001->GetZaxis()->SetTitleFont(42);
-   gre->SetHistogram(Graph_Graph_Graph_Norm100110011001);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->SetLineColor(ci);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->SetLineWidth(2);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->SetMarkerStyle(20);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetXaxis()->SetTitle("Y [mm]");
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetXaxis()->SetRange(23,78);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetXaxis()->SetLabelFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetXaxis()->SetLabelSize(0);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetXaxis()->SetTitleSize(0);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetXaxis()->SetTitleOffset(1.1);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetXaxis()->SetTitleFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetYaxis()->SetTitle("E / E_{y=0}");
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetYaxis()->SetLabelFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetYaxis()->SetLabelSize(0.06);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetYaxis()->SetTitleSize(0.06);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetYaxis()->SetTitleOffset(0.8);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetYaxis()->SetTitleFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetZaxis()->SetLabelFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetZaxis()->SetLabelSize(0.06);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetZaxis()->SetTitleSize(0.06);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetZaxis()->SetTitleOffset(1);
+   Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001->GetZaxis()->SetTitleFont(42);
+   gre->SetHistogram(Graph_Graph_Graph_Graph_Graph_Graph_Norm100110011001100110011001);
    
    gre->Draw("ap");
    
@@ -95,30 +95,30 @@ void final_ASF()
    graph->SetLineWidth(2);
    graph->SetMarkerStyle(20);
    
-   TH1F *Graph_Graph_Graph_GDati111 = new TH1F("Graph_Graph_Graph_GDati111","TB data",100,-83.77506,72.75664);
-   Graph_Graph_Graph_GDati111->SetMinimum(0.004583752);
-   Graph_Graph_Graph_GDati111->SetMaximum(1.333809);
-   Graph_Graph_Graph_GDati111->SetDirectory(nullptr);
+   TH1F *Graph_Graph_Graph_Graph_Graph_Graph_GDati111111 = new TH1F("Graph_Graph_Graph_Graph_Graph_Graph_GDati111111","TB data",100,-83.77506,72.75664);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->SetMinimum(0.004583752);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->SetMaximum(1.333809);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->SetDirectory(nullptr);
 
    ci = TColor::GetColor("#000099");
-   Graph_Graph_Graph_GDati111->SetLineColor(ci);
-   Graph_Graph_Graph_GDati111->SetLineWidth(2);
-   Graph_Graph_Graph_GDati111->SetMarkerStyle(20);
-   Graph_Graph_Graph_GDati111->GetXaxis()->SetLabelFont(42);
-   Graph_Graph_Graph_GDati111->GetXaxis()->SetLabelSize(0.06);
-   Graph_Graph_Graph_GDati111->GetXaxis()->SetTitleSize(0.06);
-   Graph_Graph_Graph_GDati111->GetXaxis()->SetTitleOffset(1.1);
-   Graph_Graph_Graph_GDati111->GetXaxis()->SetTitleFont(42);
-   Graph_Graph_Graph_GDati111->GetYaxis()->SetLabelFont(42);
-   Graph_Graph_Graph_GDati111->GetYaxis()->SetLabelSize(0.06);
-   Graph_Graph_Graph_GDati111->GetYaxis()->SetTitleSize(0.06);
-   Graph_Graph_Graph_GDati111->GetYaxis()->SetTitleFont(42);
-   Graph_Graph_Graph_GDati111->GetZaxis()->SetLabelFont(42);
-   Graph_Graph_Graph_GDati111->GetZaxis()->SetLabelSize(0.06);
-   Graph_Graph_Graph_GDati111->GetZaxis()->SetTitleSize(0.06);
-   Graph_Graph_Graph_GDati111->GetZaxis()->SetTitleOffset(0.7);
-   Graph_Graph_Graph_GDati111->GetZaxis()->SetTitleFont(42);
-   graph->SetHistogram(Graph_Graph_Graph_GDati111);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->SetLineColor(ci);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->SetLineWidth(2);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->SetMarkerStyle(20);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetXaxis()->SetLabelFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetXaxis()->SetLabelSize(0.07);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetXaxis()->SetTitleSize(0.07);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetXaxis()->SetTitleOffset(1.1);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetXaxis()->SetTitleFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetYaxis()->SetLabelFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetYaxis()->SetLabelSize(0.07);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetYaxis()->SetTitleSize(0.07);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetYaxis()->SetTitleFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetZaxis()->SetLabelFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetZaxis()->SetLabelSize(0.07);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetZaxis()->SetTitleSize(0.07);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetZaxis()->SetTitleOffset(0.7);
+   Graph_Graph_Graph_Graph_Graph_Graph_GDati111111->GetZaxis()->SetTitleFont(42);
+   graph->SetHistogram(Graph_Graph_Graph_Graph_Graph_Graph_GDati111111);
    
    graph->Draw("p");
    
@@ -149,8 +149,8 @@ void final_ASF()
    entry->SetMarkerSize(1);
    entry->SetTextFont(62);
    leg->Draw();
-   TLatex *   tex = new TLatex(-39.27099,1.175569,"PADME");
-   tex->SetTextSize(0.06972459);
+   TLatex *   tex = new TLatex(-38.45609,1.160303,"PADME");
+   tex->SetTextSize(0.09757486);
    tex->SetLineWidth(2);
    tex->Draw();
    
@@ -188,7 +188,7 @@ void final_ASF()
    TPad *c1_2__1 = new TPad("c1_2", "c1_2",0.001335708,0.02255102,0.9995548,0.3627041);
    c1_2__1->Draw();
    c1_2__1->cd();
-   c1_2__1->Range(-58.85677,0.7913224,55.20699,1.213475);
+   c1_2__1->Range(-58.83081,0.7913224,55.04583,1.213475);
    c1_2__1->SetFillColor(0);
    c1_2__1->SetBorderMode(0);
    c1_2__1->SetBorderSize(2);
@@ -214,47 +214,47 @@ void final_ASF()
    gre->SetFillStyle(1000);
    gre->SetMarkerStyle(20);
    
-   TH1F *Graph_Graph_Graph_Graph100210021002 = new TH1F("Graph_Graph_Graph_Graph100210021002","",100,-66.42759,71.1796);
-   Graph_Graph_Graph_Graph100210021002->SetMinimum(0.8922353);
-   Graph_Graph_Graph_Graph100210021002->SetMaximum(1.210111);
-   Graph_Graph_Graph_Graph100210021002->SetDirectory(nullptr);
-   Graph_Graph_Graph_Graph100210021002->SetStats(0);
+   TH1F *Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002 = new TH1F("Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002","",100,-66.42759,71.1796);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->SetMinimum(0.8922353);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->SetMaximum(1.210111);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->SetDirectory(nullptr);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->SetStats(0);
 
    ci = TColor::GetColor("#000099");
-   Graph_Graph_Graph_Graph100210021002->SetLineColor(ci);
-   Graph_Graph_Graph_Graph100210021002->SetLineWidth(2);
-   Graph_Graph_Graph_Graph100210021002->SetMarkerStyle(20);
-   Graph_Graph_Graph_Graph100210021002->GetXaxis()->SetTitle("Y [mm]");
-   Graph_Graph_Graph_Graph100210021002->GetXaxis()->SetRange(18,80);
-   Graph_Graph_Graph_Graph100210021002->GetXaxis()->SetLabelFont(42);
-   Graph_Graph_Graph_Graph100210021002->GetXaxis()->SetLabelSize(0.09);
-   Graph_Graph_Graph_Graph100210021002->GetXaxis()->SetTitleSize(0.09);
-   Graph_Graph_Graph_Graph100210021002->GetXaxis()->SetTitleOffset(1);
-   Graph_Graph_Graph_Graph100210021002->GetXaxis()->SetTitleFont(42);
-   Graph_Graph_Graph_Graph100210021002->GetYaxis()->SetTitle("Ratio");
-   Graph_Graph_Graph_Graph100210021002->GetYaxis()->SetLabelFont(42);
-   Graph_Graph_Graph_Graph100210021002->GetYaxis()->SetLabelOffset(0.006);
-   Graph_Graph_Graph_Graph100210021002->GetYaxis()->SetLabelSize(0.09);
-   Graph_Graph_Graph_Graph100210021002->GetYaxis()->SetTitleSize(0.09);
-   Graph_Graph_Graph_Graph100210021002->GetYaxis()->SetTitleOffset(0.5);
-   Graph_Graph_Graph_Graph100210021002->GetYaxis()->SetTitleFont(42);
-   Graph_Graph_Graph_Graph100210021002->GetZaxis()->SetLabelFont(42);
-   Graph_Graph_Graph_Graph100210021002->GetZaxis()->SetLabelSize(0.06);
-   Graph_Graph_Graph_Graph100210021002->GetZaxis()->SetTitleSize(0.06);
-   Graph_Graph_Graph_Graph100210021002->GetZaxis()->SetTitleOffset(1);
-   Graph_Graph_Graph_Graph100210021002->GetZaxis()->SetTitleFont(42);
-   gre->SetHistogram(Graph_Graph_Graph_Graph100210021002);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->SetLineColor(ci);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->SetLineWidth(2);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->SetMarkerStyle(20);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetXaxis()->SetTitle("Y [mm]");
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetXaxis()->SetRange(18,80);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetXaxis()->SetLabelFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetXaxis()->SetLabelSize(0.11);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetXaxis()->SetTitleSize(0.11);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetXaxis()->SetTitleOffset(1);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetXaxis()->SetTitleFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetYaxis()->SetTitle("Ratio");
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetYaxis()->SetLabelFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetYaxis()->SetLabelOffset(0.006);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetYaxis()->SetLabelSize(0.11);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetYaxis()->SetTitleSize(0.11);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetYaxis()->SetTitleOffset(0.5);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetYaxis()->SetTitleFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetZaxis()->SetLabelFont(42);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetZaxis()->SetLabelSize(0.06);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetZaxis()->SetTitleSize(0.06);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetZaxis()->SetTitleOffset(1);
+   Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002->GetZaxis()->SetTitleFont(42);
+   gre->SetHistogram(Graph_Graph_Graph_Graph_Graph_Graph_Graph100210021002100210021002);
    
    
-   TPaveStats *ptstats = new TPaveStats(0.1647373,0.7074074,0.4265361,0.9259259,"brNDC");
+   TPaveStats *ptstats = new TPaveStats(0.3451807,0.6619237,0.5767406,0.9383778,"brNDC");
    ptstats->SetName("stats");
    ptstats->SetBorderSize(0);
    ptstats->SetFillColor(0);
    ptstats->SetTextAlign(12);
    ptstats->SetTextFont(42);
-   TText *ptstats_LaTex = ptstats->AddText("#chi^{2} / ndf = 9.086 / 10");
+   TText *ptstats_LaTex = ptstats->AddText("#chi^{2} / ndf = 9.09 / 10");
    ptstats_LaTex = ptstats->AddText("Prob  = 0.524");
-   ptstats_LaTex = ptstats->AddText("p0       = 1.012 #pm 0.005429 ");
+   ptstats_LaTex = ptstats->AddText("p0       = 1.01 #pm 0.00543 ");
    ptstats->SetOptStat(0);
    ptstats->SetOptFit(1111);
    ptstats->Draw();
@@ -269,7 +269,7 @@ void final_ASF()
    ci = TColor::GetColor("#cc0000");
    PrevFitTMP1004->SetLineColor(ci);
    PrevFitTMP1004->SetLineStyle(9);
-   PrevFitTMP1004->SetLineWidth(3);
+   PrevFitTMP1004->SetLineWidth(2);
    PrevFitTMP1004->SetChisquare(9.086066);
    PrevFitTMP1004->SetNDF(10);
    PrevFitTMP1004->GetXaxis()->SetLabelFont(42);
@@ -289,4 +289,6 @@ void final_ASF()
    c1->cd();
    c1->Modified();
    c1->SetSelected(c1);
+
+   c1->Print("final_ASF.pdf");
 }

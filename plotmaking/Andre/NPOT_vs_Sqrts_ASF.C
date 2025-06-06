@@ -137,4 +137,6 @@ void NPOT_vs_Sqrts_ASF()
    dpotvssqrts->Modified();
    dpotvssqrts->SetSelected(dpotvssqrts);
    dpotvssqrts->ToggleToolBar();
+
+   dpotvssqrts->Print("NPOT_vs_Sqrts_ASF.pdf");
 }

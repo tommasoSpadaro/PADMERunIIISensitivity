@@ -286,4 +286,6 @@ void RelativeUncorrelatedErrors_gR_ASF()
    relErr->Modified();
    relErr->SetSelected(relErr);
    relErr->ToggleToolBar();
+
+   relErr->Print("RelativeUncorrelatedErrors_gR_ASF.pdf");
 }

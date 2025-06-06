@@ -358,10 +358,12 @@ void gR_PvalueMinimum_ASF()
    entry->SetTextFont(62);
    leg->Draw();
    TLatex *   tex = new TLatex(16.35475,1.085754,"PADME");
-   tex->SetTextSize(0.06282723);
+   tex->SetTextSize(0.08);
    tex->SetLineWidth(2);
    tex->Draw();
    rcanva->Modified();
    rcanva->SetSelected(rcanva);
    rcanva->ToggleToolBar();
+
+   rcanva->Print("gR_PvalueMinimum_ASF.pdf");
 }

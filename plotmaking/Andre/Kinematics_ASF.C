@@ -199,8 +199,8 @@ void Kinematics_ASF()
    arrow->SetLineWidth(2);
    arrow->SetAngle(40);
    arrow->Draw();
-   TLatex *   tex = new TLatex(19.01271,234.5426,"PADME");
-   tex->SetTextSize(0.09649123);
+   TLatex *   tex = new TLatex(18.701271,234.5426,"PADME");
+   tex->SetTextSize(0.12);
    tex->SetLineWidth(2);
    tex->Draw();
    kineCanva_1__0->Modified();
@@ -514,4 +514,6 @@ void Kinematics_ASF()
    kineCanva->Modified();
    kineCanva->SetSelected(kineCanva);
    kineCanva->ToggleToolBar();
+
+   kineCanva->Print("Kinematics_ASF.pdf");
 }

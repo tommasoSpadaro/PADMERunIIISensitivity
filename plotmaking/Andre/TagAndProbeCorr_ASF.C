@@ -8,6 +8,7 @@ void TagAndProbeCorr_ASF()
    TCanvas *Tag_and_probe_correction = new TCanvas("Tag and probe correction", "",65,244,700,554);
    gStyle->SetOptFit(1);
    gStyle->SetOptTitle(0);
+   gStyle->SetFitFormat("5.2g");
    Tag_and_probe_correction->Range(0,0,1,1);
    Tag_and_probe_correction->SetFillColor(0);
    Tag_and_probe_correction->SetBorderMode(0);
@@ -98,8 +99,8 @@ void TagAndProbeCorr_ASF()
    gre->SetHistogram(Graph_Graph_Graph_gRatioTP100110011001);
    
    gre->Draw("p");
-   TLatex *   tex = new TLatex(33.06885,1.081657,"PADME");
-   tex->SetTextSize(0.09649123);
+   TLatex *   tex = new TLatex(30.46885,1.081657,"PADME");
+   tex->SetTextSize(0.12);
    tex->SetLineWidth(2);
    tex->Draw();
       tex = new TLatex(32.4764,1.08134,"");
@@ -160,6 +161,7 @@ void TagAndProbeCorr_ASF()
    ptstats_LaTex = ptstats->AddText("p0       =     1 #pm 0.003491 ");
    ptstats->SetOptStat(0);
    ptstats->SetOptFit(1111);
+   ptstats->SetFitFormat("5.2g");
    ptstats->Draw();
    
    ptstats = new TPaveStats(0.16961,0.6984649,0.3625811,0.8563596,"brNDC");
@@ -173,6 +175,7 @@ void TagAndProbeCorr_ASF()
    ptstats_LaTex = ptstats->AddText("p0       =     1 #pm 0.003491 ");
    ptstats->SetOptStat(0);
    ptstats->SetOptFit(1111);
+   ptstats->SetFitFormat("5.2g");
    ptstats->Draw();
    
    Double_t TagsPandsPprobesPcorrection_fx1002[42] = { 17.12853, 17.26818, 17.22433, 17.17917, 17.40201, 17.35996, 17.31664, 17.09748, 17.06696, 16.99856, 16.9516, 16.90572, 16.85911, 16.81358, 16.76397, 16.71757, 16.67104,
@@ -250,6 +253,7 @@ void TagAndProbeCorr_ASF()
    ptstats_LaTex = ptstats->AddText("p0       =     1 #pm 0.003491 ");
    ptstats->SetOptStat(0);
    ptstats->SetOptFit(1111);
+   ptstats->SetFitFormat("5.2g");
    ptstats->Draw();
    gre->GetListOfFunctions()->Add(ptstats);
    ptstats->SetParent(gre->GetListOfFunctions());
@@ -259,4 +263,6 @@ void TagAndProbeCorr_ASF()
    Tag_and_probe_correction->Modified();
    Tag_and_probe_correction->SetSelected(Tag_and_probe_correction);
    Tag_and_probe_correction->ToggleToolBar();
+
+   Tag_and_probe_correction->Print("TagAndProbeCorr_ASF.pdf");
 }

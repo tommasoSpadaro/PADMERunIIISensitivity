@@ -98,8 +98,8 @@ void EnergyLossCorrection_ASF()
    gre->SetHistogram(Graph_Graph_Graph10011001);
    
    gre->Draw("p");
-   TLatex *   tex = new TLatex(32.81494,1.015018,"PADME");
-   tex->SetTextSize(0.09649123);
+   TLatex *   tex = new TLatex(31.81494,1.015018,"PADME");
+   tex->SetTextSize(0.11);
    tex->SetLineWidth(2);
    tex->Draw();
       tex = new TLatex(34.3384,1.019174,"");
@@ -193,4 +193,6 @@ void EnergyLossCorrection_ASF()
    Energy_loss_correction->Modified();
    Energy_loss_correction->SetSelected(Energy_loss_correction);
    Energy_loss_correction->ToggleToolBar();
+
+   Energy_loss_correction->Print("EnergyLossCorrection_ASF.pdf");
 }

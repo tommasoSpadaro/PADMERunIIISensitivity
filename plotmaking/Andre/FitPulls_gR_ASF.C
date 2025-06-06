@@ -244,4 +244,6 @@ void FitPulls_gR_ASF()
    pullCanva->Modified();
    pullCanva->SetSelected(pullCanva);
    pullCanva->ToggleToolBar();
+
+   pullCanva->Print("FitPulls_gR_ASF.pdf");
 }

@@ -247,4 +247,6 @@ void RMaxStability_ASF()
    Acceptance_RMaX_stability->Modified();
    Acceptance_RMaX_stability->SetSelected(Acceptance_RMaX_stability);
    Acceptance_RMaX_stability->ToggleToolBar();
+
+   Acceptance_RMaX_stability->Print("Acceptance_RMaX_stability_ASF.pdf");
 }
