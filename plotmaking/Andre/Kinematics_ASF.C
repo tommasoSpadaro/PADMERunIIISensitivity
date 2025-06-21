@@ -488,6 +488,34 @@ void Kinematics_ASF()
    EMin3->SetFillStyle(0);
    EMin3->SetMarkerStyle(20);
 
+   TLegend *leg = new TLegend(0.194,0.456,0.421,0.714,NULL,"brNDC");
+   leg->SetBorderSize(1);
+   leg->SetTextFont(62);
+   leg->SetLineColor(1);
+   leg->SetLineStyle(1);
+   leg->SetLineWidth(1);
+   leg->SetFillColor(0);
+   leg->SetFillStyle(1001);
+   TLegendEntry *entry=leg->AddEntry("EMax","Maximum","l");
+   entry->SetFillStyle(1000);
+   entry->SetLineColor(2);
+   entry->SetLineStyle(1);
+   entry->SetLineWidth(1);
+   entry->SetMarkerColor(1);
+   entry->SetMarkerStyle(20);
+   entry->SetMarkerSize(1);
+   entry->SetTextFont(42);
+   entry=leg->AddEntry("EMin","Minimum","l");
+   entry->SetFillStyle(1000);
+   entry->SetLineColor(2);
+   entry->SetLineStyle(2);
+   entry->SetLineWidth(1);
+   entry->SetMarkerColor(2);
+   entry->SetMarkerStyle(20);
+   entry->SetMarkerSize(1);
+   entry->SetTextFont(42);
+   leg->Draw();
+
    ci = TColor::GetColor("#cc0000");
    EMin3->SetLineColor(ci);
    EMin3->SetLineStyle(2);

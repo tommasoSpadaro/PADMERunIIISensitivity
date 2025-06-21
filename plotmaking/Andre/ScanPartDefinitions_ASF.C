@@ -118,5 +118,33 @@ void ScanPartDefinitions_ASF()
    dsq->SetSelected(dsq);
    dsq->ToggleToolBar();
 
+   TLegend *leg = new TLegend(0.673,0.372,0.830,0.500,NULL,"brNDC");
+   leg->SetBorderSize(1);
+   leg->SetTextFont(62);
+   leg->SetLineColor(1);
+   leg->SetLineStyle(1);
+   leg->SetLineWidth(1);
+   leg->SetFillColor(0);
+   leg->SetFillStyle(1001);
+   TLegendEntry *entry=leg->AddEntry("gPeriodIDVsSqrts_Scan0","Scan 1","p");
+   entry->SetFillStyle(1000);
+   entry->SetLineColor(1);
+   entry->SetLineStyle(1);
+   entry->SetLineWidth(0);
+   entry->SetMarkerColor(2);
+   entry->SetMarkerStyle(20);
+   entry->SetMarkerSize(1);
+   entry->SetTextFont(42);
+   entry=leg->AddEntry("gPeriodIDVsSqrts_Scan1","Scan 2","p");
+   entry->SetFillStyle(1000);
+   entry->SetLineColor(1);
+   entry->SetLineStyle(1);
+   entry->SetLineWidth(0);
+   entry->SetMarkerColor(1);
+   entry->SetMarkerStyle(20);
+   entry->SetMarkerSize(1);
+   entry->SetTextFont(42);
+   leg->Draw();
+
    dsq->Print("ScanPartDefinitions_ASF.pdf");
 }

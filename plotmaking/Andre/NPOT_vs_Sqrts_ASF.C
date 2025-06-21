@@ -38,7 +38,7 @@ void NPOT_vs_Sqrts_ASF()
    gre->SetMarkerColor(4);
    gre->SetMarkerStyle(20);
    
-   TH1F *Graph_Graph_Graph_PoTAllVsSqrts101410011001 = new TH1F("Graph_Graph_Graph_PoTAllVsSqrts101410011001","",100,13.97497,20.86929);
+   TH1F *Graph_Graph_Graph_PoTAllVsSqrts101410011001 = new TH1F("Graph_Graph_Graph_PoTAllVsSqrts101410011001","",100,13.97497,21.86929);
    Graph_Graph_Graph_PoTAllVsSqrts101410011001->SetMinimum(4.586425e+09);
    Graph_Graph_Graph_PoTAllVsSqrts101410011001->SetMaximum(1.164876e+10);
    Graph_Graph_Graph_PoTAllVsSqrts101410011001->SetDirectory(nullptr);
@@ -128,6 +128,48 @@ void NPOT_vs_Sqrts_ASF()
    Graph_Graph_Graph_PoTAllVsSqrtsAboveRes101610031003->GetZaxis()->SetTitleSize(0.06);
    Graph_Graph_Graph_PoTAllVsSqrtsAboveRes101610031003->GetZaxis()->SetTitleOffset(0.7);
    gre->SetHistogram(Graph_Graph_Graph_PoTAllVsSqrtsAboveRes101610031003);
+
+
+   TLegend *leg = new TLegend(0.537,0.527,0.858,0.703,NULL,"brNDC");
+   leg->SetBorderSize(1);
+   leg->SetTextFont(62);
+   leg->SetLineColor(1);
+   leg->SetLineStyle(1);
+   leg->SetLineWidth(1);
+   leg->SetFillColor(0);
+   leg->SetMargin(0.2);
+   leg->SetFillStyle(1001);
+   TLegendEntry *entry=leg->AddEntry("PoTAllVsSqrts","In resonance","p");
+   entry->SetFillStyle(1000);
+   entry->SetLineColor(1);
+   entry->SetLineStyle(1);
+   entry->SetLineWidth(0);
+   // entry->SetMarkerColor(2);
+   entry->SetMarkerStyle(20);
+   entry->SetMarkerSize(1);
+   entry->SetTextFont(42);
+   entry->SetTextSize(0.045);
+   entry=leg->AddEntry("PoTAllVsSqrtsBelowRes","Below resonance","p");
+   entry->SetFillStyle(1000);
+   entry->SetLineColor(1);
+   entry->SetLineStyle(1);
+   entry->SetLineWidth(0);
+   entry->SetTextSize(0.045);
+   // entry->SetMarkerColor(1);
+   entry->SetMarkerStyle(20);
+   entry->SetMarkerSize(1);
+   entry->SetTextFont(42);
+   entry=leg->AddEntry("PoTAllVsSqrtsAboveRes","Above resonance","p");
+   entry->SetFillStyle(1000);
+   entry->SetLineColor(1);
+   entry->SetLineStyle(1);
+   entry->SetLineWidth(0);
+   entry->SetTextSize(0.045);
+   entry->SetMarkerColor(2);
+   entry->SetMarkerStyle(20);
+   entry->SetMarkerSize(1);
+   entry->SetTextFont(42);
+   leg->Draw();
    
    gre->Draw("p");
    TLatex *   tex = new TLatex(14.34251,1.079776e+10,"PADME");
