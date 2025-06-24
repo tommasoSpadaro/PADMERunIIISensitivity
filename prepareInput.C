@@ -823,7 +823,7 @@ void prepareInput(TString fileout){
   TCanvas* pullcanva = new TCanvas("pullCanva");
   TH1F* pullframe = pullcanva->DrawFrame(-0.5,-3.,32.5,3.);
   pullframe->SetTitle(";Energy point ID; g_{R} Fit Pulls");
-  pullframe->GetYaxis()->SetTitleOffset(1.0);
+  pullframe->GetYaxis()->SetTitleOffset(0.8);
   pullframe->GetXaxis()->SetLabelOffset(0.006);
 
   gRZipPullsSideband->SetMarkerStyle(20);
@@ -838,11 +838,26 @@ void prepareInput(TString fileout){
   funPulls->SetLineStyle(2);
   
   TFitResultPtr fitrespulls = gRZipPullsSideband->Fit(funPulls,"S","same");
-  TLegend* legopulls = new TLegend(0.2,0.7,0.8,0.85);
-  legopulls->AddEntry(funPulls,Form("#splitline{P0 = %.2f #pm %.2f, P1 = (%.2f #pm %.2f)}{#chi^{2}/ndf = %.1f / %d, Prob = %.2f}",
-						   fitrespulls->Parameter(0),fitrespulls->ParError(0),
-						   fitrespulls->Parameter(1),fitrespulls->ParError(1),
-						   fitrespulls->Chi2(),(int)fitrespulls->Ndf(),fitrespulls->Prob()),"L");
+  TLegend* legopulls = new TLegend(0.2,0.7,0.7,0.85);
+//  legopulls->AddEntry(funPulls,Form("#splitline{P0 = %.2f #pm %.2f, P1 = (%.2f #pm %.2f)}{#chi^{2}/ndf = %.1f / %d, Prob = %.2f}",
+//						   fitrespulls->Parameter(0),fitrespulls->ParError(0),
+//						   fitrespulls->Parameter(1),fitrespulls->ParError(1),
+//						   fitrespulls->Chi2(),(int)fitrespulls->Ndf(),fitrespulls->Prob()),"L");
+  legopulls->SetTextSizePixels(28);
+  float parsforlegend[2] = {0,0};
+  TString signforlegend[2] = {"",""};
+  for (int ip = 0; ip<2; ip++){
+    parsforlegend[ip] = TMath::Abs(fitrespulls->Parameter(ip));
+    if (fitrespulls->Parameter(ip) < 0) {
+      signforlegend[ip] = "#minus";
+    }
+    else {
+      signforlegend[ip] = "  ";
+    }
+  }
+  legopulls->AddEntry(funPulls,Form("#splitline{P0 = %s%.2f #pm %.2f}{P1 = %s%.2f #pm %.2f}",
+				    signforlegend[0].Data(),parsforlegend[0],fitrespulls->ParError(0),
+				    signforlegend[1].Data(),parsforlegend[1],fitrespulls->ParError(1)),"L");
   legopulls->Draw();
 
   //
