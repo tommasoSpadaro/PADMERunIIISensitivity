@@ -4,7 +4,7 @@ $maxjobs = $ARGV[0]; # max number of jobs simultaneously running together
 $username = $ARGV[1]; # needed to retrieve number of jobs running
 $seedStem = $ARGV[2]; # starting seed value
 
-$nSteps = 1;#350;#315;#200;#1 #200;#9;#199; #number of pseudo-events
+$nSteps = 200;#350;#315;#200;#1 #200;#9;#199; #number of pseudo-events
 $iStep = 0;
 
 $loopCond = 1;
@@ -60,10 +60,11 @@ while ($loopCond == 1){
 #	    elsif (/InputFileName /) {print CONFIGOUT "InputFileName ~/PADME/PADME_sensitivity/input/MCVersion2_POTErrorFinal_BKG0.004_EFF0.004_bugfix.root\n";}
 #	    elsif (/InputFileName /) {print CONFIGOUT "InputFileName ~/PADME/PADME_sensitivity/input/prova.root\n";}
 #	    elsif (/InputFileName /) {print CONFIGOUT "InputFileName ~/PADME/PADME_sensitivity/input/completedRunIII_0.3pctOnB_0.3pctOnPoT.root\n";}
-	    elsif (/InputFileName /) {print CONFIGOUT "InputFileName ~/PADME/PADME_sensitivity/input/completedRunIII_0.3pctOnB_0.1pctOnPoT.root\n";}
+#	    elsif (/InputFileName /) {print CONFIGOUT "InputFileName ~/PADME/PADME_sensitivity/input/completedRunIII_0.3pctOnB_0.1pctOnPoT.root\n";}
+	    elsif (/InputFileName /) {print CONFIGOUT "InputFileName ~/PADME/PADME_sensitivity/input/runIVproj.root\n";}
 
 	    # VALUTAZIONE LIMITE OSSERVATO
-	    elsif (/ObsLimitMode /) {print CONFIGOUT "ObsLimitMode 1\n";} # OBSLIMIT!!!
+#	    elsif (/ObsLimitMode /) {print CONFIGOUT "ObsLimitMode 1\n";} # OBSLIMIT!!!
 
 #limite atteso
 #	    elsif (/^ToyOfToyMode/) {print CONFIGOUT "ToyOfToyMode 1\n";} #generate toy-pseudoevents in memory
@@ -117,11 +118,13 @@ while ($loopCond == 1){
 
 	    elsif (/^BkgBiasObsP0 /){print CONFIGOUT "BkgBiasObsP0 1.01163\n";}
 	    elsif (/^BkgBiasObsP1 /){print CONFIGOUT "BkgBiasObsP1 -0.0103\n";}
-	    elsif (/^BkgBiasErrP0 /){print CONFIGOUT "BkgBiasErrP0 0.0013\n";}
-	    elsif (/^BkgBiasErrP1 /){print CONFIGOUT "BkgBiasErrP1 0.004\n";}
+	    elsif (/^BkgBiasErrP0 /){print CONFIGOUT "BkgBiasErrP0 0.0006\n";}
+	    elsif (/^BkgBiasErrP1 /){print CONFIGOUT "BkgBiasErrP1 0.002\n";}
+#	    elsif (/^BkgBiasErrP0 /){print CONFIGOUT "BkgBiasErrP0 0.0013\n";}
+#	    elsif (/^BkgBiasErrP1 /){print CONFIGOUT "BkgBiasErrP1 0.004\n";}
 	    elsif (/^BkgBiasErrP0P1Corr /){print CONFIGOUT "BkgBiasErrP0P1Corr -0.06\n";}
 
-	    elsif (/^UsePOTSlopeCorrection /){print CONFIGOUT "UsePOTSlopeCorrection 1\n";}
+	    elsif (/^UsePOTSlopeCorrection /){print CONFIGOUT "UsePOTSlopeCorrection 0\n";}
 	    elsif (/^POTSlopeCorrectionObs /){print CONFIGOUT "POTSlopeCorrectionObs 0.\n";}
 	    elsif (/^POTSlopeCorrectionErr /){print CONFIGOUT "POTSlopeCorrectionErr 0.004\n";}
 	    # TO PUT FREQ ONLY EVALUATION:
