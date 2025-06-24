@@ -655,16 +655,21 @@ void rereadfulllim(int seedStem, int clsoption, bool overlay, int overlaymode, T
   //  PLOT OF UPPER LIMITS
   
   TCanvas* dd =new TCanvas("dd","resultC",970,600);
-  dd->Divide(1,2);
-  TVirtualPad* pad1 = dd->cd(1);
-  pad1->SetPad(0,0.35,1,1);
-  pad1->SetBottomMargin(0.0);  
+  TVirtualPad* pad1 = nullptr;
+  if (overlay && (overlaymode == 2 || overlaymode == 3)) {
+    dd->Divide(1,2);
+    TVirtualPad* pad1 = dd->cd(1);
+    pad1->SetPad(0,0.35,1,1);
+    pad1->SetBottomMargin(0.0);  
+    pad1->cd();
+  } else{
+    pad1 = dd->cd(1);
+  }
   TH2D* framepl = new TH2D("framepl",";M_{X} (MeV);g_{ve};",100,16.,18.5,100,5E-5,1E-3);
 //  TPad *pad1 = new TPad("pad1","pad1",0.1,0.2,0.9,1.,0,0);
 //  pad1->Draw();
 //  TPad *pad2 = new TPad("pad2","pad2",0.1,0.,0.9,0.2,0,0);
 //  pad2->Draw();
-  pad1->cd();
   framepl->Draw("");
   framepl->GetYaxis()->SetMaxDigits(3);
   framepl->GetYaxis()->SetNdivisions(505);
