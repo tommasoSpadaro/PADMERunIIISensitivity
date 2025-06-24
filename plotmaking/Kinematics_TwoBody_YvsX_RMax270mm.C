@@ -4,7 +4,7 @@
 void Kinematics_TwoBody_YvsX_RMax270mm()
 {
 //=========Macro generated from canvas: radiiCanva_0/radiiCanva_0
-//=========  (Wed May 28 14:22:06 2025) by ROOT version 6.30/04
+//=========  (Tue Jun 24 11:09:32 2025) by ROOT version 6.30/04
    TCanvas *radiiCanva_0 = new TCanvas("radiiCanva_0", "radiiCanva_0",0,66,800,800);
    gStyle->SetOptFit(1);
    gStyle->SetOptTitle(0);
@@ -650,7 +650,7 @@ void Kinematics_TwoBody_YvsX_RMax270mm()
    ECalYX__1->GetYaxis()->SetLabelSize(0.05);
    ECalYX__1->GetYaxis()->SetTitleSize(0.04);
    ECalYX__1->GetYaxis()->SetTickLength(0);
-   ECalYX__1->GetYaxis()->SetTitleOffset(1.6);
+   ECalYX__1->GetYaxis()->SetTitleOffset(1.7);
    ECalYX__1->GetZaxis()->SetLabelFont(42);
    ECalYX__1->GetZaxis()->SetLabelSize(0.06);
    ECalYX__1->GetZaxis()->SetTitleSize(0.06);
