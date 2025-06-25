@@ -41,3 +41,6 @@ BkgBiasObsP1 -0.0103
 BkgBiasErrP0 0.0013
 BkgBiasErrP1 0.004
 BkgBiasErrP0P1Corr -0.06
+UsePOTSlopeCorrection 0
+POTSlopeCorrectionObs 0
+POTSlopeCorrectionErr 0.0001
